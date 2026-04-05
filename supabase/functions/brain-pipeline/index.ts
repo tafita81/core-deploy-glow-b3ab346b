@@ -35,6 +35,7 @@ serve(async (req) => {
 
     const results = {
       researched: 0, generated: 0, media: 0, validated: 0, published: 0,
+      whatsapp_generated: 0,
       viral_score_avg: 0, competitors_analyzed: 0, hashtags_found: 0,
       errors: [] as string[],
     };
