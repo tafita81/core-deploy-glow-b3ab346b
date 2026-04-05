@@ -17,70 +17,142 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Use AI to research trending psychology topics
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // STEP 1: Analyze top viral videos & competitor channels
+    const viralAnalysisRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-pro",
         messages: [
           {
             role: "system",
-            content: `Você é um pesquisador de tendências em saúde mental e bem-estar para redes sociais brasileiras.
-Analise o que está em alta e retorne EXATAMENTE um JSON array com 3 tópicos trending.
-Cada item deve ter: "topic" (slug em português sem acento), "label" (nome legível), "reason" (por que está em alta), "suggested_type" (carrossel|reel|story|artigo), "suggested_channel" (instagram|youtube).
+            content: `Você é um analista de growth hacking e viralização de conteúdo em redes sociais brasileiras, especializado em psicologia, saúde mental e bem-estar.
+
+Sua missão é fazer engenharia reversa dos vídeos e posts MAIS VIRAIS do momento neste nicho.
+
+Analise canais como: Metaforando, Psicólogo Fernando, Ana Beatriz Barbosa, Luana Psicóloga, Morato, Marcos Lacerda (saúde mental), e outros canais de psicologia/autoajuda que estão bombando.
+
+Retorne EXATAMENTE um JSON com esta estrutura:
+{
+  "viral_patterns": {
+    "top_title_hooks": ["5 exemplos de títulos que mais geraram cliques esta semana"],
+    "thumbnail_patterns": ["descrição do padrão visual das thumbnails virais"],
+    "avg_duration_seconds": 45,
+    "best_posting_times": ["horários que mais geram engajamento"],
+    "trending_hashtags": ["#tag1", "#tag2", "até 15 hashtags"],
+    "cta_patterns": ["tipos de CTA que mais convertem"],
+    "hook_first_3_seconds": ["exemplos de ganchos dos primeiros 3 segundos"]
+  },
+  "competitor_analysis": [
+    {
+      "channel": "nome do canal",
+      "platform": "youtube|instagram|tiktok",
+      "why_viral": "razão do sucesso",
+      "content_format": "formato que mais funciona",
+      "posting_frequency": "frequência de postagem"
+    }
+  ],
+  "topics": [
+    {
+      "topic": "slug-sem-acento",
+      "label": "Nome legível",
+      "reason": "por que vai viralizar",
+      "viral_title": "Título otimizado para CTR máximo com gatilho mental",
+      "hook": "Gancho dos primeiros 3 segundos",
+      "hashtags": ["#tag1", "#tag2"],
+      "suggested_type": "reel|carrossel|story|artigo",
+      "suggested_channel": "instagram|youtube|tiktok",
+      "monetization_angle": "como monetizar este tema",
+      "whatsapp_cta": "CTA para levar para comunidade WhatsApp"
+    }
+  ],
+  "monetization_insights": {
+    "trending_products": ["produtos/serviços que canais similares vendem"],
+    "community_growth_tactics": ["táticas para crescer comunidade WhatsApp"],
+    "revenue_streams": ["fontes de receita dos top canais"]
+  }
+}
+
 Retorne APENAS o JSON, sem markdown.`,
           },
           {
             role: "user",
-            content: `Data atual: ${new Date().toISOString().slice(0, 10)}. Quais são os 3 temas de psicologia mais relevantes para postar hoje nas redes sociais brasileiras? Considere tendências reais como: ansiedade pós-pandemia, burnout no trabalho remoto, saúde mental de jovens, relacionamentos digitais, inteligência emocional, trauma geracional, autoestima na era das redes sociais, parentalidade consciente, etc.`,
+            content: `Data: ${new Date().toISOString().slice(0, 10)}. Hora: ${new Date().toISOString().slice(11, 16)} UTC.
+
+Faça uma análise PROFUNDA dos vídeos e posts mais virais de psicologia/saúde mental/autoajuda NESTE EXATO MOMENTO no Brasil.
+
+Considere:
+1. Os 5 vídeos/posts com mais views/likes nas últimas 24h
+2. Quais títulos geraram mais cliques (CTR)
+3. Quais thumbnails convertem mais
+4. Quais ganchos nos primeiros 3 segundos prendem a atenção
+5. Quais hashtags estão trending
+6. Como os maiores canais monetizam
+7. Como eles levam seguidores para comunidades (WhatsApp, Telegram)
+8. Quais tipos de conteúdo geram mais compartilhamentos
+
+Gere 5 tópicos (não 3) que GARANTAM viralização baseado nos padrões acima.
+Cada tópico deve ter título com gatilho mental (curiosidade, urgência, medo, polêmica controlada).`,
           },
         ],
       }),
     });
 
-    if (!aiResponse.ok) {
-      if (aiResponse.status === 429) {
+    if (!viralAnalysisRes.ok) {
+      if (viralAnalysisRes.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      throw new Error(`AI error: ${aiResponse.status}`);
+      throw new Error(`AI error: ${viralAnalysisRes.status}`);
     }
 
-    const aiData = await aiResponse.json();
-    let rawContent = aiData.choices?.[0]?.message?.content || "[]";
-    
-    // Clean markdown fences if present
+    const aiData = await viralAnalysisRes.json();
+    let rawContent = aiData.choices?.[0]?.message?.content || "{}";
     rawContent = rawContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    
-    let topics: Array<{
-      topic: string;
-      label: string;
-      reason: string;
-      suggested_type: string;
-      suggested_channel: string;
-    }>;
 
+    let analysis: any;
     try {
-      topics = JSON.parse(rawContent);
+      analysis = JSON.parse(rawContent);
     } catch {
-      console.error("Failed to parse AI response:", rawContent);
-      topics = [];
+      console.error("Failed to parse viral analysis:", rawContent);
+      analysis = { topics: [], viral_patterns: {}, competitor_analysis: [], monetization_insights: {} };
     }
+
+    const topics = analysis.topics || [];
+    const viralPatterns = analysis.viral_patterns || {};
+    const competitorAnalysis = analysis.competitor_analysis || [];
+    const monetizationInsights = analysis.monetization_insights || {};
+
+    // Save viral intelligence to settings for other functions to use
+    await supabase.from("settings").upsert({
+      key: "viral_intelligence",
+      value: {
+        viral_patterns: viralPatterns,
+        competitor_analysis: competitorAnalysis,
+        monetization_insights: monetizationInsights,
+        updated_at: new Date().toISOString(),
+      },
+    }, { onConflict: "key" });
 
     // Log the research
     await supabase.from("system_logs").insert({
       event_type: "pesquisa",
-      message: `Pesquisa de tendências: ${topics.length} tópicos identificados`,
+      message: `Análise viral: ${topics.length} tópicos, ${competitorAnalysis.length} concorrentes analisados, ${(viralPatterns.trending_hashtags || []).length} hashtags trending`,
       level: "info",
-      metadata: { topics, date: new Date().toISOString().slice(0, 10) },
+      metadata: {
+        topics_count: topics.length,
+        competitors: competitorAnalysis.map((c: any) => c.channel),
+        top_hashtags: (viralPatterns.trending_hashtags || []).slice(0, 5),
+        monetization_streams: monetizationInsights.revenue_streams,
+        date: new Date().toISOString(),
+      },
     });
 
-    return new Response(JSON.stringify({ topics }), {
+    return new Response(JSON.stringify({ topics, viral_patterns: viralPatterns, competitor_analysis: competitorAnalysis, monetization_insights: monetizationInsights }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

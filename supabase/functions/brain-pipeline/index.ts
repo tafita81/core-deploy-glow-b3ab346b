@@ -19,7 +19,7 @@ serve(async (req) => {
 
     await supabase.from("system_logs").insert({
       event_type: "sistema",
-      message: "Pipeline autônomo iniciado",
+      message: "🧠 Pipeline VIRAL autônomo iniciado — Modo: Máxima Viralização",
       level: "info",
     });
 
@@ -33,10 +33,17 @@ serve(async (req) => {
     const autoPublish = settings.auto_publish === true || settings.auto_publish === "true";
     const scoreThreshold = Number(settings.score_threshold) || 75;
 
-    const results = { researched: 0, generated: 0, media: 0, validated: 0, published: 0, errors: [] as string[] };
+    const results = {
+      researched: 0, generated: 0, media: 0, validated: 0, published: 0,
+      viral_score_avg: 0, competitors_analyzed: 0, hashtags_found: 0,
+      errors: [] as string[],
+    };
 
-    // STEP 1: Research trends
-    let topics: Array<{ topic: string; label: string; suggested_type: string; suggested_channel: string }> = [];
+    // STEP 1: VIRAL RESEARCH — Analyze competitors, trending videos, viral patterns
+    let topics: any[] = [];
+    let viralPatterns: any = {};
+    let monetizationInsights: any = {};
+
     try {
       const trendRes = await fetch(`${supabaseUrl}/functions/v1/research-trends`, {
         method: "POST",
@@ -46,23 +53,38 @@ serve(async (req) => {
       if (trendRes.ok) {
         const trendData = await trendRes.json();
         topics = trendData.topics || [];
+        viralPatterns = trendData.viral_patterns || {};
+        monetizationInsights = trendData.monetization_insights || {};
         results.researched = topics.length;
+        results.competitors_analyzed = (trendData.competitor_analysis || []).length;
+        results.hashtags_found = (viralPatterns.trending_hashtags || []).length;
       }
     } catch (e) {
-      results.errors.push(`Pesquisa: ${e instanceof Error ? e.message : "erro"}`);
+      results.errors.push(`Pesquisa viral: ${e instanceof Error ? e.message : "erro"}`);
     }
 
-    // STEP 2: Generate content (limit 2 per run)
+    // STEP 2: GENERATE VIRAL CONTENT — Create 3 pieces per run (multi-platform)
     const contentIds: string[] = [];
-    for (const topic of topics.slice(0, 2)) {
+    const platformRotation = ["instagram", "tiktok", "youtube"];
+
+    for (let i = 0; i < Math.min(3, topics.length); i++) {
+      const topic = topics[i];
+      const targetChannel = topic.suggested_channel || platformRotation[i % platformRotation.length];
+      const targetType = targetChannel === "youtube" ? "artigo" : (topic.suggested_type || "reel");
+
       try {
         const genRes = await fetch(`${supabaseUrl}/functions/v1/generate-content`, {
           method: "POST",
           headers: { Authorization: `Bearer ${supabaseKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             topic: topic.topic,
-            channel: topic.suggested_channel || "instagram",
-            content_type: topic.suggested_type || "carrossel",
+            channel: targetChannel,
+            content_type: targetType,
+            viral_title: topic.viral_title,
+            hook: topic.hook,
+            hashtags: topic.hashtags,
+            whatsapp_cta: topic.whatsapp_cta,
+            monetization_angle: topic.monetization_angle,
           }),
         });
         if (genRes.ok) {
@@ -77,7 +99,7 @@ serve(async (req) => {
       }
     }
 
-    // STEP 3: Generate media (images + audio) for each content
+    // STEP 3: GENERATE VIRAL MEDIA — Thumbnails + narration optimized for clicks
     for (const contentId of contentIds) {
       try {
         const mediaRes = await fetch(`${supabaseUrl}/functions/v1/generate-media`, {
@@ -91,7 +113,7 @@ serve(async (req) => {
       }
     }
 
-    // STEP 4: Validate each content
+    // STEP 4: VALIDATE — Science + Ethics
     for (const contentId of contentIds) {
       try {
         if (scienceCheck) {
@@ -114,7 +136,7 @@ serve(async (req) => {
       }
     }
 
-    // STEP 5: Auto-publish
+    // STEP 5: AUTO-APPROVE + AUTO-PUBLISH to ALL connected channels
     if (autoPublish) {
       // Approve high-score validated content
       const { data: toApprove } = await supabase
@@ -129,14 +151,16 @@ serve(async (req) => {
         await supabase.from("contents").update({ status: "aprovado" }).eq("id", content.id);
       }
 
-      // Publish approved content to social media
+      // Publish the BEST content first (highest score)
       const { data: approved } = await supabase
         .from("contents")
         .select("*")
         .eq("status", "aprovado")
         .eq("scientific_valid", true)
         .eq("ethics_valid", true)
-        .gte("score", scoreThreshold);
+        .gte("score", scoreThreshold)
+        .order("score", { ascending: false })
+        .limit(5);
 
       for (const content of approved || []) {
         try {
@@ -149,7 +173,7 @@ serve(async (req) => {
             results.published++;
             await supabase.from("system_logs").insert({
               event_type: "publicacao",
-              message: `Auto-publicado: "${content.title}"`,
+              message: `🚀 VIRAL publicado: "${content.title}" — Score: ${content.score}`,
               level: "info",
               metadata: { content_id: content.id, score: content.score },
             });
@@ -160,9 +184,20 @@ serve(async (req) => {
       }
     }
 
+    // Calculate avg viral score
+    if (contentIds.length > 0) {
+      const { data: scored } = await supabase
+        .from("contents")
+        .select("score")
+        .in("id", contentIds);
+      if (scored?.length) {
+        results.viral_score_avg = Math.round(scored.reduce((a, b) => a + (b.score || 0), 0) / scored.length);
+      }
+    }
+
     await supabase.from("system_logs").insert({
       event_type: "sistema",
-      message: `Pipeline concluído: ${results.researched} pesquisados, ${results.generated} gerados, ${results.media} mídias, ${results.validated} validados, ${results.published} publicados`,
+      message: `🧠 Pipeline VIRAL concluído: ${results.researched} pesquisados, ${results.generated} gerados (score médio: ${results.viral_score_avg}), ${results.media} mídias, ${results.validated} validados, ${results.published} publicados, ${results.competitors_analyzed} concorrentes analisados`,
       level: results.errors.length > 0 ? "warning" : "info",
       metadata: results,
     });
