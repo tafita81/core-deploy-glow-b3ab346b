@@ -137,29 +137,30 @@ Retorne APENAS o JSON, sem markdown.`,
             role: "user",
             content: `Data: ${new Date().toISOString().slice(0, 10)}. Hora: ${new Date().toISOString().slice(11, 16)} UTC.
 
-RANKING BRASIL — Analise o que está com MAIS ACESSOS AGORA nas 3 plataformas:
+🧠 ANÁLISE QUÂNTICA DE CRESCIMENTO — Foque em VELOCIDADE e ACELERAÇÃO, não volume total.
 
-📱 INSTAGRAM:
-- Quais Reels de psicologia/autoajuda estão no Explore com mais views HOJE?
-- Quais perfis estão crescendo mais rápido ESTA SEMANA?
+🇧🇷 RANKING BRASIL POR MOMENTUM:
+📱 INSTAGRAM: Quais Reels de psicologia/autoajuda tiveram MAIOR CRESCIMENTO DE VIEWS na última hora? Quais perfis ganharam mais seguidores HOJE vs ontem?
+🎬 YOUTUBE: Quais vídeos de psicologia ACABARAM de entrar no Trending ou estão SUBINDO posições? Quais Shorts tiveram crescimento exponencial nas últimas 2-4 horas?
+🎵 TIKTOK: Quais vídeos de saúde mental EXPLODIRAM de views na última hora? Quais sons estão COMEÇANDO a viralizar (fase inicial = máxima oportunidade)?
 
-🎬 YOUTUBE:
-- Quais vídeos de psicologia/comportamento estão no Trending Brasil AGORA?
-- Quais Shorts estão com milhões de views HOJE?
+RANKEIE os TOP 10 por MOMENTUM SCORE — o canal com crescimento mais ACELERADO fica em #1, mesmo que tenha menos seguidores totais.
 
-🎵 TIKTOK:
-- Quais vídeos de saúde mental estão na For You Page com mais views?
-- Quais sons/trends estão sendo usados nesse nicho?
+🌍 RANKING MUNDIAL POR MOMENTUM:
+- Analise criadores de TODOS os países — EUA, UK, Espanha, Índia, Alemanha, Coreia, Japão, etc.
+- Foque em quem teve MAIOR DELTA de crescimento nas últimas horas
+- Identifique vídeos que estão ANTES DO PICO viral (máxima oportunidade para replicar)
+- TRADUZA TUDO para português brasileiro
 
-RANKEIE os TOP 10 canais/perfis com mais acessos NO MOMENTO no Brasil.
+📊 PARA CADA CANAL, CALCULE:
+- Velocidade de crescimento (views/hora)
+- Aceleração (exponencial vs linear vs desacelerando)
+- Momentum Score (0-100)
+- Ponto de inflexão (antes/no/pós pico)
 
-🌍 RANKING MUNDIAL — Analise TAMBÉM os TOP 10 canais/perfis de psicologia, saúde mental, autoajuda e desenvolvimento pessoal com MAIS ACESSOS NO MUNDO INTEIRO:
-- Inclua criadores dos EUA, UK, Espanha, Índia, Alemanha, etc.
-- Canais como Psych2Go, Einzelgänger, Therapy in a Nutshell, etc. — mas descubra quem está EXPLODINDO AGORA
-- Foque em quem tem mais views HOJE, não apenas os maiores em seguidores
-
-Gere 5 tópicos com títulos que SUPEREM os mais acessos do momento (Brasil + Mundo).
-Cada título deve ser MELHOR que o #1 trending atual.`,
+Gere 5 tópicos INSPIRADOS nos vídeos com MAIOR MOMENTUM (não nos maiores em views).
+Cada tópico deve replicar o PADRÃO DE CRESCIMENTO do conteúdo que inspirou, adaptado para o público brasileiro.
+Inclua o campo "inspired_by" e "predicted_momentum" em cada tópico.`,
           },
         ],
       }),
