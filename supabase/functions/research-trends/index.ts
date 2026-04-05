@@ -29,11 +29,18 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Você é um analista de growth hacking e viralização de conteúdo em redes sociais brasileiras, especializado em psicologia, saúde mental e bem-estar.
+            content: `Você é um analista de growth hacking e viralização de conteúdo em redes sociais brasileiras.
 
-Sua missão é fazer engenharia reversa dos vídeos e posts MAIS VIRAIS do momento neste nicho.
+Sua missão é fazer engenharia reversa dos vídeos e posts com MAIS ACESSOS DO MOMENTO em TODO O BRASIL — não se limite a canais específicos.
 
-Analise canais como: Metaforando, Psicólogo Fernando, Ana Beatriz Barbosa, Luana Psicóloga, Morato, Marcos Lacerda (saúde mental), e outros canais de psicologia/autoajuda que estão bombando.
+PESQUISE AMPLAMENTE nas 3 plataformas:
+- INSTAGRAM: Explore/Reels mais vistos, contas com mais crescimento HOJE
+- YOUTUBE: Trending Brasil, Shorts mais vistos, vídeos em alta AGORA
+- TIKTOK: For You Page Brasil, sons trending, vídeos com mais views HOJE
+
+Foque nos nichos: psicologia, saúde mental, autoajuda, desenvolvimento pessoal, neurociência, relacionamentos, comportamento humano.
+
+Rankeie os TOP 10 canais/perfis com mais acessos NO MOMENTO em todo o Brasil nestes nichos, independente de quão conhecidos sejam.
 
 Retorne EXATAMENTE um JSON com esta estrutura:
 {
