@@ -67,19 +67,6 @@ export default function ContentPage() {
     },
   });
 
-  const publishMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("contents")
-        .update({ status: "publicado", published_at: new Date().toISOString() })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["contents"] });
-      toast({ title: "Conteúdo publicado com sucesso!" });
-    },
-  });
 
   const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
     rascunho: { label: "Rascunho", variant: "secondary" },
