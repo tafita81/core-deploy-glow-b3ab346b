@@ -7,14 +7,77 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Key, Brain, Shield, Save } from "lucide-react";
-import { useState } from "react";
+import { Key, Brain, Shield, Save, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SettingsPage() {
   const [autoPublish, setAutoPublish] = useState(false);
   const [scienceCheck, setScienceCheck] = useState(true);
   const [ethicsCheck, setEthicsCheck] = useState(true);
   const [scoreThreshold, setScoreThreshold] = useState([75]);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ["settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("settings").select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (settings) {
+      const getVal = (key: string) => settings.find((s) => s.key === key)?.value;
+      const ap = getVal("auto_publish");
+      if (ap !== undefined) setAutoPublish(ap === "true" || ap === true);
+      const st = getVal("score_threshold");
+      if (st !== undefined) setScoreThreshold([Number(st)]);
+      const sc = getVal("science_check");
+      if (sc !== undefined) setScienceCheck(sc === "true" || sc === true);
+      const ec = getVal("ethics_check");
+      if (ec !== undefined) setEthicsCheck(ec === "true" || ec === true);
+    }
+  }, [settings]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const updates = [
+        { key: "auto_publish", value: JSON.stringify(autoPublish) },
+        { key: "score_threshold", value: JSON.stringify(scoreThreshold[0]) },
+        { key: "science_check", value: JSON.stringify(scienceCheck) },
+        { key: "ethics_check", value: JSON.stringify(ethicsCheck) },
+      ];
+      for (const u of updates) {
+        const { error } = await supabase
+          .from("settings")
+          .update({ value: u.value })
+          .eq("key", u.key);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["settings"] });
+      toast({ title: "Configurações salvas com sucesso!" });
+    },
+    onError: () => {
+      toast({ title: "Erro ao salvar", variant: "destructive" });
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -123,8 +186,16 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Button className="bg-gradient-primary text-primary-foreground">
-          <Save className="h-4 w-4 mr-2" />
+        <Button
+          className="bg-gradient-primary text-primary-foreground"
+          onClick={() => saveMutation.mutate()}
+          disabled={saveMutation.isPending}
+        >
+          {saveMutation.isPending ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4 mr-2" />
+          )}
           Salvar Configurações
         </Button>
       </div>

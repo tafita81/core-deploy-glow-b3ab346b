@@ -4,35 +4,51 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Brain, Sparkles, FlaskConical, Shield, Send, RefreshCw } from "lucide-react";
+import { Brain, Sparkles, FlaskConical, Shield, Send, RefreshCw, Loader2 } from "lucide-react";
 import { useState } from "react";
-
-const generatedContent = [
-  {
-    id: "1",
-    topic: "Ansiedade",
-    channel: "Instagram",
-    type: "Reel",
-    content: "🧠 5 sinais de que sua ansiedade está controlando suas decisões — e você nem percebe.\n\n1️⃣ Você evita conversas importantes\n2️⃣ Procrastina por medo de errar\n3️⃣ Diz 'sim' pra tudo pra evitar conflito\n4️⃣ Checa o celular compulsivamente\n5️⃣ Interpreta silêncio como rejeição\n\n📚 Base científica: Segundo estudo publicado na Frontiers in Psychology (2023), a ansiedade altera os circuitos de tomada de decisão no córtex pré-frontal.\n\n💬 Qual desses sinais você mais se identifica? Comenta aqui 👇\n\n#psicologia #ansiedade #saudemental #autoconhecimento",
-    scienceValidated: true,
-    ethicsValidated: true,
-    score: 91,
-  },
-  {
-    id: "2",
-    topic: "Relacionamentos",
-    channel: "Instagram",
-    type: "Carousel",
-    content: "🔁 O padrão tóxico que você repete nos relacionamentos — sem perceber.\n\nSlide 1: Você atrai sempre o mesmo tipo de pessoa?\nSlide 2: Teoria do Apego — Bowlby explica por quê\nSlide 3: Apego Ansioso vs Apego Evitativo\nSlide 4: Como identificar seu padrão\nSlide 5: CTA — Salva esse post pra ler quando precisar\n\n📚 Base científica: Hazan & Shaver (1987) — Romantic Love as Attachment Process, Journal of Personality and Social Psychology.",
-    scienceValidated: true,
-    ethicsValidated: true,
-    score: 88,
-  },
-];
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ContentPage() {
   const [topic, setTopic] = useState("");
   const [channel, setChannel] = useState("");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: contents, isLoading } = useQuery({
+    queryKey: ["contents"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contents")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("contents")
+        .update({ status: "publicado", published_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contents"] });
+      toast({ title: "Conteúdo publicado com sucesso!" });
+    },
+  });
+
+  const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
+    rascunho: { label: "Rascunho", variant: "secondary" },
+    revisao: { label: "Em Revisão", variant: "outline" },
+    aprovado: { label: "Aprovado", variant: "default" },
+    publicado: { label: "Publicado", variant: "default" },
+    rejeitado: { label: "Rejeitado", variant: "destructive" },
+  };
 
   return (
     <DashboardLayout>
@@ -78,8 +94,6 @@ export default function ContentPage() {
                   <SelectContent>
                     <SelectItem value="instagram">Instagram</SelectItem>
                     <SelectItem value="youtube">YouTube</SelectItem>
-                    <SelectItem value="tiktok">TikTok</SelectItem>
-                    <SelectItem value="whatsapp">WhatsApp</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -94,42 +108,60 @@ export default function ContentPage() {
 
         <div className="space-y-4">
           <h2 className="font-heading text-lg font-semibold">Conteúdo Gerado</h2>
-          {generatedContent.map((item) => (
-            <Card key={item.id} className="hover:glow-primary transition-shadow">
-              <CardContent className="p-5 space-y-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary">{item.channel}</Badge>
-                  <Badge variant="outline">{item.type}</Badge>
-                  <Badge variant="outline">{item.topic}</Badge>
-                  <div className="ml-auto flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Score:</span>
-                    <span className="text-sm font-bold text-success">{item.score}</span>
-                  </div>
-                </div>
-                <div className="rounded-lg bg-muted/50 p-4">
-                  <pre className="text-sm whitespace-pre-wrap font-sans">{item.content}</pre>
-                </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <FlaskConical className={`h-4 w-4 ${item.scienceValidated ? "text-success" : "text-destructive"}`} />
-                    <span className="text-xs">Ciência {item.scienceValidated ? "✓" : "✗"}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Shield className={`h-4 w-4 ${item.ethicsValidated ? "text-success" : "text-destructive"}`} />
-                    <span className="text-xs">Ética {item.ethicsValidated ? "✓" : "✗"}</span>
-                  </div>
-                  <div className="ml-auto flex gap-2">
-                    <Button size="sm" variant="outline">
-                      <RefreshCw className="h-3 w-3 mr-1" /> Regenerar
-                    </Button>
-                    <Button size="sm" className="bg-gradient-primary text-primary-foreground">
-                      <Send className="h-3 w-3 mr-1" /> Publicar
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            contents?.map((item) => {
+              const status = statusMap[item.status] || statusMap.rascunho;
+              return (
+                <Card key={item.id} className="hover:glow-primary transition-shadow">
+                  <CardContent className="p-5 space-y-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary">{item.channel || "—"}</Badge>
+                      <Badge variant="outline">{item.content_type}</Badge>
+                      <Badge variant="outline">{item.topic || "—"}</Badge>
+                      <Badge variant={status.variant}>{status.label}</Badge>
+                      <div className="ml-auto flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Score:</span>
+                        <span className={`text-sm font-bold ${(item.score ?? 0) >= 80 ? "text-success" : (item.score ?? 0) >= 60 ? "text-warning" : "text-destructive"}`}>
+                          {item.score ?? 0}
+                        </span>
+                      </div>
+                    </div>
+                    {item.body && (
+                      <div className="rounded-lg bg-muted/50 p-4">
+                        <pre className="text-sm whitespace-pre-wrap font-sans">{item.body}</pre>
+                      </div>
+                    )}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex items-center gap-1.5">
+                        <FlaskConical className={`h-4 w-4 ${item.scientific_valid ? "text-success" : "text-destructive"}`} />
+                        <span className="text-xs">Ciência {item.scientific_valid ? "✓" : "✗"}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Shield className={`h-4 w-4 ${item.ethics_valid ? "text-success" : "text-destructive"}`} />
+                        <span className="text-xs">Ética {item.ethics_valid ? "✓" : "✗"}</span>
+                      </div>
+                      {item.status !== "publicado" && (
+                        <div className="ml-auto flex gap-2">
+                          <Button
+                            size="sm"
+                            className="bg-gradient-primary text-primary-foreground"
+                            onClick={() => publishMutation.mutate(item.id)}
+                            disabled={publishMutation.isPending}
+                          >
+                            <Send className="h-3 w-3 mr-1" /> Publicar
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </div>
       </div>
     </DashboardLayout>
