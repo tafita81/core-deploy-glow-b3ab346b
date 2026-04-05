@@ -1,0 +1,2 @@
+ALTER TABLE channels DROP CONSTRAINT channels_platform_check;
+ALTER TABLE channels ADD CONSTRAINT channels_platform_check CHECK (platform = ANY (ARRAY['instagram', 'youtube', 'tiktok', 'whatsapp', 'twitter', 'linkedin', 'facebook', 'pinterest']));
