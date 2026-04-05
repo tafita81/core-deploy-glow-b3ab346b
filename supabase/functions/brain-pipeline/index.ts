@@ -359,6 +359,62 @@ serve(async (req) => {
       results.errors.push(`Otimização perfis: ${e instanceof Error ? e.message : "erro"}`);
     }
 
+    // STEP 9: CROSS-PLATFORM INTELLIGENCE — Unified quantum learning across ALL networks
+    try {
+      const crossRes = await fetch(`${supabaseUrl}/functions/v1/cross-platform-intelligence`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${supabaseKey}`, "Content-Type": "application/json" },
+        body: "{}",
+      });
+      if (crossRes.ok) {
+        const crossData = await crossRes.json();
+        (results as any).health_score = crossData.evolution_metrics?.overall_health_score || 0;
+        (results as any).growth_trajectory = crossData.evolution_metrics?.growth_trajectory || "unknown";
+        (results as any).cross_adjustments = (crossData.real_time_adjustments || []).length;
+        (results as any).transmutations = (crossData.content_transmutation || []).length;
+      }
+    } catch (e) {
+      results.errors.push(`Inteligência cruzada: ${e instanceof Error ? e.message : "erro"}`);
+    }
+
+    // STEP 10: CONTENT TRANSMUTATION — Replicate best content across ALL platforms
+    try {
+      const { data: transQueue } = await supabase.from("settings").select("value").eq("key", "content_transmutation_queue").single();
+      const queue = (transQueue?.value as any)?.queue || [];
+      let transmuted = 0;
+
+      for (const trans of queue.slice(0, 3)) {
+        for (const target of (trans.target_platforms || []).slice(0, 2)) {
+          try {
+            const genRes = await fetch(`${supabaseUrl}/functions/v1/generate-content`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${supabaseKey}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                topic: trans.original_content,
+                channel: target.platform,
+                content_type: target.adapted_format || "reel",
+                viral_title: target.adapted_title,
+                hook: target.adaptation_notes,
+                is_transmutation: true,
+                source_platform: trans.original_platform,
+              }),
+            });
+            if (genRes.ok) transmuted++;
+          } catch (_) { /* continue on error */ }
+        }
+      }
+
+      if (transmuted > 0) {
+        (results as any).content_transmuted = transmuted;
+        await supabase.from("settings").upsert({
+          key: "content_transmutation_queue",
+          value: { queue: [], processed_at: new Date().toISOString(), last_count: transmuted },
+        }, { onConflict: "key" });
+      }
+    } catch (e) {
+      results.errors.push(`Transmutação: ${e instanceof Error ? e.message : "erro"}`);
+    }
+
     // Calculate avg viral score
     if (contentIds.length > 0) {
       const { data: scored } = await supabase
