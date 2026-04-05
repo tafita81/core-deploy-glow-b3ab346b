@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Brain, Sparkles, FlaskConical, Shield, Loader2, Image, Volume2 } from "lucide-react";
+import { Brain, Sparkles, FlaskConical, Shield, Loader2, Image, Volume2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +52,30 @@ export default function ContentPage() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("contents").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contents"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-contents"] });
+      toast({ title: "🗑️ Conteúdo excluído" });
+    },
+  });
+
+  const deleteAllPublishedMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("contents").delete().eq("status", "publicado");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contents"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-contents"] });
+      toast({ title: "🗑️ Todos os conteúdos publicados foram excluídos" });
+    },
+  });
+
   const { data: contents, isLoading } = useQuery({
     queryKey: ["contents"],
     queryFn: async () => {
@@ -64,6 +88,8 @@ export default function ContentPage() {
     },
   });
 
+  const publishedCount = contents?.filter((c) => c.status === "publicado").length ?? 0;
+
   const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
     rascunho: { label: "Rascunho", variant: "secondary" },
     revisao: { label: "Em Revisão", variant: "outline" },
@@ -75,11 +101,26 @@ export default function ContentPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="font-heading text-2xl font-bold">Geração de Conteúdo</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Gere conteúdo com imagem, narração e validação automática
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-heading text-2xl font-bold">Geração de Conteúdo</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Gere conteúdo viral com imagem, narração e validação automática
+            </p>
+          </div>
+          {publishedCount > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => deleteAllPublishedMutation.mutate()}
+              disabled={deleteAllPublishedMutation.isPending}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              {deleteAllPublishedMutation.isPending
+                ? "Excluindo..."
+                : `Excluir ${publishedCount} publicados`}
+            </Button>
+          )}
         </div>
 
         <Card>
@@ -104,6 +145,9 @@ export default function ContentPage() {
                     <SelectItem value="inteligencia-emocional">Inteligência Emocional</SelectItem>
                     <SelectItem value="parentalidade">Parentalidade Consciente</SelectItem>
                     <SelectItem value="luto">Luto e Perdas</SelectItem>
+                    <SelectItem value="narcisismo">Narcisismo</SelectItem>
+                    <SelectItem value="apego">Apego e Relacionamentos</SelectItem>
+                    <SelectItem value="dopamina">Dopamina e Foco</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -148,13 +192,15 @@ export default function ContentPage() {
               ) : (
                 <Brain className="h-4 w-4 mr-2" />
               )}
-              {generateMutation.isPending ? "Gerando conteúdo + mídia..." : "Gerar com IA"}
+              {generateMutation.isPending ? "Gerando conteúdo viral..." : "Gerar Viral com IA"}
             </Button>
           </CardContent>
         </Card>
 
         <div className="space-y-4">
-          <h2 className="font-heading text-lg font-semibold">Conteúdo Gerado</h2>
+          <h2 className="font-heading text-lg font-semibold">
+            Conteúdo Gerado ({contents?.length ?? 0})
+          </h2>
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -177,10 +223,20 @@ export default function ContentPage() {
                         <span className={`text-sm font-bold ${(item.score ?? 0) >= 80 ? "text-success" : (item.score ?? 0) >= 60 ? "text-warning" : "text-destructive"}`}>
                           {item.score ?? 0}
                         </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                          onClick={() => deleteMutation.mutate(item.id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     </div>
 
-                    {/* Thumbnail */}
+                    <h3 className="font-medium text-sm">{item.title}</h3>
+
                     {thumbUrl && (
                       <div className="rounded-lg overflow-hidden border">
                         <img src={thumbUrl} alt={item.title} className="w-full h-48 object-cover" />
@@ -188,9 +244,14 @@ export default function ContentPage() {
                     )}
 
                     {item.body && (
-                      <div className="rounded-lg bg-muted/50 p-4">
-                        <pre className="text-sm whitespace-pre-wrap font-sans">{item.body}</pre>
-                      </div>
+                      <details className="group">
+                        <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
+                          Ver conteúdo completo
+                        </summary>
+                        <div className="rounded-lg bg-muted/50 p-4 mt-2">
+                          <pre className="text-sm whitespace-pre-wrap font-sans">{item.body}</pre>
+                        </div>
+                      </details>
                     )}
 
                     <div className="flex flex-wrap items-center gap-3">
@@ -216,16 +277,15 @@ export default function ContentPage() {
                       )}
                       {item.status === "publicado" ? (
                         <Badge variant="default" className="ml-auto text-[10px]">
-                          ✅ Publicado automaticamente
+                          ✅ Publicado
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="ml-auto text-[10px]">
-                          ⏳ Aguardando pipeline automático
+                          ⏳ Pipeline automático
                         </Badge>
                       )}
                     </div>
 
-                    {/* Audio player */}
                     {audioUrl && (
                       <audio controls className="w-full h-8" src={audioUrl}>
                         Seu navegador não suporta áudio.
