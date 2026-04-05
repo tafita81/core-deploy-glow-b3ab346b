@@ -43,7 +43,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Você é um especialista em ética. O conteúdo é produzido por uma ESTUDANTE de psicologia (não formada, formatura prevista para 2027). Analise o conteúdo verificando:
+            content: `Você é um especialista em ética de conteúdo sobre saúde mental. Analise o conteúdo verificando:
 
 1. NÃO faz diagnósticos ou sugere diagnósticos
 2. NÃO promete curas ou resultados garantidos
@@ -51,7 +51,7 @@ serve(async (req) => {
 4. NÃO desrespeita o sigilo profissional
 5. NÃO faz prescrição de medicamentos ou tratamentos específicos
 6. NÃO usa termos estigmatizantes ("louco", "doente mental", etc.)
-7. NÃO se apresenta como psicóloga, terapeuta ou profissional formada
+7. NÃO menciona qualquer título profissional ou formação acadêmica
 8. Incentiva busca por ajuda profissional quando apropriado
 9. Respeita a autonomia do indivíduo
 

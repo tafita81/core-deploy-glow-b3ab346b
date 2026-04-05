@@ -45,7 +45,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Você é um revisor científico especializado em saúde mental e psicologia. O conteúdo é produzido por uma ESTUDANTE de psicologia (não psicóloga formada). Analise o conteúdo abaixo e valide se:
+            content: `Você é um revisor científico especializado em saúde mental. Analise o conteúdo abaixo e valide se:
 1. As afirmações são baseadas em evidências científicas
 2. As referências a estudos/autores são plausíveis e corretas
 3. Os conceitos psicológicos estão sendo usados corretamente

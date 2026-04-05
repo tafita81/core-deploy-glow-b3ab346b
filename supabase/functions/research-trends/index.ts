@@ -29,7 +29,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Você é um pesquisador de tendências em saúde mental e bem-estar para redes sociais brasileiras. O conteúdo será produzido por uma estudante de psicologia (não formada).
+            content: `Você é um pesquisador de tendências em saúde mental e bem-estar para redes sociais brasileiras.
 Analise o que está em alta e retorne EXATAMENTE um JSON array com 3 tópicos trending.
 Cada item deve ter: "topic" (slug em português sem acento), "label" (nome legível), "reason" (por que está em alta), "suggested_type" (carrossel|reel|story|artigo), "suggested_channel" (instagram|youtube).
 Retorne APENAS o JSON, sem markdown.`,
