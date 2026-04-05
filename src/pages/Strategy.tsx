@@ -95,6 +95,12 @@ const Strategy = () => {
   const ytPosts = ytChannel?.posts_count || 0;
   const waTotalMembers = whatsappGroups?.reduce((a: number, g: any) => a + (g.members_count || 0), 0) || 0;
 
+  const formatNum = (n: number) => {
+    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+    return n.toString();
+  };
+
   const steps = [
     {
       icon: Eye,
