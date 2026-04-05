@@ -328,6 +328,37 @@ serve(async (req) => {
       }
     }
 
+    // STEP 7: MONITOR ALL CHANNELS — Real-time metrics & profile data
+    try {
+      const monitorRes = await fetch(`${supabaseUrl}/functions/v1/monitor-channels`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${supabaseKey}`, "Content-Type": "application/json" },
+        body: "{}",
+      });
+      if (monitorRes.ok) {
+        const monitorData = await monitorRes.json();
+        (results as any).channels_monitored = (monitorData.metrics || []).length;
+        (results as any).total_followers = (monitorData.metrics || []).reduce((s: number, m: any) => s + (m.followers || 0), 0);
+      }
+    } catch (e) {
+      results.errors.push(`Monitoramento: ${e instanceof Error ? e.message : "erro"}`);
+    }
+
+    // STEP 8: OPTIMIZE PROFILES — AI analyzes and auto-updates bios, descriptions, keywords
+    try {
+      const optRes = await fetch(`${supabaseUrl}/functions/v1/optimize-profiles`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${supabaseKey}`, "Content-Type": "application/json" },
+        body: "{}",
+      });
+      if (optRes.ok) {
+        const optData = await optRes.json();
+        (results as any).profiles_optimized = (optData.applied || []).length;
+      }
+    } catch (e) {
+      results.errors.push(`Otimização perfis: ${e instanceof Error ? e.message : "erro"}`);
+    }
+
     // Calculate avg viral score
     if (contentIds.length > 0) {
       const { data: scored } = await supabase
@@ -341,7 +372,7 @@ serve(async (req) => {
 
     await supabase.from("system_logs").insert({
       event_type: "sistema",
-      message: `🧠 Pipeline VIRAL concluído: ${results.researched} pesquisados, ${results.generated} gerados (score médio: ${results.viral_score_avg}), ${results.media} mídias, ${results.validated} validados, ${results.published} publicados, ${results.whatsapp_generated} WhatsApp, ${results.competitors_analyzed} vídeos rastreados`,
+      message: `🧠 Pipeline VIRAL concluído: ${results.researched} pesquisados, ${results.generated} gerados (score médio: ${results.viral_score_avg}), ${results.media} mídias, ${results.validated} validados, ${results.published} publicados, ${results.whatsapp_generated} WhatsApp, ${results.competitors_analyzed} vídeos rastreados, ${(results as any).channels_monitored || 0} canais monitorados, ${(results as any).profiles_optimized || 0} perfis otimizados`,
       level: results.errors.length > 0 ? "warning" : "info",
       metadata: results,
     });

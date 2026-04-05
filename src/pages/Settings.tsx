@@ -19,8 +19,10 @@ const PLATFORMS = [
     name: "Instagram",
     emoji: "📸",
     fields: [
-      { key: "access_token", label: "Access Token", placeholder: "Cole seu Instagram Graph API Access Token", help: "Obtenha em developers.facebook.com → Instagram Graph API" },
-      { key: "page_id", label: "Page/Account ID", placeholder: "ID da conta do Instagram", help: "O ID numérico da sua conta profissional" },
+      { key: "access_token", label: "Access Token (Graph API)", placeholder: "Cole seu Instagram Graph API Access Token", help: "developers.facebook.com → Instagram Graph API — permite publicar, ler métricas, editar perfil" },
+      { key: "page_id", label: "Page/Account ID", placeholder: "ID da conta profissional", help: "ID numérico da conta — encontre em Business Settings" },
+      { key: "business_id", label: "Business Account ID", placeholder: "ID do Business Manager", help: "Necessário para insights avançados e gestão de anúncios" },
+      { key: "refresh_token", label: "Long-Lived Token / Refresh", placeholder: "Token de longa duração (60 dias)", help: "Gere um long-lived token para não expirar rápido" },
     ],
   },
   {
@@ -28,9 +30,12 @@ const PLATFORMS = [
     name: "YouTube",
     emoji: "🎬",
     fields: [
-      { key: "api_key", label: "API Key", placeholder: "Cole sua YouTube Data API Key", help: "Obtenha em console.cloud.google.com → APIs → YouTube Data API v3" },
-      { key: "channel_id", label: "Channel ID", placeholder: "ID do canal (ex: UCxxxxxxx)", help: "Encontre em youtube.com/account_advanced" },
-      { key: "access_token", label: "OAuth Access Token", placeholder: "Token para publicar vídeos", help: "Necessário para upload — gere via OAuth 2.0 playground" },
+      { key: "api_key", label: "API Key (Data API v3)", placeholder: "Cole sua YouTube Data API Key", help: "console.cloud.google.com → YouTube Data API v3" },
+      { key: "channel_id", label: "Channel ID", placeholder: "UCxxxxxxx", help: "youtube.com/account_advanced" },
+      { key: "access_token", label: "OAuth Access Token", placeholder: "Token OAuth para upload e edição", help: "Permite publicar vídeos, editar títulos/descrições/thumbnails, gerenciar playlists" },
+      { key: "refresh_token", label: "OAuth Refresh Token", placeholder: "Refresh token para renovar automaticamente", help: "O cérebro renova o token automaticamente quando expirar" },
+      { key: "client_id", label: "OAuth Client ID", placeholder: "Client ID do Google Cloud", help: "console.cloud.google.com → Credentials → OAuth 2.0" },
+      { key: "client_secret", label: "OAuth Client Secret", placeholder: "Client Secret do Google Cloud", help: "Necessário junto com refresh_token para renovação automática" },
     ],
   },
   {
@@ -38,8 +43,11 @@ const PLATFORMS = [
     name: "TikTok",
     emoji: "🎵",
     fields: [
-      { key: "access_token", label: "Access Token", placeholder: "Cole seu TikTok API Access Token", help: "Obtenha em developers.tiktok.com → Content Posting API" },
-      { key: "open_id", label: "Open ID", placeholder: "Seu TikTok Open ID", help: "Identificador da conta na API" },
+      { key: "access_token", label: "Access Token", placeholder: "Cole seu TikTok API Access Token", help: "developers.tiktok.com → Content Posting API — publica, lê métricas" },
+      { key: "open_id", label: "Open ID", placeholder: "Seu TikTok Open ID", help: "Identificador único da conta na API" },
+      { key: "refresh_token", label: "Refresh Token", placeholder: "Token de renovação automática", help: "O cérebro renova automaticamente quando expirar" },
+      { key: "client_key", label: "Client Key", placeholder: "App Client Key", help: "developers.tiktok.com → Manage Apps → Client Key" },
+      { key: "client_secret", label: "Client Secret", placeholder: "App Client Secret", help: "Necessário para renovação automática de tokens" },
     ],
   },
   {
@@ -47,12 +55,54 @@ const PLATFORMS = [
     name: "WhatsApp Business",
     emoji: "💬",
     fields: [
-      { key: "access_token", label: "Access Token", placeholder: "Cole seu WhatsApp Business API Token", help: "Obtenha em developers.facebook.com → WhatsApp Business API" },
+      { key: "access_token", label: "Access Token", placeholder: "Cole seu WhatsApp Business API Token", help: "developers.facebook.com → WhatsApp Business API" },
       { key: "phone_number_id", label: "Phone Number ID", placeholder: "ID do número de telefone", help: "ID do número cadastrado no WhatsApp Business" },
+      { key: "business_account_id", label: "Business Account ID", placeholder: "ID da conta business", help: "Permite gerenciar templates de mensagem e grupos" },
+    ],
+  },
+  {
+    id: "twitter",
+    name: "X (Twitter)",
+    emoji: "🐦",
+    fields: [
+      { key: "api_key", label: "API Key (Consumer Key)", placeholder: "Cole sua Twitter API Key", help: "developer.twitter.com → Project → Keys & Tokens" },
+      { key: "api_secret", label: "API Secret", placeholder: "Consumer Secret", help: "Par da API Key — necessário para autenticação" },
+      { key: "access_token", label: "Access Token", placeholder: "Token de acesso da conta", help: "Permite postar tweets, editar perfil, ler métricas" },
+      { key: "access_secret", label: "Access Token Secret", placeholder: "Secret do token de acesso", help: "Par do access token" },
+      { key: "bearer_token", label: "Bearer Token", placeholder: "Token para leitura de dados", help: "Usado para pesquisa de tweets e análise de tendências" },
+    ],
+  },
+  {
+    id: "linkedin",
+    name: "LinkedIn",
+    emoji: "💼",
+    fields: [
+      { key: "access_token", label: "Access Token", placeholder: "Cole seu LinkedIn Access Token", help: "linkedin.com/developers → OAuth — permite publicar posts e artigos" },
+      { key: "person_id", label: "Person URN / ID", placeholder: "urn:li:person:xxxxx", help: "Identificador do seu perfil — encontre via API /me" },
+      { key: "organization_id", label: "Organization ID (opcional)", placeholder: "ID da Company Page", help: "Se tiver uma Company Page, o cérebro publica lá também" },
+    ],
+  },
+  {
+    id: "facebook",
+    name: "Facebook",
+    emoji: "📘",
+    fields: [
+      { key: "access_token", label: "Page Access Token", placeholder: "Token da página do Facebook", help: "developers.facebook.com → Page tokens — permite publicar, editar, gerenciar" },
+      { key: "page_id", label: "Page ID", placeholder: "ID numérico da página", help: "Encontre em Configurações da Página → Sobre" },
+      { key: "app_id", label: "App ID", placeholder: "ID do aplicativo Facebook", help: "developers.facebook.com → My Apps" },
+      { key: "app_secret", label: "App Secret", placeholder: "Secret do aplicativo", help: "Necessário para renovação automática de tokens" },
+    ],
+  },
+  {
+    id: "pinterest",
+    name: "Pinterest",
+    emoji: "📌",
+    fields: [
+      { key: "access_token", label: "Access Token", placeholder: "Cole seu Pinterest API Token", help: "developers.pinterest.com → criar pins, boards, ler analytics" },
+      { key: "board_id", label: "Board ID principal", placeholder: "ID do board principal", help: "Board onde o cérebro criará pins automaticamente" },
     ],
   },
 ];
-
 export default function SettingsPage() {
   const [autoPublish, setAutoPublish] = useState(false);
   const [scienceCheck, setScienceCheck] = useState(true);
