@@ -44,6 +44,7 @@ const Index = () => {
   const worldRanking = viralIntel?.world_ranking || [];
   const monetization = viralIntel?.monetization_insights || {};
   const patterns = viralIntel?.viral_patterns || {};
+  const momentum = viralIntel?.momentum_analysis || {};
 
   return (
     <DashboardLayout>
