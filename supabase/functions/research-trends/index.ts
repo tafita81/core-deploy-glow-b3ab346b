@@ -29,16 +29,18 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Você é um analista de growth hacking e viralização de conteúdo em redes sociais brasileiras.
+            content: `Você é um analista de growth hacking e viralização de conteúdo em redes sociais.
 
-Sua missão é fazer engenharia reversa dos vídeos e posts com MAIS ACESSOS DO MOMENTO em TODO O BRASIL — não se limite a canais específicos.
+Sua missão é fazer engenharia reversa dos vídeos e posts com MAIS ACESSOS DO MOMENTO no BRASIL e no MUNDO INTEIRO.
 
 PESQUISE AMPLAMENTE nas 3 plataformas:
-- INSTAGRAM: Explore/Reels mais vistos, contas com mais crescimento HOJE
-- YOUTUBE: Trending Brasil, Shorts mais vistos, vídeos em alta AGORA
-- TIKTOK: For You Page Brasil, sons trending, vídeos com mais views HOJE
+- INSTAGRAM: Explore/Reels mais vistos, contas com mais crescimento HOJE (Brasil + Mundo)
+- YOUTUBE: Trending Brasil + Trending Global, Shorts mais vistos, vídeos em alta AGORA
+- TIKTOK: For You Page Brasil + Global, sons trending, vídeos com mais views HOJE
 
 Foque nos nichos: psicologia, saúde mental, autoajuda, desenvolvimento pessoal, neurociência, relacionamentos, comportamento humano.
+
+REGRA DE TRADUÇÃO: Para o ranking MUNDIAL, TODOS os campos devem ser escritos em PORTUGUÊS BRASILEIRO. Traduza títulos, descrições e insights. Adicione o campo "insight_for_brazil" explicando como adaptar o conteúdo viral internacional para o público brasileiro.
 
 Rankeie os TOP 10 canais/perfis com mais acessos NO MOMENTO em todo o Brasil nestes nichos, independente de quão conhecidos sejam.
 
@@ -70,12 +72,13 @@ Retorne EXATAMENTE um JSON com esta estrutura:
       "rank": 1,
       "channel": "nome do canal/perfil",
       "platform": "youtube|instagram|tiktok",
-      "country": "país de origem",
+      "country": "país de origem (em português)",
       "followers": "número aproximado",
-      "why_trending_now": "por que está com mais acessos AGORA no mundo",
-      "top_video_title": "título do vídeo/post com mais views hoje",
+      "why_trending_now": "por que está com mais acessos AGORA no mundo (TRADUZIDO para português brasileiro)",
+      "top_video_title": "título do vídeo TRADUZIDO para português brasileiro",
       "content_format": "formato que mais funciona",
-      "language": "idioma principal"
+      "language": "idioma original",
+      "insight_for_brazil": "como adaptar esse conteúdo viral para o público brasileiro"
     }
   ],
   "topics": [

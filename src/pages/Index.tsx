@@ -164,6 +164,9 @@ const Index = () => {
                         {c.top_video_title && (
                           <p className="text-[10px] text-primary/70 truncate">📹 {c.top_video_title}</p>
                         )}
+                        {c.insight_for_brazil && (
+                          <p className="text-[10px] text-success truncate">🇧🇷 {c.insight_for_brazil}</p>
+                        )}
                       </div>
                     </div>
                   ))}

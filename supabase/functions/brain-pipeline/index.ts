@@ -56,8 +56,26 @@ serve(async (req) => {
         viralPatterns = trendData.viral_patterns || {};
         monetizationInsights = trendData.monetization_insights || {};
         results.researched = topics.length;
-        results.competitors_analyzed = (trendData.top_10_ranking_brasil || trendData.competitor_analysis || []).length;
+        const brRanking = trendData.top_10_ranking_brasil || trendData.competitor_analysis || [];
+        const worldRanking = trendData.world_ranking || [];
+        results.competitors_analyzed = brRanking.length + worldRanking.length;
         results.hashtags_found = (viralPatterns.trending_hashtags || []).length;
+
+        // Use world ranking insights to enrich topics for Brazilian audience
+        if (worldRanking.length > 0) {
+          const worldInsights = worldRanking
+            .filter((w: any) => w.insight_for_brazil)
+            .map((w: any) => w.insight_for_brazil);
+          
+          if (worldInsights.length > 0) {
+            await supabase.from("system_logs").insert({
+              event_type: "pesquisa",
+              message: `🌍 ${worldRanking.length} canais mundiais analisados — insights adaptados para Brasil`,
+              level: "info",
+              metadata: { world_channels: worldRanking.map((w: any) => w.channel), insights: worldInsights.slice(0, 5) },
+            });
+          }
+        }
       }
     } catch (e) {
       results.errors.push(`Pesquisa viral: ${e instanceof Error ? e.message : "erro"}`);
