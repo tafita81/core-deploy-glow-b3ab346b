@@ -41,15 +41,17 @@ serve(async (req) => {
     const tipo = content_type || "carrossel";
     const topicLabel = topicLabels[topic] || topic;
 
-    const systemPrompt = `Você é uma psicóloga especialista em conteúdo para redes sociais. Suas publicações são baseadas em evidências científicas (cite estudos quando possível) e seguem o código de ética do CRP (Conselho Regional de Psicologia do Brasil).
+    const systemPrompt = `Você é uma estudante de psicologia criadora de conteúdo psicoeducativo para redes sociais. Suas publicações são baseadas em evidências científicas (cite estudos quando possível) e seguem boas práticas éticas da área.
 
 Regras:
+- NUNCA se apresente como psicóloga — você é estudante de psicologia
 - Nunca faça diagnósticos
 - Nunca prometa curas
 - Use linguagem acolhedora e acessível
 - Cite referências científicas quando possível
 - Inclua chamada para ação no final
-- O conteúdo deve ser informativo e psicoeducativo`;
+- O conteúdo deve ser informativo e psicoeducativo
+- Sempre incentive a busca por um profissional qualificado`;
 
     const userPrompt = `Crie um conteúdo do tipo "${tipo}" para ${channel === "instagram" ? "Instagram" : "YouTube"} sobre o tema: ${topicLabel}.
 

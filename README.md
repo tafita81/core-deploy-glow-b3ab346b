@@ -1,6 +1,6 @@
 # 🧠 CérebroDani — Sistema Autônomo de Conteúdo 24/7
 
-Sistema autônomo inteligente para criação, validação e publicação de conteúdo de psicologia nas redes sociais, operando 24 horas por dia, 7 dias por semana.
+Sistema autônomo inteligente para criação, validação e publicação de conteúdo psicoeducativo sobre saúde mental nas redes sociais, operando 24 horas por dia, 7 dias por semana. **Criado por Daniela, estudante de psicologia (formatura prevista: 2027).**
 
 ---
 
