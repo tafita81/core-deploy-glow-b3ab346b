@@ -68,6 +68,18 @@ const Strategy = () => {
     },
   });
 
+  const { data: brainLearnings } = useQuery({
+    queryKey: ["brain-learnings"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("settings")
+        .select("value")
+        .eq("key", "brain_learnings")
+        .single();
+      return data?.value as any;
+    },
+  });
+
   const momentum = viralIntel?.momentum_analysis || {};
   const patterns = viralIntel?.viral_patterns || {};
   const monetization = viralIntel?.monetization_insights || {};
