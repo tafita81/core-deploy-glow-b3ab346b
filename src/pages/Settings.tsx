@@ -98,8 +98,11 @@ const PLATFORMS = [
     name: "Pinterest",
     emoji: "📌",
     fields: [
-      { key: "access_token", label: "Access Token", placeholder: "Cole seu Pinterest API Token", help: "developers.pinterest.com → criar pins, boards, ler analytics" },
-      { key: "board_id", label: "Board ID principal", placeholder: "ID do board principal", help: "Board onde o cérebro criará pins automaticamente" },
+      { key: "access_token", label: "Access Token (API v5)", placeholder: "Cole seu Pinterest API Token", help: "developers.pinterest.com → Apps → gerar token com scopes: pins:read, pins:write, boards:read, boards:write, user_accounts:read" },
+      { key: "board_id", label: "Board ID principal", placeholder: "ID do board principal para psicologia", help: "Board onde o cérebro criará pins automaticamente — crie um board 'Psicologia & Saúde Mental'" },
+      { key: "refresh_token", label: "Refresh Token", placeholder: "Token de renovação automática", help: "O cérebro renova automaticamente quando expirar" },
+      { key: "app_id", label: "App ID", placeholder: "ID do app Pinterest", help: "developers.pinterest.com → My Apps → App ID" },
+      { key: "app_secret", label: "App Secret", placeholder: "Secret do app Pinterest", help: "Necessário para renovação automática de tokens" },
     ],
   },
 ];

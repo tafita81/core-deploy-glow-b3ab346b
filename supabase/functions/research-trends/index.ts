@@ -93,10 +93,11 @@ MÉTRICAS POR VÍDEO:
 4. **Momentum Score (0-100)**: combina views totais + crescimento + engajamento
 5. **Ponto de Inflexão**: antes/no/após pico viral
 
-PESQUISE nas 3 plataformas (Brasil + Mundo):
+PESQUISE nas 4 plataformas (Brasil + Mundo):
 - INSTAGRAM: Reels ESPECÍFICOS com mais views e maior crescimento AGORA
 - YOUTUBE: Vídeos ESPECÍFICOS no Trending, Shorts que EXPLODIRAM
 - TIKTOK: Vídeos ESPECÍFICOS que acumularam milhões de views nas últimas horas
+- PINTEREST: Pins ESPECÍFICOS de psicologia/saúde mental com mais saves, impressões e cliques AGORA — inclua Idea Pins (vídeo) e Pins estáticos
 
 Foque: psicologia, saúde mental, autoajuda, desenvolvimento pessoal, neurociência, relacionamentos, comportamento humano.
 
