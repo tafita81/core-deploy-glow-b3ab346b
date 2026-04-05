@@ -116,7 +116,7 @@ serve(async (req) => {
             result = await publishToTikTok(accessToken, content);
             break;
           case "whatsapp": {
-            const phoneId = tokens.find((t: any) => t.token_type === "phone_id")?.token_value;
+            const phoneId = tokens.find((t: any) => t.token_type === "phone_number_id" || t.token_type === "phone_id")?.token_value;
             if (!phoneId) { results.push({ platform: "whatsapp", success: false, error: "Phone ID não configurado" }); continue; }
             result = await publishToWhatsApp(accessToken, phoneId, content);
             break;
