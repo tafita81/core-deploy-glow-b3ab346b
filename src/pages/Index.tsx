@@ -216,8 +216,54 @@ const Index = () => {
             </Card>
           </div>
         )}
+        {/* Momentum Analysis */}
+        {(momentum.fastest_growing_topic || (momentum.emerging_trends || []).length > 0) && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">⚡ Análise de Momentum em Tempo Real</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {momentum.fastest_growing_topic && (
+                <div className="text-xs">
+                  <span className="font-medium text-success">🚀 Tema com maior aceleração:</span>{" "}
+                  <span>{momentum.fastest_growing_topic}</span>
+                </div>
+              )}
+              {momentum.best_time_to_post && (
+                <div className="text-xs">
+                  <span className="font-medium text-primary">⏰ Melhor horário para postar:</span>{" "}
+                  <span>{momentum.best_time_to_post}</span>
+                </div>
+              )}
+              {(momentum.emerging_trends || []).length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-success mb-1">🌱 Tendências EMERGENTES (máxima oportunidade):</p>
+                  <div className="flex flex-wrap gap-1">
+                    {(momentum.emerging_trends || []).map((t: string, i: number) => (
+                      <Badge key={i} variant="secondary" className="text-[10px] bg-success/10 text-success">
+                        {t}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {(momentum.dying_trends || []).length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-destructive mb-1">💀 Tendências MORRENDO (evitar):</p>
+                  <div className="flex flex-wrap gap-1">
+                    {(momentum.dying_trends || []).map((t: string, i: number) => (
+                      <Badge key={i} variant="secondary" className="text-[10px] bg-destructive/10 text-destructive">
+                        {t}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Trending Hashtags */}
+
         {(patterns.trending_hashtags || []).length > 0 && (
           <Card>
             <CardHeader className="pb-2">
