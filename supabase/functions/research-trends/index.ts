@@ -192,6 +192,7 @@ Inclua o campo "inspired_by" e "predicted_momentum" em cada tópico.`,
     const competitorAnalysis = analysis.top_10_ranking_brasil || analysis.competitor_analysis || [];
     const worldRanking = analysis.top_10_ranking_mundial || [];
     const monetizationInsights = analysis.monetization_insights || {};
+    const momentumAnalysis = analysis.momentum_analysis || {};
 
     // Save viral intelligence to settings for other functions to use
     await supabase.from("settings").upsert({
@@ -200,6 +201,7 @@ Inclua o campo "inspired_by" e "predicted_momentum" em cada tópico.`,
         viral_patterns: viralPatterns,
         competitor_analysis: competitorAnalysis,
         world_ranking: worldRanking,
+        momentum_analysis: momentumAnalysis,
         monetization_insights: monetizationInsights,
         updated_at: new Date().toISOString(),
       },
