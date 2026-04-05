@@ -238,6 +238,103 @@ const Strategy = () => {
           ))}
         </div>
 
+        {/* WHY THE BRAIN CHOSE THIS STRATEGY */}
+        <Card className="border-yellow-500/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              🎯 Por que o Cérebro Escolheu Esta Estratégia
+            </CardTitle>
+            <p className="text-[10px] text-muted-foreground">
+              Cada decisão é baseada em dados reais — vídeos virais, crescimento medido hora a hora e aprendizado acumulado
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {/* What inspired the current strategy */}
+            {topBrasil.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[10px] font-medium text-yellow-400">🔥 Vídeos que INSPIRARAM as decisões atuais:</p>
+                {topBrasil.slice(0, 3).map((v: any, i: number) => (
+                  <div key={i} className="rounded-md bg-muted/30 p-2.5 space-y-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-[11px] font-medium">#{v.rank || i+1} "{v.video_title || v.top_video_title || v.channel}"</p>
+                      <Badge variant="outline" className="text-[9px] shrink-0">{v.platform}</Badge>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      👁 {v.total_views || "?"} views • 📈 {v.views_growth_1h || v.growth_velocity || "?"}/h • ⚡ Momentum: {v.momentum_score || "?"}
+                    </p>
+                    {v.why_viral && <p className="text-[10px] text-green-400">💡 Por que viralizou: {v.why_viral}</p>}
+                    {v.replication_strategy && <p className="text-[10px] text-primary">🔄 Como replicamos: {v.replication_strategy}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {topMundial.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[10px] font-medium text-blue-400">🌍 Referências mundiais que guiam a estratégia:</p>
+                {topMundial.slice(0, 3).map((v: any, i: number) => (
+                  <div key={i} className="rounded-md bg-muted/30 p-2.5 space-y-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-[11px] font-medium">#{v.rank || i+1} "{v.video_title}"</p>
+                      <Badge variant="outline" className="text-[9px] shrink-0">{v.country || v.platform}</Badge>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      👁 {v.total_views || "?"} views • 📈 {v.views_growth_1h || "?"}/h • ⚡ {v.momentum_score || "?"}
+                    </p>
+                    {v.insight_for_brazil && <p className="text-[10px] text-purple-400">🇧🇷 Adaptação para o Brasil: {v.insight_for_brazil}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Decision chain */}
+            <div className="rounded-md bg-primary/5 border border-primary/10 p-3 space-y-2">
+              <p className="text-[10px] font-medium text-primary">🧠 Cadeia de decisão do cérebro:</p>
+              <div className="space-y-1.5 text-[10px] text-muted-foreground leading-relaxed">
+                <p>1️⃣ <strong>Pesquisou</strong> milhões de vídeos em 3 plataformas (BR + mundo)</p>
+                <p>2️⃣ <strong>Comparou</strong> com snapshots da hora anterior — identificou os que mais CRESCERAM</p>
+                <p>3️⃣ <strong>Analisou</strong> padrões: títulos, ganchos, formatos e horários que geraram mais views</p>
+                <p>4️⃣ <strong>Cruzou</strong> com histórico de conteúdos que já geramos (scores altos vs baixos)</p>
+                <p>5️⃣ <strong>Decidiu</strong> replicar os padrões dos vídeos com maior momentum + inovar com algo nunca testado</p>
+                <p>6️⃣ <strong>Validou</strong> com análise de confiança viral bayesiana (só publica se ≥85% de chance)</p>
+              </div>
+            </div>
+
+            {/* Current momentum decision */}
+            {momentum.hottest_video_now && (
+              <div className="rounded-md bg-orange-500/10 border border-orange-500/20 p-2.5">
+                <p className="text-[10px] font-medium text-orange-400">🔥 Decisão AGORA baseada em:</p>
+                <p className="text-[11px] mt-1">Vídeo mais quente: {momentum.hottest_video_now}</p>
+                {momentum.best_time_to_post && <p className="text-[10px] text-muted-foreground mt-0.5">⏰ Próxima janela ideal: {momentum.best_time_to_post}</p>}
+              </div>
+            )}
+
+            {(momentum.emerging_videos || []).length > 0 && (
+              <div className="space-y-1">
+                <p className="text-[10px] font-medium text-green-400">🚀 Vídeos EMERGENTES (maior oportunidade agora):</p>
+                {(momentum.emerging_videos as string[]).slice(0, 3).map((v: string, i: number) => (
+                  <p key={i} className="text-[10px] text-muted-foreground">• {v}</p>
+                ))}
+              </div>
+            )}
+
+            {(momentum.dying_videos || []).length > 0 && (
+              <div className="space-y-1">
+                <p className="text-[10px] font-medium text-red-400">💀 Vídeos MORRENDO (evitando copiar):</p>
+                {(momentum.dying_videos as string[]).slice(0, 3).map((v: string, i: number) => (
+                  <p key={i} className="text-[10px] text-muted-foreground">• {v}</p>
+                ))}
+              </div>
+            )}
+
+            {topBrasil.length === 0 && topMundial.length === 0 && (
+              <div className="rounded-md bg-muted/30 p-3 text-center">
+                <p className="text-[11px] text-muted-foreground">⏳ O cérebro ainda não executou a primeira análise. As decisões aparecerão aqui após a primeira rodada.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* REAL DATA: Current Status */}
         <Card className="border-primary/30">
           <CardHeader className="pb-2">
