@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      channel_tokens: {
+        Row: {
+          channel_id: string
+          created_at: string
+          extra_config: Json | null
+          id: string
+          token_type: string
+          token_value: string
+          updated_at: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          extra_config?: Json | null
+          id?: string
+          token_type?: string
+          token_value: string
+          updated_at?: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          extra_config?: Json | null
+          id?: string
+          token_type?: string
+          token_value?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_tokens_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       channels: {
         Row: {
           created_at: string
