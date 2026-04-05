@@ -174,7 +174,23 @@ O app estará disponível em `http://localhost:5173`.
 ## 🌐 Deploy
 
 - **URL Publicada**: [https://core-deploy-glow.lovable.app](https://core-deploy-glow.lovable.app)
-- **Repositório**: [https://github.com/tafita81/Cerebrodani](https://github.com/tafita81/Cerebrodani)
+- **Repositório**: [https://github.com/tafita81/core-deploy-glow-b3ab346b](https://github.com/tafita81/core-deploy-glow-b3ab346b)
+
+---
+
+## 🔗 Acesso ao Banco de Dados (API REST)
+
+O banco de dados pode ser acessado externamente via API REST (compatível com Manus, Replit, etc.):
+
+- **Base URL**: `https://qfbjogofvrxdxobmecbk.supabase.co/rest/v1/`
+- **Tabelas**: `contents`, `channels`, `system_logs`, `settings`
+
+```bash
+# Exemplo: listar conteúdos
+curl "https://qfbjogofvrxdxobmecbk.supabase.co/rest/v1/contents" \
+  -H "apikey: YOUR_ANON_KEY" \
+  -H "Authorization: Bearer YOUR_ANON_KEY"
+```
 
 ---
 
