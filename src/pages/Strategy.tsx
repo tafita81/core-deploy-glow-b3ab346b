@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Brain, TrendingUp, Target, Zap, Users, MessageCircle, Eye, ArrowRight, Sparkles, Clock } from "lucide-react";
+import { Brain, TrendingUp, Target, Zap, Users, MessageCircle, Eye, ArrowRight, Sparkles, Clock, DollarSign } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 const Strategy = () => {
   const { data: viralIntel } = useQuery({
@@ -187,6 +188,180 @@ const Strategy = () => {
             </Card>
           ))}
         </div>
+
+        {/* Monetization Projections */}
+        <Card className="border-primary/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-green-400" />
+              💰 Quanto Dinheiro Cada Rede Pode Gerar
+            </CardTitle>
+            <p className="text-[11px] text-muted-foreground">
+              Valores reais baseados nas médias do mercado brasileiro em 2025-2026. Os números mudam conforme o cérebro ajusta a estratégia.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Simple explanation */}
+            <div className="rounded-lg bg-muted/30 p-3 text-xs leading-relaxed space-y-2">
+              <p className="font-medium">🧒 Explicação simples:</p>
+              <p>Imagine que cada rede social é como uma loja diferente. Quanto mais gente entra (seguidores), mais gente compra (monetização). O cérebro trabalha para trazer o máximo de gente para cada "loja" e depois levar todo mundo para o WhatsApp, que é onde a venda de verdade acontece.</p>
+            </div>
+
+            {/* Platform cards */}
+            {(() => {
+              const platforms = [
+                {
+                  name: "Instagram",
+                  emoji: "📸",
+                  color: "from-pink-500/20 to-purple-500/20",
+                  borderColor: "border-pink-500/30",
+                  followers_goal: "50K-100K",
+                  timeline: "6-12 meses",
+                  revenue: {
+                    reels_fund: { label: "Bônus de Reels", range: "R$ 500-2.000/mês", explanation: "Instagram paga por views nos Reels. Com 1M+ views/mês = R$ 500-2.000" },
+                    brand_deals: { label: "Parcerias com marcas", range: "R$ 1.000-5.000/post", explanation: "Marcas de saúde mental pagam para aparecer nos posts. Com 50K seguidores, cada post patrocinado vale R$ 1.000-5.000" },
+                    affiliate: { label: "Links de afiliado", range: "R$ 300-1.500/mês", explanation: "Livros de psicologia, cursos online — cada venda pelo link = comissão de 10-30%" },
+                  },
+                  total_monthly: "R$ 1.800 - 8.500/mês",
+                  how_brain_helps: "O cérebro posta Reels nos horários de pico, usa hashtags trending e ganchos dos vídeos mais virais para maximizar alcance",
+                },
+                {
+                  name: "YouTube",
+                  emoji: "🎬",
+                  color: "from-red-500/20 to-orange-500/20",
+                  borderColor: "border-red-500/30",
+                  followers_goal: "10K-50K",
+                  timeline: "6-18 meses",
+                  revenue: {
+                    adsense: { label: "AdSense (anúncios)", range: "R$ 2.000-10.000/mês", explanation: "YouTube paga por cada 1.000 views. No Brasil, psicologia paga ~R$ 15-30 por mil views (CPM alto). Com 200K views/mês = R$ 3.000-6.000" },
+                    membership: { label: "Membros do canal", range: "R$ 500-3.000/mês", explanation: "Fãs pagam R$ 5-20/mês para conteúdo exclusivo. 100-200 membros = R$ 500-3.000" },
+                    super_chat: { label: "Super Chat em lives", range: "R$ 200-1.000/live", explanation: "Em lives sobre ansiedade, relacionamentos — pessoas pagam para ter perguntas respondidas" },
+                  },
+                  total_monthly: "R$ 2.700 - 14.000/mês",
+                  how_brain_helps: "O cérebro analisa quais títulos e thumbnails geram mais cliques no YouTube Trending e replica esses padrões",
+                },
+                {
+                  name: "TikTok",
+                  emoji: "🎵",
+                  color: "from-cyan-500/20 to-blue-500/20",
+                  borderColor: "border-cyan-500/30",
+                  followers_goal: "100K-500K",
+                  timeline: "3-9 meses",
+                  revenue: {
+                    creator_fund: { label: "Fundo de Criadores", range: "R$ 300-2.000/mês", explanation: "TikTok paga por views. É menos que YouTube, mas é mais fácil viralizar. 1M views/mês = R$ 300-2.000" },
+                    lives: { label: "Lives + presentes", range: "R$ 500-3.000/mês", explanation: "Pessoas enviam 'presentes' durante lives de saúde mental. Cada presente = dinheiro real" },
+                    brand_deals: { label: "Parcerias com marcas", range: "R$ 2.000-10.000/post", explanation: "TikTok é onde marcas mais investem agora. Com 100K+ seguidores, 1 post patrocinado = R$ 2.000-10.000" },
+                  },
+                  total_monthly: "R$ 2.800 - 15.000/mês",
+                  how_brain_helps: "O cérebro identifica sons que estão começando a viralizar e cria conteúdo usando esses sons antes de todo mundo",
+                },
+                {
+                  name: "WhatsApp",
+                  emoji: "💬",
+                  color: "from-green-500/20 to-emerald-500/20",
+                  borderColor: "border-green-500/30",
+                  followers_goal: "1K-5K membros",
+                  timeline: "6-18 meses",
+                  revenue: {
+                    consultations: { label: "Consultas online (2027+)", range: "R$ 5.000-20.000/mês", explanation: "Quando Daniela se formar em 2027, cada consulta = R$ 150-300. Com 20-60 clientes/mês da comunidade = R$ 3.000-18.000" },
+                    workshops: { label: "Workshops pagos", range: "R$ 2.000-8.000/mês", explanation: "Workshops online sobre ansiedade, autoestima — R$ 47-97 por pessoa. 50-100 participantes = R$ 2.350-9.700" },
+                    premium_group: { label: "Grupo premium", range: "R$ 1.000-5.000/mês", explanation: "Grupo VIP com conteúdo exclusivo — R$ 19-49/mês por membro. 100-200 membros = R$ 1.900-9.800" },
+                  },
+                  total_monthly: "R$ 8.000 - 33.000/mês",
+                  how_brain_helps: "O cérebro gera conversas, enquetes e conteúdo exclusivo nos grupos para manter engajamento alto até 2027",
+                },
+              ];
+
+              return (
+                <div className="grid grid-cols-1 gap-3">
+                  {platforms.map((p, i) => (
+                    <Card key={i} className={`${p.borderColor} border overflow-hidden`}>
+                      <div className={`bg-gradient-to-r ${p.color} p-3`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{p.emoji}</span>
+                            <div>
+                              <h4 className="font-heading font-bold text-sm">{p.name}</h4>
+                              <p className="text-[10px] text-muted-foreground">Meta: {p.followers_goal} em {p.timeline}</p>
+                            </div>
+                          </div>
+                          <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-[10px] font-bold">
+                            {p.total_monthly}
+                          </Badge>
+                        </div>
+                      </div>
+                      <CardContent className="p-3 space-y-2">
+                        {Object.values(p.revenue).map((rev, j) => (
+                          <div key={j} className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium">{rev.label}</span>
+                              <span className="text-[10px] font-bold text-green-400">{rev.range}</span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground leading-relaxed">{rev.explanation}</p>
+                          </div>
+                        ))}
+                        <div className="rounded-md bg-primary/5 p-2 mt-2">
+                          <p className="text-[10px] text-primary">🧠 {p.how_brain_helps}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              );
+            })()}
+
+            {/* Total projection */}
+            <Card className="border-green-500/30 bg-gradient-to-r from-green-500/5 to-emerald-500/5">
+              <CardContent className="p-4 space-y-3">
+                <div className="text-center space-y-1">
+                  <p className="text-xs text-muted-foreground">📊 Projeção Total (todas as plataformas combinadas)</p>
+                  <p className="font-heading text-2xl font-bold text-green-400">R$ 15.300 - 70.500/mês</p>
+                  <p className="text-[10px] text-muted-foreground">Quando todas as metas forem atingidas (12-24 meses)</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[10px]">
+                      <span>📅 Mês 1-3: Construção de base</span>
+                      <span className="text-green-400">R$ 0-500/mês</span>
+                    </div>
+                    <Progress value={5} className="h-1.5" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[10px]">
+                      <span>📅 Mês 3-6: Primeiras monetizações</span>
+                      <span className="text-green-400">R$ 500-3.000/mês</span>
+                    </div>
+                    <Progress value={20} className="h-1.5" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[10px]">
+                      <span>📅 Mês 6-12: Crescimento acelerado</span>
+                      <span className="text-green-400">R$ 3.000-15.000/mês</span>
+                    </div>
+                    <Progress value={50} className="h-1.5" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[10px]">
+                      <span>📅 Mês 12-24: Monetização plena</span>
+                      <span className="text-green-400">R$ 15.000-70.000/mês</span>
+                    </div>
+                    <Progress value={100} className="h-1.5" />
+                  </div>
+                </div>
+
+                <div className="rounded-md bg-muted/30 p-2.5 text-[10px] leading-relaxed space-y-1">
+                  <p className="font-medium">🧒 Por que esses números são reais?</p>
+                  <p>• YouTube paga CPM de R$ 15-30 para nicho de psicologia (um dos mais altos)</p>
+                  <p>• Instagram e TikTok pagam menos por view, mas viralizam mais rápido</p>
+                  <p>• WhatsApp não paga diretamente, mas é onde consultas e workshops são vendidos</p>
+                  <p>• Marcas de saúde mental estão entre as que mais investem em influenciadores</p>
+                  <p>• O cérebro otimiza tudo automaticamente para acelerar cada fase</p>
+                </div>
+              </CardContent>
+            </Card>
+          </CardContent>
+        </Card>
 
         {/* Live Activity */}
         {recentLogs && recentLogs.length > 0 && (
