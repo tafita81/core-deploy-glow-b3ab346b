@@ -43,7 +43,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Você é um especialista em ética profissional do CRP (Conselho Regional de Psicologia do Brasil). Analise o conteúdo abaixo verificando:
+            content: `Você é um especialista em ética. O conteúdo é produzido por uma ESTUDANTE de psicologia (não formada, formatura prevista para 2027). Analise o conteúdo verificando:
 
 1. NÃO faz diagnósticos ou sugere diagnósticos
 2. NÃO promete curas ou resultados garantidos
