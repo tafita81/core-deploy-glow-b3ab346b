@@ -222,7 +222,17 @@ serve(async (req) => {
           headers: { Authorization: `Bearer ${supabaseKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({ content_id: contentId }),
         });
-        if (mediaRes.ok) results.media++;
+        if (mediaRes.ok) {
+          results.media++;
+          // Also try to generate HeyGen video with lip sync
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/generate-video-heygen`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${supabaseKey}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ content_id: contentId }),
+            });
+          } catch (_) { /* HeyGen is optional — continues if API key not set */ }
+        }
       } catch (e) {
         results.errors.push(`Mídia ${contentId}: ${e instanceof Error ? e.message : "erro"}`);
       }
