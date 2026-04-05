@@ -282,16 +282,22 @@ const Strategy = () => {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-green-400" />
-              💰 Monetização Real — Baseada nos Seus Números
+              💰 Projeção de Monetização
             </CardTitle>
             <p className="text-[11px] text-muted-foreground">
-              Cálculos baseados nos seus {igFollowers.toLocaleString("pt-BR")} seguidores do Instagram, {ytFollowers.toLocaleString("pt-BR")} inscritos do YouTube e dados reais do mercado 2025-2026.
+              {(igFollowers + ytFollowers + tkFollowers) > 0
+                ? `Cálculos baseados nos seus ${(igFollowers + ytFollowers + tkFollowers).toLocaleString("pt-BR")} seguidores reais e dados do mercado 2025-2026.`
+                : "Nenhuma conta conectada ainda. Conecte suas redes para ver projeções reais baseadas nos seus números. Os valores abaixo são fórmulas do mercado — só terão resultado quando houver seguidores reais."
+              }
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-lg bg-muted/30 p-3 text-xs leading-relaxed space-y-2">
               <p className="font-medium">🧒 Explicação simples:</p>
               <p>É como um jogo: cada seguidor é um "ponto". Quanto mais pontos, mais dinheiro. Mas o truque é que <strong>não é só ter seguidores</strong> — é fazer eles <strong>assistirem, comentarem e comprarem</strong>. O cérebro faz isso automaticamente.</p>
+              {(igFollowers + ytFollowers + tkFollowers) === 0 && (
+                <p className="text-yellow-400 font-medium">⚠️ Conecte suas contas para ver valores reais aqui. Sem conexão = sem dados = R$ 0.</p>
+              )}
             </div>
 
             {/* Platform-specific real projections */}
