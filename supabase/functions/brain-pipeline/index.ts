@@ -117,8 +117,22 @@ serve(async (req) => {
       }
     }
 
-    // STEP 4: Auto-publish if enabled
+    // STEP 4: Auto-publish if enabled — publish to real social media
     if (autoPublish) {
+      // First approve high-score content
+      const { data: toApprove } = await supabase
+        .from("contents")
+        .select("*")
+        .in("status", ["revisao", "rascunho"])
+        .eq("scientific_valid", true)
+        .eq("ethics_valid", true)
+        .gte("score", scoreThreshold);
+
+      for (const content of toApprove || []) {
+        await supabase.from("contents").update({ status: "aprovado" }).eq("id", content.id);
+      }
+
+      // Then publish approved content to social media
       const { data: approved } = await supabase
         .from("contents")
         .select("*")
@@ -128,19 +142,28 @@ serve(async (req) => {
         .gte("score", scoreThreshold);
 
       for (const content of approved || []) {
-        const { error: pubError } = await supabase
-          .from("contents")
-          .update({ status: "publicado", published_at: new Date().toISOString() })
-          .eq("id", content.id);
-
-        if (!pubError) {
-          results.published++;
-          await supabase.from("system_logs").insert({
-            event_type: "publicacao",
-            message: `Auto-publicado: "${content.title}"`,
-            level: "info",
-            metadata: { content_id: content.id, score: content.score },
+        try {
+          // Call publish-social to send to all connected platforms
+          const pubRes = await fetch(`${supabaseUrl}/functions/v1/publish-social`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${supabaseKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ content_id: content.id }),
           });
+
+          if (pubRes.ok) {
+            results.published++;
+            await supabase.from("system_logs").insert({
+              event_type: "publicacao",
+              message: `Auto-publicado em redes sociais: "${content.title}"`,
+              level: "info",
+              metadata: { content_id: content.id, score: content.score },
+            });
+          }
+        } catch (e) {
+          results.errors.push(`Publicação ${content.title}: ${e instanceof Error ? e.message : "erro"}`);
         }
       }
     }

@@ -4,46 +4,19 @@ import { ContentQueue } from "@/components/ContentQueue";
 import { PerformanceChart } from "@/components/PerformanceChart";
 import { AgentStatus } from "@/components/AgentStatus";
 import { TopicsRanking } from "@/components/TopicsRanking";
-import { Button } from "@/components/ui/button";
+import { PendingActions } from "@/components/PendingActions";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Zap, TrendingUp, PlayCircle, Loader2 } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Eye, Zap, TrendingUp } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
   const { data: contents } = useQuery({
     queryKey: ["dashboard-contents"],
     queryFn: async () => {
       const { data, error } = await supabase.from("contents").select("*");
       if (error) throw error;
       return data;
-    },
-  });
-
-  const pipelineMutation = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("brain-pipeline");
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["dashboard-contents"] });
-      queryClient.invalidateQueries({ queryKey: ["contents-queue"] });
-      queryClient.invalidateQueries({ queryKey: ["agent-logs"] });
-      queryClient.invalidateQueries({ queryKey: ["topics-ranking"] });
-      queryClient.invalidateQueries({ queryKey: ["performance-chart"] });
-      const r = data?.results;
-      toast({
-        title: "🧠 Pipeline executado!",
-        description: `${r?.researched ?? 0} pesquisados, ${r?.generated ?? 0} gerados, ${r?.validated ?? 0} validados, ${r?.published ?? 0} publicados`,
-      });
-    },
-    onError: (err: Error) => {
-      toast({ title: "Erro no pipeline", description: err.message, variant: "destructive" });
     },
   });
 
@@ -60,26 +33,16 @@ const Index = () => {
           <div>
             <h1 className="font-heading text-2xl font-bold">Dashboard</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Visão geral do sistema autônomo
+              Sistema 100% autônomo — pipeline roda a cada 6h
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-[10px]">Cron: a cada 6h</Badge>
-            <Button
-              size="sm"
-              className="bg-gradient-primary text-primary-foreground"
-              onClick={() => pipelineMutation.mutate()}
-              disabled={pipelineMutation.isPending}
-            >
-              {pipelineMutation.isPending ? (
-                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-              ) : (
-                <PlayCircle className="h-4 w-4 mr-1" />
-              )}
-              {pipelineMutation.isPending ? "Rodando..." : "Rodar Pipeline"}
-            </Button>
-          </div>
+          <Badge variant="outline" className="text-[10px] animate-pulse-glow">
+            🟢 Automático 24/7
+          </Badge>
         </div>
+
+        {/* Pending actions - what user needs to configure */}
+        <PendingActions />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <MetricCard

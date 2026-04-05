@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Brain, Sparkles, FlaskConical, Shield, Send, RefreshCw, Loader2 } from "lucide-react";
+import { Brain, Sparkles, FlaskConical, Shield, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,19 +67,6 @@ export default function ContentPage() {
     },
   });
 
-  const publishMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("contents")
-        .update({ status: "publicado", published_at: new Date().toISOString() })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["contents"] });
-      toast({ title: "Conteúdo publicado com sucesso!" });
-    },
-  });
 
   const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
     rascunho: { label: "Rascunho", variant: "secondary" },
@@ -210,17 +197,15 @@ export default function ContentPage() {
                         <Shield className={`h-4 w-4 ${item.ethics_valid ? "text-success" : "text-destructive"}`} />
                         <span className="text-xs">Ética {item.ethics_valid ? "✓" : "✗"}</span>
                       </div>
+                      {item.status === "publicado" && (
+                        <Badge variant="default" className="ml-auto text-[10px]">
+                          ✅ Publicado automaticamente
+                        </Badge>
+                      )}
                       {item.status !== "publicado" && (
-                        <div className="ml-auto flex gap-2">
-                          <Button
-                            size="sm"
-                            className="bg-gradient-primary text-primary-foreground"
-                            onClick={() => publishMutation.mutate(item.id)}
-                            disabled={publishMutation.isPending}
-                          >
-                            <Send className="h-3 w-3 mr-1" /> Publicar
-                          </Button>
-                        </div>
+                        <Badge variant="outline" className="ml-auto text-[10px]">
+                          ⏳ Aguardando pipeline automático
+                        </Badge>
                       )}
                     </div>
                   </CardContent>
