@@ -25,11 +25,27 @@ export default function ContentPage() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data.content;
+      const content = data.content;
+
+      // Auto-validate with science and ethics
+      if (content?.id) {
+        toast({ title: "🔬 Validando cientificamente..." });
+        await supabase.functions.invoke("validate-science", {
+          body: { content_id: content.id },
+        });
+        toast({ title: "⚖️ Validando eticamente..." });
+        await supabase.functions.invoke("validate-ethics", {
+          body: { content_id: content.id },
+        });
+      }
+
+      return content;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contents"] });
-      toast({ title: "✨ Conteúdo gerado com sucesso!", description: "A IA criou um novo conteúdo para você." });
+      queryClient.invalidateQueries({ queryKey: ["contents-queue"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-contents"] });
+      toast({ title: "✨ Conteúdo gerado e validado!", description: "Passou por validação científica e ética." });
       setTopic("");
       setChannel("");
       setInstructions("");
