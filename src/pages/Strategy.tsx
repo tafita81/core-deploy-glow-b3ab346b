@@ -616,6 +616,92 @@ const Strategy = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* BRAIN LEARNING LOG */}
+        <Card className="border-purple-500/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Brain className="h-4 w-4 text-purple-400" />
+              🧠 Aprendizado Infinito do Cérebro
+            </CardTitle>
+            <p className="text-[10px] text-muted-foreground">
+              O cérebro aprende a cada hora. Iteração #{brainLearnings?.total_iterations || 0}.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="rounded-lg bg-muted/30 p-3 text-xs leading-relaxed space-y-1">
+              <p className="font-medium">🧒 Como funciona:</p>
+              <p>Imagine um jogador de videogame que <strong>nunca esquece</strong>. A cada hora, o cérebro analisa milhões de vídeos, compara com o que já fez antes, descobre o que deu certo e o que deu errado — e <strong>muda a estratégia</strong> sozinho. É como um robô que joga, aprende e fica cada vez melhor automaticamente.</p>
+            </div>
+
+            {brainLearnings?.latest && (
+              <div className="space-y-2">
+                <div className="rounded-md bg-green-500/10 border border-green-500/20 p-2.5">
+                  <p className="text-[10px] font-medium text-green-400 mb-1">🎯 Última descoberta do cérebro:</p>
+                  <p className="text-[11px] leading-relaxed">{brainLearnings.latest.evolution_note || "Processando..."}</p>
+                  <p className="text-[9px] text-muted-foreground mt-1">
+                    Confiança: {brainLearnings.latest.confidence || 0}% • Inspirado por: "{brainLearnings.latest.top_video_that_inspired || "..."}" ({brainLearnings.latest.top_video_views || "?"})
+                  </p>
+                </div>
+
+                {brainLearnings.latest.new_strategy && (
+                  <div className="rounded-md bg-purple-500/10 border border-purple-500/20 p-2.5">
+                    <p className="text-[10px] font-medium text-purple-400 mb-1">🔮 Nova rota decidida:</p>
+                    <p className="text-[11px] leading-relaxed">{brainLearnings.latest.new_strategy}</p>
+                  </div>
+                )}
+
+                {(brainLearnings.latest.what_worked || []).length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-medium text-green-400">✅ O que funcionou:</p>
+                    {brainLearnings.latest.what_worked.map((w: string, i: number) => (
+                      <p key={i} className="text-[10px] text-muted-foreground">• {w}</p>
+                    ))}
+                  </div>
+                )}
+
+                {(brainLearnings.latest.what_failed || []).length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-medium text-red-400">❌ O que evitar:</p>
+                    {brainLearnings.latest.what_failed.map((f: string, i: number) => (
+                      <p key={i} className="text-[10px] text-muted-foreground">• {f}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Learning history timeline */}
+            {(brainLearnings?.history || []).length > 1 && (
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-medium text-muted-foreground">📜 Histórico de aprendizado (últimas rodadas):</p>
+                {(brainLearnings.history as any[]).slice(-5).reverse().map((entry: any, i: number) => (
+                  <div key={i} className="flex items-start gap-2 rounded-md bg-muted/20 p-1.5">
+                    <span className="text-[9px] text-muted-foreground shrink-0 mt-0.5">
+                      {new Date(entry.timestamp).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                      {" "}
+                      {new Date(entry.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[10px] truncate">{entry.evolution_note || "Iteração"}</p>
+                      <p className="text-[9px] text-muted-foreground">
+                        Confiança: {entry.confidence}% • Modelo: "{(entry.top_video_that_inspired || "").slice(0, 40)}"
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Learnings from viral_intelligence */}
+            {viralIntel?.learnings && (
+              <div className="rounded-md bg-primary/5 border border-primary/10 p-2.5 space-y-1">
+                <p className="text-[10px] font-medium text-primary">🚀 Inovação desta rodada:</p>
+                <p className="text-[11px] leading-relaxed">{viralIntel.learnings.new_strategy}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
