@@ -13,8 +13,31 @@ import { useToast } from "@/hooks/use-toast";
 export default function ContentPage() {
   const [topic, setTopic] = useState("");
   const [channel, setChannel] = useState("");
+  const [contentType, setContentType] = useState("carrossel");
+  const [instructions, setInstructions] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const generateMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("generate-content", {
+        body: { topic, channel, content_type: contentType, instructions },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data.content;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contents"] });
+      toast({ title: "✨ Conteúdo gerado com sucesso!", description: "A IA criou um novo conteúdo para você." });
+      setTopic("");
+      setChannel("");
+      setInstructions("");
+    },
+    onError: (err: Error) => {
+      toast({ title: "Erro ao gerar conteúdo", description: err.message, variant: "destructive" });
+    },
+  });
 
   const { data: contents, isLoading } = useQuery({
     queryKey: ["contents"],
