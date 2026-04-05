@@ -93,46 +93,55 @@ export type Database = {
       }
       contents: {
         Row: {
+          audio_url: string | null
           body: string | null
           channel: string | null
           content_type: string
           created_at: string
           ethics_valid: boolean | null
           id: string
+          media_url: string | null
           published_at: string | null
           scientific_valid: boolean | null
           score: number | null
           status: string
+          thumbnail_url: string | null
           title: string
           topic: string | null
           updated_at: string
         }
         Insert: {
+          audio_url?: string | null
           body?: string | null
           channel?: string | null
           content_type?: string
           created_at?: string
           ethics_valid?: boolean | null
           id?: string
+          media_url?: string | null
           published_at?: string | null
           scientific_valid?: boolean | null
           score?: number | null
           status?: string
+          thumbnail_url?: string | null
           title: string
           topic?: string | null
           updated_at?: string
         }
         Update: {
+          audio_url?: string | null
           body?: string | null
           channel?: string | null
           content_type?: string
           created_at?: string
           ethics_valid?: boolean | null
           id?: string
+          media_url?: string | null
           published_at?: string | null
           scientific_valid?: boolean | null
           score?: number | null
           status?: string
+          thumbnail_url?: string | null
           title?: string
           topic?: string | null
           updated_at?: string
