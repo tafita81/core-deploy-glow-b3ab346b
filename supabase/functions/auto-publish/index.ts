@@ -29,6 +29,10 @@ function getNextOptimalTime(platform: string): string {
     case "youtube": return brHour < 12 ? "12h" : brHour < 18 ? "18h" : "12h amanhã";
     case "tiktok": return brHour < 7 ? "7h" : brHour < 12 ? "12h" : brHour < 19 ? "19h" : "7h amanhã";
     case "whatsapp": return brHour < 8 ? "8h" : brHour < 17 ? "17h" : "8h amanhã";
+    case "pinterest": return brHour < 12 ? "12h" : brHour < 20 ? "20h" : brHour < 22 ? "22h" : "12h amanhã";
+    case "facebook": return brHour < 9 ? "9h" : brHour < 12 ? "12h" : brHour < 18 ? "18h" : "9h amanhã";
+    case "linkedin": return brHour < 9 ? "9h" : brHour < 14 ? "14h" : "9h amanhã";
+    case "twitter": return brHour < 9 ? "9h" : brHour < 12 ? "12h" : brHour < 17 ? "17h" : "9h amanhã";
     default: return "em breve";
   }
 }
