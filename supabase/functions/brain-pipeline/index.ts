@@ -162,7 +162,7 @@ serve(async (req) => {
 
     // STEP 2: GENERATE VIRAL CONTENT — Create 3 pieces per run (multi-platform)
     const contentIds: string[] = [];
-    const platformRotation = ["instagram", "tiktok", "youtube"];
+    const platformRotation = ["instagram", "tiktok", "youtube", "pinterest"];
 
     for (let i = 0; i < Math.min(3, topics.length); i++) {
       const topic = topics[i];
