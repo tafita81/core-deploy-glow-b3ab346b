@@ -314,11 +314,6 @@ const Strategy = () => {
               const yt6m = Math.round(ytFollowers * Math.pow(1 + monthlyGrowthRate, 6));
               const yt12m = Math.round(ytFollowers * Math.pow(1 + monthlyGrowthRate, 12));
 
-              const formatNum = (n: number) => {
-                if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
-                if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-                return n.toString();
-              };
 
               const platforms = [
                 {
