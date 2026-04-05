@@ -14,6 +14,10 @@ function isOptimalTime(platform: string): boolean {
     case "youtube": return (utcHour >= 15 && utcHour <= 18) || (utcHour >= 21 && utcHour <= 23);
     case "tiktok": return (utcHour >= 10 && utcHour <= 12) || (utcHour >= 15 && utcHour <= 17) || utcHour >= 22 || utcHour <= 1;
     case "whatsapp": return (utcHour >= 11 && utcHour <= 13) || (utcHour >= 20 && utcHour <= 22);
+    case "pinterest": return (utcHour >= 0 && utcHour <= 3) || (utcHour >= 15 && utcHour <= 17) || (utcHour >= 23);
+    case "facebook": return (utcHour >= 12 && utcHour <= 15) || (utcHour >= 21 && utcHour <= 23);
+    case "linkedin": return (utcHour >= 12 && utcHour <= 14) || (utcHour >= 17 && utcHour <= 19);
+    case "twitter": return (utcHour >= 12 && utcHour <= 15) || (utcHour >= 20 && utcHour <= 23);
     default: return true;
   }
 }
