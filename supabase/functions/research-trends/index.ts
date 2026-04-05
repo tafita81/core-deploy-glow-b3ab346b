@@ -53,13 +53,16 @@ Retorne EXATAMENTE um JSON com esta estrutura:
     "cta_patterns": ["tipos de CTA que mais convertem"],
     "hook_first_3_seconds": ["exemplos de ganchos dos primeiros 3 segundos"]
   },
-  "competitor_analysis": [
+  "top_10_ranking_brasil": [
     {
-      "channel": "nome do canal",
+      "rank": 1,
+      "channel": "nome do canal/perfil",
       "platform": "youtube|instagram|tiktok",
-      "why_viral": "razão do sucesso",
+      "followers": "número aproximado",
+      "why_trending_now": "por que está com mais acessos AGORA",
+      "top_video_title": "título do vídeo/post com mais views hoje",
       "content_format": "formato que mais funciona",
-      "posting_frequency": "frequência de postagem"
+      "posting_frequency": "frequência"
     }
   ],
   "topics": [
