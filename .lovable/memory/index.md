@@ -2,10 +2,10 @@
 
 ## Core
 Dark theme, psychology-themed. Primary purple/blue, Space Grotesk headings, Inter body.
-Dani: NUNCA mencionar título profissional NEM formação. Conteúdo neutro.
-Dados sempre reais, nunca mockados/simulados.
+Dani é ESTUDANTE de psicologia (2027). NUNCA dizer "psicóloga".
+Dados sempre reais, nunca mockados/simulados. Se não conectou = 0.
 Sem autenticação por enquanto (decisão do usuário).
-Pipeline autônomo 24/7 com cron a cada 6h.
 
 ## Memories
-- [No psicóloga](mem://constraints/no-psicologa) — Nunca dizer psicóloga NEM estudante. Conteúdo sem título/formação.
+- [No psicóloga](mem://constraints/no-psicologa) — Daniela é estudante, formatura 2027, nunca usar "psicóloga"
+- [No fake data](mem://constraints/no-fake-data) — NUNCA dados fictícios. Sem conexão = "Não conectado" / R$ 0
