@@ -203,6 +203,25 @@ serve(async (req) => {
       }
     }
 
+    // STEP 6: GENERATE WHATSAPP COMMUNITY CONTENT
+    const whatsappTypes = ["conversa", "dica_rapida", "enquete"];
+    for (let i = 0; i < Math.min(2, whatsappTypes.length); i++) {
+      try {
+        const whatsappRes = await fetch(`${supabaseUrl}/functions/v1/generate-whatsapp-content`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${supabaseKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            group_type: "geral",
+            content_type: whatsappTypes[i],
+            source_content_id: contentIds[0] || null,
+          }),
+        });
+        if (whatsappRes.ok) results.whatsapp_generated++;
+      } catch (e) {
+        results.errors.push(`WhatsApp ${whatsappTypes[i]}: ${e instanceof Error ? e.message : "erro"}`);
+      }
+    }
+
     // Calculate avg viral score
     if (contentIds.length > 0) {
       const { data: scored } = await supabase
