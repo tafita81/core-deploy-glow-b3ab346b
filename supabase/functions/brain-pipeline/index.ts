@@ -62,18 +62,96 @@ serve(async (req) => {
         results.competitors_analyzed = brRanking.length + worldRanking.length;
         results.hashtags_found = (viralPatterns.trending_hashtags || []).length;
 
-        // Use world ranking insights to enrich topics for Brazilian audience
+        // SAVE HOURLY SNAPSHOTS — track views over time
+        const now = new Date().toISOString();
+        const snapshots: any[] = [];
+        
+        for (const v of brRanking) {
+          snapshots.push({
+            video_title: v.video_title || v.top_video_title || v.channel || 'Sem título',
+            creator: v.creator || v.channel,
+            platform: v.platform || 'unknown',
+            region: 'brasil',
+            total_views: v.total_views || v.followers || '0',
+            views_growth_1h: v.views_growth_1h || v.growth_velocity || '0',
+            momentum_score: v.momentum_score || 0,
+            acceleration: v.acceleration || 'linear',
+            snapshot_hour: now,
+            metadata: { rank: v.rank, why_viral: v.why_viral || v.why_growing_fast, format: v.content_format },
+          });
+        }
+        for (const v of worldRanking) {
+          snapshots.push({
+            video_title: v.video_title || v.top_video_title || v.channel || 'Sem título',
+            creator: v.creator || v.channel,
+            platform: v.platform || 'unknown',
+            region: 'mundial',
+            total_views: v.total_views || '0',
+            views_growth_1h: v.views_growth_1h || v.growth_velocity || '0',
+            momentum_score: v.momentum_score || 0,
+            acceleration: v.acceleration || 'linear',
+            snapshot_hour: now,
+            metadata: { rank: v.rank, country: v.country, insight_br: v.insight_for_brazil, format: v.content_format },
+          });
+        }
+
+        if (snapshots.length > 0) {
+          await supabase.from("video_snapshots").insert(snapshots);
+          await supabase.from("system_logs").insert({
+            event_type: "snapshot",
+            message: `📸 ${snapshots.length} snapshots salvos — comparação horária ativa`,
+            level: "info",
+            metadata: { count: snapshots.length, hour: now },
+          });
+        }
+
+        // COMPARE WITH PREVIOUS HOUR — find videos that grew the most
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+        const { data: prevSnapshots } = await supabase
+          .from("video_snapshots")
+          .select("video_title, total_views, momentum_score, region")
+          .lt("snapshot_hour", now)
+          .gte("snapshot_hour", oneHourAgo);
+
+        if (prevSnapshots && prevSnapshots.length > 0) {
+          // Find videos that appeared in both hours and grew the most
+          const prevMap = new Map(prevSnapshots.map((s: any) => [s.video_title, s]));
+          const growthWinners = snapshots
+            .filter(s => prevMap.has(s.video_title))
+            .map(s => {
+              const prev = prevMap.get(s.video_title)!;
+              return { ...s, momentum_delta: (s.momentum_score || 0) - (prev.momentum_score || 0) };
+            })
+            .sort((a, b) => b.momentum_delta - a.momentum_delta);
+
+          if (growthWinners.length > 0) {
+            await supabase.from("system_logs").insert({
+              event_type: "decisao",
+              message: `🎯 Vídeo com MAIOR crescimento no período: "${growthWinners[0].video_title}" (Δ momentum: +${growthWinners[0].momentum_delta})`,
+              level: "info",
+              metadata: { top_growers: growthWinners.slice(0, 5).map((g: any) => ({ title: g.video_title, delta: g.momentum_delta })) },
+            });
+
+            // PRIORITIZE topics inspired by the fastest growing videos
+            const topGrower = growthWinners[0];
+            topics = topics.sort((a: any, b: any) => {
+              const aMatch = (a.inspired_by_video || '').includes(topGrower.video_title) ? 1 : 0;
+              const bMatch = (b.inspired_by_video || '').includes(topGrower.video_title) ? 1 : 0;
+              return bMatch - aMatch;
+            });
+          }
+        }
+
         if (worldRanking.length > 0) {
           const worldInsights = worldRanking
             .filter((w: any) => w.insight_for_brazil)
             .map((w: any) => w.insight_for_brazil);
-          
           if (worldInsights.length > 0) {
             await supabase.from("system_logs").insert({
               event_type: "pesquisa",
-              message: `🌍 ${worldRanking.length} canais mundiais analisados — insights adaptados para Brasil`,
+              message: `🌍 ${worldRanking.length} vídeos mundiais rastreados — insights para Brasil`,
               level: "info",
-              metadata: { world_channels: worldRanking.map((w: any) => w.channel), insights: worldInsights.slice(0, 5) },
+              metadata: { top_videos: worldRanking.slice(0, 3).map((w: any) => w.video_title), insights: worldInsights.slice(0, 5) },
             });
           }
         }
@@ -235,7 +313,7 @@ serve(async (req) => {
 
     await supabase.from("system_logs").insert({
       event_type: "sistema",
-      message: `🧠 Pipeline VIRAL concluído: ${results.researched} pesquisados, ${results.generated} gerados (score médio: ${results.viral_score_avg}), ${results.media} mídias, ${results.validated} validados, ${results.published} publicados, ${results.whatsapp_generated} WhatsApp, ${results.competitors_analyzed} concorrentes`,
+      message: `🧠 Pipeline VIRAL concluído: ${results.researched} pesquisados, ${results.generated} gerados (score médio: ${results.viral_score_avg}), ${results.media} mídias, ${results.validated} validados, ${results.published} publicados, ${results.whatsapp_generated} WhatsApp, ${results.competitors_analyzed} vídeos rastreados`,
       level: results.errors.length > 0 ? "warning" : "info",
       metadata: results,
     });

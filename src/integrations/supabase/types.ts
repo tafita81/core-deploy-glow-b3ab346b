@@ -199,6 +199,51 @@ export type Database = {
         }
         Relationships: []
       }
+      video_snapshots: {
+        Row: {
+          acceleration: string | null
+          created_at: string
+          creator: string | null
+          id: string
+          metadata: Json | null
+          momentum_score: number | null
+          platform: string
+          region: string
+          snapshot_hour: string
+          total_views: string | null
+          video_title: string
+          views_growth_1h: string | null
+        }
+        Insert: {
+          acceleration?: string | null
+          created_at?: string
+          creator?: string | null
+          id?: string
+          metadata?: Json | null
+          momentum_score?: number | null
+          platform: string
+          region?: string
+          snapshot_hour?: string
+          total_views?: string | null
+          video_title: string
+          views_growth_1h?: string | null
+        }
+        Update: {
+          acceleration?: string | null
+          created_at?: string
+          creator?: string | null
+          id?: string
+          metadata?: Json | null
+          momentum_score?: number | null
+          platform?: string
+          region?: string
+          snapshot_hour?: string
+          total_views?: string | null
+          video_title?: string
+          views_growth_1h?: string | null
+        }
+        Relationships: []
+      }
       whatsapp_content: {
         Row: {
           body: string | null
