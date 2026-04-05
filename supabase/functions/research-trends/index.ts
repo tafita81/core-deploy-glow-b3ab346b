@@ -151,7 +151,7 @@ Cada título deve ser MELHOR que o #1 trending atual.`,
       analysis = JSON.parse(rawContent);
     } catch {
       console.error("Failed to parse viral analysis:", rawContent);
-      analysis = { topics: [], viral_patterns: {}, top_10_ranking_brasil: [], monetization_insights: {} };
+      analysis = { topics: [], viral_patterns: {}, top_10_ranking_brasil: [], top_10_ranking_mundial: [], monetization_insights: {} };
     }
 
     const topics = analysis.topics || [];
