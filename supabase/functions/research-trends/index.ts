@@ -70,12 +70,13 @@ Retorne EXATAMENTE um JSON com esta estrutura:
       "rank": 1,
       "channel": "nome do canal/perfil",
       "platform": "youtube|instagram|tiktok",
-      "country": "país de origem",
+      "country": "país de origem (em português)",
       "followers": "número aproximado",
-      "why_trending_now": "por que está com mais acessos AGORA no mundo",
-      "top_video_title": "título do vídeo/post com mais views hoje",
+      "why_trending_now": "por que está com mais acessos AGORA no mundo (TRADUZIDO para português brasileiro)",
+      "top_video_title": "título do vídeo TRADUZIDO para português brasileiro",
       "content_format": "formato que mais funciona",
-      "language": "idioma principal"
+      "language": "idioma original",
+      "insight_for_brazil": "como adaptar esse conteúdo viral para o público brasileiro"
     }
   ],
   "topics": [
