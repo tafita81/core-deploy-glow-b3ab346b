@@ -184,7 +184,7 @@ Inclua o campo "inspired_by" e "predicted_momentum" em cada tópico.`,
       analysis = JSON.parse(rawContent);
     } catch {
       console.error("Failed to parse viral analysis:", rawContent);
-      analysis = { topics: [], viral_patterns: {}, top_10_ranking_brasil: [], top_10_ranking_mundial: [], monetization_insights: {} };
+      analysis = { topics: [], viral_patterns: {}, top_10_ranking_brasil: [], top_10_ranking_mundial: [], momentum_analysis: {}, monetization_insights: {} };
     }
 
     const topics = analysis.topics || [];
