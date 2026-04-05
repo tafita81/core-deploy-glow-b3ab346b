@@ -128,12 +128,21 @@ const Index = () => {
                   {competitors.slice(0, 10).map((c: any, i: number) => (
                     <div key={i} className="flex items-start gap-2 text-xs">
                       <span className="font-bold text-primary min-w-[20px]">#{c.rank || i + 1}</span>
-                      <div className="min-w-0">
-                        <p className="font-medium truncate">
-                          {c.channel} <span className="text-muted-foreground">({c.platform})</span>
-                          {c.followers && <span className="text-muted-foreground ml-1">• {c.followers}</span>}
-                        </p>
-                        <p className="text-muted-foreground truncate">{c.why_trending_now || c.why_viral}</p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1">
+                          <p className="font-medium truncate">
+                            {c.channel} <span className="text-muted-foreground">({c.platform})</span>
+                          </p>
+                          {c.momentum_score && (
+                            <Badge variant="secondary" className="text-[9px] shrink-0">
+                              ⚡{c.momentum_score}
+                            </Badge>
+                          )}
+                        </div>
+                        {c.growth_velocity && (
+                          <p className="text-[10px] text-success truncate">📈 {c.growth_velocity} • {c.acceleration || ''}</p>
+                        )}
+                        <p className="text-muted-foreground truncate">{c.why_growing_fast || c.why_trending_now || c.why_viral}</p>
                         {c.top_video_title && (
                           <p className="text-[10px] text-primary/70 truncate">📹 {c.top_video_title}</p>
                         )}
