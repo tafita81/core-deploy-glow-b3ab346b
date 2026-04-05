@@ -217,6 +217,66 @@ serve(async (req) => {
             }
             break;
           }
+
+          case "pinterest": {
+            const accessToken = tokenMap.access_token;
+            if (!accessToken) break;
+
+            // Pinterest API v5 — user account info
+            const pinUserRes = await fetch("https://api.pinterest.com/v5/user_account", {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            if (pinUserRes.ok) {
+              const pinUser = await pinUserRes.json();
+              channelMetrics.profile = pinUser;
+              channelMetrics.followers = pinUser.follower_count || 0;
+              channelMetrics.posts_count = pinUser.pin_count || 0;
+              channelMetrics.monthly_views = pinUser.monthly_views || 0;
+
+              await supabase.from("channels").update({
+                followers: pinUser.follower_count || 0,
+                posts_count: pinUser.pin_count || 0,
+              }).eq("id", channel.id);
+            }
+
+            // Get boards
+            const boardsRes = await fetch("https://api.pinterest.com/v5/boards?page_size=25", {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            if (boardsRes.ok) {
+              const boardsData = await boardsRes.json();
+              channelMetrics.boards = (boardsData.items || []).map((b: any) => ({
+                id: b.id, name: b.name, pin_count: b.pin_count, follower_count: b.follower_count,
+              }));
+            }
+
+            // Get top pins analytics
+            const pinsRes = await fetch("https://api.pinterest.com/v5/pins?page_size=20", {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            if (pinsRes.ok) {
+              const pinsData = await pinsRes.json();
+              channelMetrics.recent_pins = (pinsData.items || []).slice(0, 10).map((p: any) => ({
+                id: p.id, title: p.title, description: p.description, link: p.link,
+                dominant_color: p.dominant_color, created_at: p.created_at,
+              }));
+            }
+
+            // Get analytics overview
+            try {
+              const analyticsRes = await fetch("https://api.pinterest.com/v5/user_account/analytics?start_date=" +
+                new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) +
+                "&end_date=" + new Date().toISOString().slice(0, 10) +
+                "&metric_types=IMPRESSION,PIN_CLICK,OUTBOUND_CLICK,SAVE", {
+                headers: { Authorization: `Bearer ${accessToken}` },
+              });
+              if (analyticsRes.ok) {
+                channelMetrics.analytics = await analyticsRes.json();
+              }
+            } catch (_) { /* analytics optional */ }
+
+            break;
+          }
         }
       } catch (e) {
         channelMetrics.error = e instanceof Error ? e.message : "Erro ao monitorar";

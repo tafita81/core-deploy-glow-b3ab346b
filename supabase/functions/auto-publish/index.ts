@@ -14,6 +14,10 @@ function isOptimalTime(platform: string): boolean {
     case "youtube": return (utcHour >= 15 && utcHour <= 18) || (utcHour >= 21 && utcHour <= 23);
     case "tiktok": return (utcHour >= 10 && utcHour <= 12) || (utcHour >= 15 && utcHour <= 17) || utcHour >= 22 || utcHour <= 1;
     case "whatsapp": return (utcHour >= 11 && utcHour <= 13) || (utcHour >= 20 && utcHour <= 22);
+    case "pinterest": return (utcHour >= 0 && utcHour <= 3) || (utcHour >= 15 && utcHour <= 17) || (utcHour >= 23);
+    case "facebook": return (utcHour >= 12 && utcHour <= 15) || (utcHour >= 21 && utcHour <= 23);
+    case "linkedin": return (utcHour >= 12 && utcHour <= 14) || (utcHour >= 17 && utcHour <= 19);
+    case "twitter": return (utcHour >= 12 && utcHour <= 15) || (utcHour >= 20 && utcHour <= 23);
     default: return true;
   }
 }
@@ -25,6 +29,10 @@ function getNextOptimalTime(platform: string): string {
     case "youtube": return brHour < 12 ? "12h" : brHour < 18 ? "18h" : "12h amanhã";
     case "tiktok": return brHour < 7 ? "7h" : brHour < 12 ? "12h" : brHour < 19 ? "19h" : "7h amanhã";
     case "whatsapp": return brHour < 8 ? "8h" : brHour < 17 ? "17h" : "8h amanhã";
+    case "pinterest": return brHour < 12 ? "12h" : brHour < 20 ? "20h" : brHour < 22 ? "22h" : "12h amanhã";
+    case "facebook": return brHour < 9 ? "9h" : brHour < 12 ? "12h" : brHour < 18 ? "18h" : "9h amanhã";
+    case "linkedin": return brHour < 9 ? "9h" : brHour < 14 ? "14h" : "9h amanhã";
+    case "twitter": return brHour < 9 ? "9h" : brHour < 12 ? "12h" : brHour < 17 ? "17h" : "9h amanhã";
     default: return "em breve";
   }
 }

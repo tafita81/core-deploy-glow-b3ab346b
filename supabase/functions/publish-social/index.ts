@@ -80,6 +80,97 @@ function extractHashtags(text: string): string {
   return "#psicologia #saudemental #bemestar #ansiedade #autoconhecimento #saúdemental #terapia #mentalhealth #dicasdepsicologia #vidasaudavel";
 }
 
+async function publishToPinterest(token: string, boardId: string, content: any) {
+  const description = `${content.title}\n\n${(content.body || "").replace(/---METADATA---[\s\S]*/, "").slice(0, 500)}\n\n💬 Entre na comunidade gratuita — link na bio`;
+  
+  const pinData: any = {
+    board_id: boardId,
+    title: content.title?.slice(0, 100),
+    description,
+    link: content.media_url || undefined,
+    alt_text: content.title,
+  };
+
+  // Add media source if available
+  if (content.thumbnail_url || content.media_url) {
+    pinData.media_source = {
+      source_type: "image_url",
+      url: content.thumbnail_url || content.media_url,
+    };
+  }
+
+  const res = await fetch("https://api.pinterest.com/v5/pins", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(pinData),
+  });
+  return { platform: "pinterest", success: res.ok, status: res.status };
+}
+
+async function publishToFacebook(token: string, pageId: string, content: any) {
+  const message = `${content.title}\n\n${(content.body || "").replace(/---METADATA---[\s\S]*/, "").slice(0, 1500)}\n\n💬 Entre na comunidade gratuita!`;
+  
+  let endpoint = `https://graph.facebook.com/v19.0/${pageId}/feed`;
+  const body: any = { message, access_token: token };
+  
+  if (content.thumbnail_url || content.media_url) {
+    endpoint = `https://graph.facebook.com/v19.0/${pageId}/photos`;
+    body.url = content.thumbnail_url || content.media_url;
+    body.caption = message;
+    delete body.message;
+  }
+
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return { platform: "facebook", success: res.ok, status: res.status };
+}
+
+async function publishToLinkedIn(token: string, personId: string, content: any) {
+  const text = `${content.title}\n\n${(content.body || "").replace(/---METADATA---[\s\S]*/, "").slice(0, 1300)}\n\n#psicologia #saudemental #bemestar`;
+  
+  const res = await fetch("https://api.linkedin.com/v2/ugcPosts", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "X-Restli-Protocol-Version": "2.0.0",
+    },
+    body: JSON.stringify({
+      author: personId.startsWith("urn:") ? personId : `urn:li:person:${personId}`,
+      lifecycleState: "PUBLISHED",
+      specificContent: {
+        "com.linkedin.ugc.ShareContent": {
+          shareCommentary: { text },
+          shareMediaCategory: "NONE",
+        },
+      },
+      visibility: { "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC" },
+    }),
+  });
+  return { platform: "linkedin", success: res.ok, status: res.status };
+}
+
+async function publishToTwitter(apiKey: string, apiSecret: string, accessToken: string, accessSecret: string, content: any) {
+  const text = `${content.title}\n\n${(content.body || "").replace(/---METADATA---[\s\S]*/, "").slice(0, 200)}\n\n#psicologia #saudemental`;
+  
+  // Twitter API v2 — tweet
+  const res = await fetch("https://api.twitter.com/2/tweets", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ text: text.slice(0, 280) }),
+  });
+  return { platform: "twitter", success: res.ok, status: res.status };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -119,6 +210,31 @@ serve(async (req) => {
             const phoneId = tokens.find((t: any) => t.token_type === "phone_number_id" || t.token_type === "phone_id")?.token_value;
             if (!phoneId) { results.push({ platform: "whatsapp", success: false, error: "Phone ID não configurado" }); continue; }
             result = await publishToWhatsApp(accessToken, phoneId, content);
+            break;
+          }
+          case "pinterest": {
+            const boardId = tokens.find((t: any) => t.token_type === "board_id")?.token_value;
+            if (!boardId) { results.push({ platform: "pinterest", success: false, error: "Board ID não configurado" }); continue; }
+            result = await publishToPinterest(accessToken, boardId, content);
+            break;
+          }
+          case "facebook": {
+            const pageId = tokens.find((t: any) => t.token_type === "page_id")?.token_value;
+            if (!pageId) { results.push({ platform: "facebook", success: false, error: "Page ID não configurado" }); continue; }
+            result = await publishToFacebook(accessToken, pageId, content);
+            break;
+          }
+          case "linkedin": {
+            const personId = tokens.find((t: any) => t.token_type === "person_id")?.token_value;
+            if (!personId) { results.push({ platform: "linkedin", success: false, error: "Person ID não configurado" }); continue; }
+            result = await publishToLinkedIn(accessToken, personId, content);
+            break;
+          }
+          case "twitter": {
+            const apiKey = tokens.find((t: any) => t.token_type === "api_key")?.token_value || "";
+            const apiSecret = tokens.find((t: any) => t.token_type === "api_secret")?.token_value || "";
+            const accessSecret = tokens.find((t: any) => t.token_type === "access_secret")?.token_value || "";
+            result = await publishToTwitter(apiKey, apiSecret, accessToken, accessSecret, content);
             break;
           }
           default:
