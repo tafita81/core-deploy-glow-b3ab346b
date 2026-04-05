@@ -199,6 +199,95 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_content: {
+        Row: {
+          body: string | null
+          content_type: string
+          created_at: string
+          engagement_score: number | null
+          group_id: string | null
+          id: string
+          published_at: string | null
+          scheduled_at: string | null
+          source_content_id: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          content_type?: string
+          created_at?: string
+          engagement_score?: number | null
+          group_id?: string | null
+          id?: string
+          published_at?: string | null
+          scheduled_at?: string | null
+          source_content_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          content_type?: string
+          created_at?: string
+          engagement_score?: number | null
+          group_id?: string | null
+          id?: string
+          published_at?: string | null
+          scheduled_at?: string | null
+          source_content_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_content_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          group_type: string
+          id: string
+          invite_link: string | null
+          is_active: boolean | null
+          members_count: number | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          group_type?: string
+          id?: string
+          invite_link?: string | null
+          is_active?: boolean | null
+          members_count?: number | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          group_type?: string
+          id?: string
+          invite_link?: string | null
+          is_active?: boolean | null
+          members_count?: number | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

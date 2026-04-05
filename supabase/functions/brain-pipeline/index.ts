@@ -35,6 +35,7 @@ serve(async (req) => {
 
     const results = {
       researched: 0, generated: 0, media: 0, validated: 0, published: 0,
+      whatsapp_generated: 0,
       viral_score_avg: 0, competitors_analyzed: 0, hashtags_found: 0,
       errors: [] as string[],
     };
@@ -202,6 +203,25 @@ serve(async (req) => {
       }
     }
 
+    // STEP 6: GENERATE WHATSAPP COMMUNITY CONTENT
+    const whatsappTypes = ["conversa", "dica_rapida", "enquete"];
+    for (let i = 0; i < Math.min(2, whatsappTypes.length); i++) {
+      try {
+        const whatsappRes = await fetch(`${supabaseUrl}/functions/v1/generate-whatsapp-content`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${supabaseKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            group_type: "geral",
+            content_type: whatsappTypes[i],
+            source_content_id: contentIds[0] || null,
+          }),
+        });
+        if (whatsappRes.ok) results.whatsapp_generated++;
+      } catch (e) {
+        results.errors.push(`WhatsApp ${whatsappTypes[i]}: ${e instanceof Error ? e.message : "erro"}`);
+      }
+    }
+
     // Calculate avg viral score
     if (contentIds.length > 0) {
       const { data: scored } = await supabase
@@ -215,7 +235,7 @@ serve(async (req) => {
 
     await supabase.from("system_logs").insert({
       event_type: "sistema",
-      message: `🧠 Pipeline VIRAL concluído: ${results.researched} pesquisados, ${results.generated} gerados (score médio: ${results.viral_score_avg}), ${results.media} mídias, ${results.validated} validados, ${results.published} publicados, ${results.competitors_analyzed} concorrentes analisados`,
+      message: `🧠 Pipeline VIRAL concluído: ${results.researched} pesquisados, ${results.generated} gerados (score médio: ${results.viral_score_avg}), ${results.media} mídias, ${results.validated} validados, ${results.published} publicados, ${results.whatsapp_generated} WhatsApp, ${results.competitors_analyzed} concorrentes`,
       level: results.errors.length > 0 ? "warning" : "info",
       metadata: results,
     });
