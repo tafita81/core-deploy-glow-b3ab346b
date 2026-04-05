@@ -142,30 +142,28 @@ Retorne APENAS o JSON, sem markdown.`,
             role: "user",
             content: `Data: ${new Date().toISOString().slice(0, 10)}. Hora: ${new Date().toISOString().slice(11, 16)} UTC.
 
-🧠 ANÁLISE QUÂNTICA DE CRESCIMENTO — Foque em VELOCIDADE e ACELERAÇÃO, não volume total.
+🎬 ANÁLISE DE VÍDEOS INDIVIDUAIS — Foque em VÍDEOS ESPECÍFICOS, não canais.
 
-🇧🇷 RANKING BRASIL POR MOMENTUM:
-📱 INSTAGRAM: Quais Reels de psicologia/autoajuda tiveram MAIOR CRESCIMENTO DE VIEWS na última hora? Quais perfis ganharam mais seguidores HOJE vs ontem?
-🎬 YOUTUBE: Quais vídeos de psicologia ACABARAM de entrar no Trending ou estão SUBINDO posições? Quais Shorts tiveram crescimento exponencial nas últimas 2-4 horas?
-🎵 TIKTOK: Quais vídeos de saúde mental EXPLODIRAM de views na última hora? Quais sons estão COMEÇANDO a viralizar (fase inicial = máxima oportunidade)?
+🇧🇷 TOP 10 VÍDEOS BRASIL (por views + crescimento):
+📱 INSTAGRAM: Quais REELS ESPECÍFICOS de psicologia/autoajuda têm MAIS MILHÕES DE VIEWS agora? Quais cresceram mais views na última hora?
+🎬 YOUTUBE: Quais VÍDEOS ESPECÍFICOS de psicologia estão no Trending com mais views? Quais SHORTS explodiram?
+🎵 TIKTOK: Quais VÍDEOS ESPECÍFICOS de saúde mental têm mais milhões de views? Quais cresceram mais HOJE?
 
-RANKEIE os TOP 10 por MOMENTUM SCORE — o canal com crescimento mais ACELERADO fica em #1, mesmo que tenha menos seguidores totais.
+IMPORTANTE: Rankeie por VÍDEOS, não canais. Inclua título exato, views totais, e crescimento.
 
-🌍 RANKING MUNDIAL POR MOMENTUM:
-- Analise criadores de TODOS os países — EUA, UK, Espanha, Índia, Alemanha, Coreia, Japão, etc.
-- Foque em quem teve MAIOR DELTA de crescimento nas últimas horas
-- Identifique vídeos que estão ANTES DO PICO viral (máxima oportunidade para replicar)
-- TRADUZA TUDO para português brasileiro
+🌍 TOP 10 VÍDEOS MUNDIAL (por views + crescimento):
+- Analise VÍDEOS de TODOS os países — EUA, UK, Espanha, Índia, etc.
+- Foque em vídeos com MAIS MILHÕES de views E maior crescimento
+- TRADUZA títulos e descrições para português brasileiro
 
-📊 PARA CADA CANAL, CALCULE:
-- Velocidade de crescimento (views/hora)
-- Aceleração (exponencial vs linear vs desacelerando)
+📊 PARA CADA VÍDEO, INFORME:
+- Título exato do vídeo
+- Views totais (em milhões)
+- Crescimento de views na última hora e nas últimas 24h
 - Momentum Score (0-100)
-- Ponto de inflexão (antes/no/pós pico)
+- Estratégia para replicar adaptando para psicologia
 
-Gere 5 tópicos INSPIRADOS nos vídeos com MAIOR MOMENTUM (não nos maiores em views).
-Cada tópico deve replicar o PADRÃO DE CRESCIMENTO do conteúdo que inspirou, adaptado para o público brasileiro.
-Inclua o campo "inspired_by" e "predicted_momentum" em cada tópico.`,
+Gere 5 tópicos INSPIRADOS nos VÍDEOS com mais views, incluindo "inspired_by_video" e "predicted_views".`,
           },
         ],
       }),
