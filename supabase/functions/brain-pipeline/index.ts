@@ -359,6 +359,62 @@ serve(async (req) => {
       results.errors.push(`Otimização perfis: ${e instanceof Error ? e.message : "erro"}`);
     }
 
+    // STEP 9: CROSS-PLATFORM INTELLIGENCE — Unified quantum learning across ALL networks
+    try {
+      const crossRes = await fetch(`${supabaseUrl}/functions/v1/cross-platform-intelligence`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${supabaseKey}`, "Content-Type": "application/json" },
+        body: "{}",
+      });
+      if (crossRes.ok) {
+        const crossData = await crossRes.json();
+        (results as any).health_score = crossData.evolution_metrics?.overall_health_score || 0;
+        (results as any).growth_trajectory = crossData.evolution_metrics?.growth_trajectory || "unknown";
+        (results as any).cross_adjustments = (crossData.real_time_adjustments || []).length;
+        (results as any).transmutations = (crossData.content_transmutation || []).length;
+      }
+    } catch (e) {
+      results.errors.push(`Inteligência cruzada: ${e instanceof Error ? e.message : "erro"}`);
+    }
+
+    // STEP 10: CONTENT TRANSMUTATION — Replicate best content across ALL platforms
+    try {
+      const { data: transQueue } = await supabase.from("settings").select("value").eq("key", "content_transmutation_queue").single();
+      const queue = (transQueue?.value as any)?.queue || [];
+      let transmuted = 0;
+
+      for (const trans of queue.slice(0, 3)) {
+        for (const target of (trans.target_platforms || []).slice(0, 2)) {
+          try {
+            const genRes = await fetch(`${supabaseUrl}/functions/v1/generate-content`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${supabaseKey}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                topic: trans.original_content,
+                channel: target.platform,
+                content_type: target.adapted_format || "reel",
+                viral_title: target.adapted_title,
+                hook: target.adaptation_notes,
+                is_transmutation: true,
+                source_platform: trans.original_platform,
+              }),
+            });
+            if (genRes.ok) transmuted++;
+          } catch (_) { /* continue on error */ }
+        }
+      }
+
+      if (transmuted > 0) {
+        (results as any).content_transmuted = transmuted;
+        await supabase.from("settings").upsert({
+          key: "content_transmutation_queue",
+          value: { queue: [], processed_at: new Date().toISOString(), last_count: transmuted },
+        }, { onConflict: "key" });
+      }
+    } catch (e) {
+      results.errors.push(`Transmutação: ${e instanceof Error ? e.message : "erro"}`);
+    }
+
     // Calculate avg viral score
     if (contentIds.length > 0) {
       const { data: scored } = await supabase
@@ -372,7 +428,7 @@ serve(async (req) => {
 
     await supabase.from("system_logs").insert({
       event_type: "sistema",
-      message: `🧠 Pipeline VIRAL concluído: ${results.researched} pesquisados, ${results.generated} gerados (score médio: ${results.viral_score_avg}), ${results.media} mídias, ${results.validated} validados, ${results.published} publicados, ${results.whatsapp_generated} WhatsApp, ${results.competitors_analyzed} vídeos rastreados, ${(results as any).channels_monitored || 0} canais monitorados, ${(results as any).profiles_optimized || 0} perfis otimizados`,
+      message: `🧠 Pipeline QUÂNTICO concluído (10 etapas): ${results.researched} pesquisados, ${results.generated} gerados (score médio: ${results.viral_score_avg}), ${results.media} mídias, ${results.validated} validados, ${results.published} publicados, ${results.whatsapp_generated} WhatsApp, ${results.competitors_analyzed} vídeos rastreados, ${(results as any).channels_monitored || 0} canais monitorados, ${(results as any).profiles_optimized || 0} perfis otimizados, Saúde: ${(results as any).health_score || 0}/100, Trajetória: ${(results as any).growth_trajectory || "?"}, ${(results as any).cross_adjustments || 0} ajustes cruzados, ${(results as any).content_transmuted || 0} transmutações`,
       level: results.errors.length > 0 ? "warning" : "info",
       metadata: results,
     });
