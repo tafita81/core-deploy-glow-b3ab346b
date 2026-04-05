@@ -12,12 +12,38 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const { data: contents } = useQuery({
     queryKey: ["dashboard-contents"],
     queryFn: async () => {
       const { data, error } = await supabase.from("contents").select("*");
       if (error) throw error;
       return data;
+    },
+  });
+
+  const pipelineMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("brain-pipeline");
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-contents"] });
+      queryClient.invalidateQueries({ queryKey: ["contents-queue"] });
+      queryClient.invalidateQueries({ queryKey: ["agent-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["topics-ranking"] });
+      queryClient.invalidateQueries({ queryKey: ["performance-chart"] });
+      const r = data?.results;
+      toast({
+        title: "🧠 Pipeline executado!",
+        description: `${r?.researched ?? 0} pesquisados, ${r?.generated ?? 0} gerados, ${r?.validated ?? 0} validados, ${r?.published ?? 0} publicados`,
+      });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Erro no pipeline", description: err.message, variant: "destructive" });
     },
   });
 
