@@ -65,6 +65,19 @@ Retorne EXATAMENTE um JSON com esta estrutura:
       "posting_frequency": "frequência"
     }
   ],
+  "top_10_ranking_mundial": [
+    {
+      "rank": 1,
+      "channel": "nome do canal/perfil",
+      "platform": "youtube|instagram|tiktok",
+      "country": "país de origem",
+      "followers": "número aproximado",
+      "why_trending_now": "por que está com mais acessos AGORA no mundo",
+      "top_video_title": "título do vídeo/post com mais views hoje",
+      "content_format": "formato que mais funciona",
+      "language": "idioma principal"
+    }
+  ],
   "topics": [
     {
       "topic": "slug-sem-acento",
