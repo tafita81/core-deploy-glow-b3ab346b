@@ -119,9 +119,14 @@ RANKING BRASIL — Analise o que está com MAIS ACESSOS AGORA nas 3 plataformas:
 - Quais vídeos de saúde mental estão na For You Page com mais views?
 - Quais sons/trends estão sendo usados nesse nicho?
 
-RANKEIE os TOP 10 canais/perfis com mais acessos NO MOMENTO — não se prenda aos mesmos de sempre. Descubra novos criadores que estão explodindo.
+RANKEIE os TOP 10 canais/perfis com mais acessos NO MOMENTO no Brasil.
 
-Gere 5 tópicos com títulos que SUPEREM os mais acessos do momento.
+🌍 RANKING MUNDIAL — Analise TAMBÉM os TOP 10 canais/perfis de psicologia, saúde mental, autoajuda e desenvolvimento pessoal com MAIS ACESSOS NO MUNDO INTEIRO:
+- Inclua criadores dos EUA, UK, Espanha, Índia, Alemanha, etc.
+- Canais como Psych2Go, Einzelgänger, Therapy in a Nutshell, etc. — mas descubra quem está EXPLODINDO AGORA
+- Foque em quem tem mais views HOJE, não apenas os maiores em seguidores
+
+Gere 5 tópicos com títulos que SUPEREM os mais acessos do momento (Brasil + Mundo).
 Cada título deve ser MELHOR que o #1 trending atual.`,
           },
         ],
