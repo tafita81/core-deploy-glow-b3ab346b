@@ -40,8 +40,8 @@ const Index = () => {
     : 0;
   const viralReady = contents?.filter((c) => (c.score ?? 0) >= 85).length ?? 0;
 
-  const competitors = viralIntel?.top_10_ranking_brasil || viralIntel?.competitor_analysis || [];
-  const worldRanking = viralIntel?.world_ranking || [];
+  const topVideosBrasil = viralIntel?.top_10_ranking_brasil || viralIntel?.competitor_analysis || [];
+  const topVideosMundial = viralIntel?.world_ranking || [];
   const monetization = viralIntel?.monetization_insights || {};
   const patterns = viralIntel?.viral_patterns || {};
   const momentum = viralIntel?.momentum_analysis || {};
@@ -97,9 +97,9 @@ const Index = () => {
             iconColor="bg-destructive/10 text-destructive"
           />
           <MetricCard
-            title="Concorrentes"
-            value={String(competitors.length)}
-            change="Analisados"
+            title="Vídeos Virais"
+            value={String(topVideosBrasil.length)}
+            change="Rankeados"
             changeType="neutral"
             icon={Users}
             iconColor="bg-accent/50 text-accent-foreground"
@@ -114,37 +114,42 @@ const Index = () => {
           />
         </div>
 
-        {/* Viral Intelligence Panel */}
-        {(competitors.length > 0 || worldRanking.length > 0 || (monetization.revenue_streams || []).length > 0) && (
+        {(topVideosBrasil.length > 0 || topVideosMundial.length > 0 || (monetization.revenue_streams || []).length > 0) && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {competitors.length > 0 && (
+            {topVideosBrasil.length > 0 && (
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    🇧🇷 Ranking Brasil — Top Canais AGORA
+                    🇧🇷 Top Vídeos Brasil — Mais Views AGORA
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {competitors.slice(0, 10).map((c: any, i: number) => (
+                  {topVideosBrasil.slice(0, 10).map((v: any, i: number) => (
                     <div key={i} className="flex items-start gap-2 text-xs">
-                      <span className="font-bold text-primary min-w-[20px]">#{c.rank || i + 1}</span>
+                      <span className="font-bold text-primary min-w-[20px]">#{v.rank || i + 1}</span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1">
                           <p className="font-medium truncate">
-                            {c.channel} <span className="text-muted-foreground">({c.platform})</span>
+                            🎬 {v.video_title || v.top_video_title || v.channel}
                           </p>
-                          {c.momentum_score && (
+                          {v.momentum_score && (
                             <Badge variant="secondary" className="text-[9px] shrink-0">
-                              ⚡{c.momentum_score}
+                              ⚡{v.momentum_score}
                             </Badge>
                           )}
                         </div>
-                        {c.growth_velocity && (
-                          <p className="text-[10px] text-success truncate">📈 {c.growth_velocity} • {c.acceleration || ''}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">
+                          {v.creator || v.channel} • {v.platform}
+                        </p>
+                        {v.total_views && (
+                          <p className="text-[10px] text-success font-medium">👁 {v.total_views}</p>
                         )}
-                        <p className="text-muted-foreground truncate">{c.why_growing_fast || c.why_trending_now || c.why_viral}</p>
-                        {c.top_video_title && (
-                          <p className="text-[10px] text-primary/70 truncate">📹 {c.top_video_title}</p>
+                        {(v.views_growth_1h || v.growth_velocity) && (
+                          <p className="text-[10px] text-success truncate">📈 {v.views_growth_1h || v.growth_velocity} • {v.acceleration || ''}</p>
+                        )}
+                        <p className="text-muted-foreground truncate">{v.why_viral || v.why_growing_fast}</p>
+                        {v.replication_strategy && (
+                          <p className="text-[10px] text-primary/70 truncate">🔁 {v.replication_strategy}</p>
                         )}
                       </div>
                     </div>
@@ -153,38 +158,40 @@ const Index = () => {
               </Card>
             )}
 
-            {worldRanking.length > 0 && (
+            {topVideosMundial.length > 0 && (
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    🌍 Ranking Mundial — Top Canais AGORA
+                    🌍 Top Vídeos Mundial — Mais Views AGORA
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {worldRanking.slice(0, 10).map((c: any, i: number) => (
+                  {topVideosMundial.slice(0, 10).map((v: any, i: number) => (
                     <div key={i} className="flex items-start gap-2 text-xs">
-                      <span className="font-bold text-primary min-w-[20px]">#{c.rank || i + 1}</span>
+                      <span className="font-bold text-primary min-w-[20px]">#{v.rank || i + 1}</span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1">
                           <p className="font-medium truncate">
-                            {c.channel} <span className="text-muted-foreground">({c.platform})</span>
-                            {c.country && <span className="text-muted-foreground ml-1">• {c.country}</span>}
+                            🎬 {v.video_title || v.top_video_title || v.channel}
                           </p>
-                          {c.momentum_score && (
+                          {v.momentum_score && (
                             <Badge variant="secondary" className="text-[9px] shrink-0">
-                              ⚡{c.momentum_score}
+                              ⚡{v.momentum_score}
                             </Badge>
                           )}
                         </div>
-                        {c.growth_velocity && (
-                          <p className="text-[10px] text-success truncate">📈 {c.growth_velocity} • {c.acceleration || ''}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">
+                          {v.creator || v.channel} • {v.platform} {v.country && `• ${v.country}`}
+                        </p>
+                        {v.total_views && (
+                          <p className="text-[10px] text-success font-medium">👁 {v.total_views}</p>
                         )}
-                        <p className="text-muted-foreground truncate">{c.why_growing_fast || c.why_trending_now}</p>
-                        {c.top_video_title && (
-                          <p className="text-[10px] text-primary/70 truncate">📹 {c.top_video_title}</p>
+                        {(v.views_growth_1h || v.growth_velocity) && (
+                          <p className="text-[10px] text-success truncate">📈 {v.views_growth_1h || v.growth_velocity} • {v.acceleration || ''}</p>
                         )}
-                        {c.insight_for_brazil && (
-                          <p className="text-[10px] text-success truncate">🇧🇷 {c.insight_for_brazil}</p>
+                        <p className="text-muted-foreground truncate">{v.why_viral || v.why_growing_fast}</p>
+                        {v.insight_for_brazil && (
+                          <p className="text-[10px] text-success truncate">🇧🇷 {v.insight_for_brazil}</p>
                         )}
                       </div>
                     </div>
@@ -217,16 +224,16 @@ const Index = () => {
           </div>
         )}
         {/* Momentum Analysis */}
-        {(momentum.fastest_growing_topic || (momentum.emerging_trends || []).length > 0) && (
+        {(momentum.hottest_video_now || momentum.fastest_growing_topic || (momentum.emerging_trends || momentum.emerging_videos || []).length > 0) && (
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">⚡ Análise de Momentum em Tempo Real</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {momentum.fastest_growing_topic && (
+              {(momentum.hottest_video_now || momentum.fastest_growing_topic) && (
                 <div className="text-xs">
-                  <span className="font-medium text-success">🚀 Tema com maior aceleração:</span>{" "}
-                  <span>{momentum.fastest_growing_topic}</span>
+                  <span className="font-medium text-success">🚀 Vídeo mais quente agora:</span>{" "}
+                  <span>{momentum.hottest_video_now || momentum.fastest_growing_topic}</span>
                 </div>
               )}
               {momentum.best_time_to_post && (

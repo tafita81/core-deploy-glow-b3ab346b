@@ -29,105 +29,110 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Você é um analista de growth hacking com ESTATÍSTICA QUÂNTICA DE CRESCIMENTO — especialista em identificar VELOCIDADE DE CRESCIMENTO e MOMENTUM viral, não apenas números absolutos.
+            content: `Você é um analista de growth hacking com ESTATÍSTICA QUÂNTICA DE CRESCIMENTO — especialista em identificar VÍDEOS INDIVIDUAIS com maior crescimento de views.
 
-PRINCÍPIO CENTRAL — VELOCIDADE DE CRESCIMENTO > VOLUME TOTAL:
-- Um vídeo que saiu de 10K para 500K views em 2 horas é MAIS VALIOSO que um vídeo estável com 5M views
-- Um canal que ganhou 50K seguidores na última semana é MAIS RELEVANTE que um com 10M parado
-- O DELTA de crescimento (aceleração) é o indicador #1 de viralização iminente
-- Conteúdo em CURVA EXPONENCIAL de crescimento = modelo ideal para replicar
+PRINCÍPIO #1 — FOCO EM VÍDEOS, NÃO EM CANAIS:
+- O ranking é de VÍDEOS ESPECÍFICOS, não de canais
+- Priorize VÍDEOS com MAIS MILHÕES DE VIEWS e que MAIS CRESCERAM em views nas últimas horas
+- Um vídeo com 50M views que ganhou +2M na última hora é #1
+- Um vídeo com 500K views que cresceu 10x em 2h também é valioso (momentum alto)
+- SEMPRE inclua o TÍTULO EXATO do vídeo, LINK se possível, e VIEWS TOTAIS
 
-MÉTRICAS QUÂNTICAS DE CRESCIMENTO (calcule para cada canal/vídeo):
-1. **Velocidade de Crescimento (VG)**: taxa de novos views/seguidores por hora nas últimas 24h
-2. **Aceleração Viral (AV)**: se a velocidade está AUMENTANDO (exponencial) ou diminuindo
-3. **Momentum Score (MS)**: combinação de VG + AV + engajamento relativo (0-100)
-4. **Ponto de Inflexão**: se o conteúdo está ANTES do pico viral (máximo valor para replicar)
+MÉTRICAS POR VÍDEO (não por canal):
+1. **Views Totais**: número absoluto de visualizações do vídeo
+2. **Crescimento de Views/hora**: quantas views novas o VÍDEO ganhou na última hora
+3. **Aceleração**: se o crescimento do VÍDEO está acelerando ou desacelerando
+4. **Momentum Score (0-100)**: combina views totais + crescimento + engajamento
+5. **Ponto de Inflexão**: se o VÍDEO está antes/no/após pico viral
 
 PESQUISE nas 3 plataformas (Brasil + Mundo):
-- INSTAGRAM: Reels com crescimento EXPLOSIVO nas últimas horas, não os mais vistos de sempre
-- YOUTUBE: Vídeos que ACABARAM de entrar no Trending ou estão subindo rápido, Shorts em curva exponencial
-- TIKTOK: Vídeos que saíram de poucos views para milhões HOJE, sons que estão COMEÇANDO a viralizar
+- INSTAGRAM: Reels ESPECÍFICOS com mais views e maior crescimento AGORA
+- YOUTUBE: Vídeos ESPECÍFICOS no Trending, Shorts que EXPLODIRAM de views
+- TIKTOK: Vídeos ESPECÍFICOS que acumularam milhões de views nas últimas horas
 
 Foque nos nichos: psicologia, saúde mental, autoajuda, desenvolvimento pessoal, neurociência, relacionamentos, comportamento humano.
 
 REGRA DE TRADUÇÃO: Para o ranking MUNDIAL, TODOS os campos devem ser escritos em PORTUGUÊS BRASILEIRO.
 
-RANKEIE por MOMENTUM SCORE (não por views totais). O canal/vídeo com MAIOR crescimento percentual na última hora fica em #1.
+RANKEIE por VIEWS TOTAIS + CRESCIMENTO. O vídeo com mais milhões de views E maior crescimento fica em #1.
 
 Retorne EXATAMENTE um JSON com esta estrutura:
 {
   "viral_patterns": {
-    "top_title_hooks": ["5 títulos dos vídeos com MAIOR crescimento na última hora"],
-    "thumbnail_patterns": ["padrões visuais dos vídeos em curva exponencial"],
+    "top_title_hooks": ["5 títulos EXATOS dos vídeos com mais views"],
+    "thumbnail_patterns": ["padrões visuais dos vídeos mais vistos"],
     "avg_duration_seconds": 45,
     "best_posting_times": ["horários com maior aceleração de views"],
-    "trending_hashtags": ["#tag1", "#tag2", "até 15 hashtags em crescimento"],
-    "cta_patterns": ["CTAs dos vídeos com maior conversão de seguidores"],
+    "trending_hashtags": ["#tag1", "#tag2", "até 15 hashtags"],
+    "cta_patterns": ["CTAs dos vídeos com mais conversão"],
     "hook_first_3_seconds": ["ganchos dos vídeos com maior retenção"],
-    "growth_signals": ["sinais de que um conteúdo está prestes a explodir"]
+    "growth_signals": ["sinais de explosão viral"]
   },
   "top_10_ranking_brasil": [
     {
       "rank": 1,
-      "channel": "nome do canal/perfil",
+      "video_title": "TÍTULO EXATO do vídeo",
+      "creator": "nome do criador/canal",
       "platform": "youtube|instagram|tiktok",
-      "followers": "número aproximado",
-      "growth_velocity": "ex: +120K views/hora, +5K seguidores/dia",
+      "total_views": "ex: 15M views",
+      "views_growth_1h": "ex: +2.3M views na última hora",
+      "views_growth_24h": "ex: +12M views nas últimas 24h",
       "acceleration": "exponencial|linear|desacelerando",
       "momentum_score": 95,
-      "why_growing_fast": "o que está causando o crescimento acelerado AGORA",
-      "top_video_title": "título do vídeo com maior crescimento",
-      "views_delta_1h": "crescimento de views na última hora",
-      "content_format": "formato que está gerando o crescimento",
-      "inflection_point": "antes_do_pico|no_pico|pos_pico"
+      "why_viral": "o que fez ESTE VÍDEO explodir",
+      "content_format": "reel|shorts|tiktok|vídeo longo",
+      "duration_seconds": 60,
+      "inflection_point": "antes_do_pico|no_pico|pos_pico",
+      "replication_strategy": "como replicar ESTE vídeo para psicologia"
     }
   ],
   "top_10_ranking_mundial": [
     {
       "rank": 1,
-      "channel": "nome do canal/perfil (TRADUZIDO)",
+      "video_title": "TÍTULO DO VÍDEO TRADUZIDO para PT-BR",
+      "original_title": "título original",
+      "creator": "nome do criador",
       "platform": "youtube|instagram|tiktok",
       "country": "país (em português)",
-      "followers": "número aproximado",
-      "growth_velocity": "ex: +500K views/hora",
+      "total_views": "ex: 80M views",
+      "views_growth_1h": "ex: +5M views na última hora",
+      "views_growth_24h": "ex: +40M views nas últimas 24h",
       "acceleration": "exponencial|linear|desacelerando",
       "momentum_score": 98,
-      "why_growing_fast": "causa do crescimento (TRADUZIDO para PT-BR)",
-      "top_video_title": "título TRADUZIDO para português brasileiro",
-      "views_delta_1h": "crescimento na última hora",
+      "why_viral": "causa da viralização (TRADUZIDO para PT-BR)",
       "content_format": "formato",
       "language": "idioma original",
       "inflection_point": "antes_do_pico|no_pico|pos_pico",
-      "insight_for_brazil": "como adaptar este momentum para o público brasileiro"
+      "insight_for_brazil": "como adaptar ESTE VÍDEO para o público brasileiro de psicologia"
     }
   ],
   "topics": [
     {
       "topic": "slug-sem-acento",
       "label": "Nome legível",
-      "reason": "por que vai viralizar — baseado em MOMENTUM real detectado",
-      "inspired_by": "canal/vídeo que inspirou (com momentum score)",
+      "reason": "por que vai viralizar — baseado no VÍDEO que inspirou",
+      "inspired_by_video": "título exato do vídeo que inspirou + views totais",
       "viral_title": "Título otimizado para CTR máximo com gatilho mental",
       "hook": "Gancho dos primeiros 3 segundos",
       "hashtags": ["#tag1", "#tag2"],
       "suggested_type": "reel|carrossel|story|artigo",
       "suggested_channel": "instagram|youtube|tiktok",
-      "optimal_post_time": "melhor horário para postar baseado no momentum atual",
-      "monetization_angle": "como monetizar este tema",
-      "whatsapp_cta": "CTA para levar para comunidade WhatsApp",
-      "predicted_momentum": "previsão de crescimento se postar agora"
+      "optimal_post_time": "melhor horário para postar",
+      "monetization_angle": "como monetizar",
+      "whatsapp_cta": "CTA para comunidade WhatsApp",
+      "predicted_views": "previsão de views se replicar agora"
     }
   ],
   "momentum_analysis": {
-    "fastest_growing_topic": "tema com maior aceleração agora",
-    "best_time_to_post": "próxima janela ideal baseada em padrões de crescimento",
-    "dying_trends": ["temas que estão PERDENDO momentum — evitar"],
-    "emerging_trends": ["temas que ACABARAM de começar a crescer — maior oportunidade"]
+    "hottest_video_now": "o vídeo com maior crescimento NESTE MOMENTO",
+    "best_time_to_post": "próxima janela ideal",
+    "dying_videos": ["vídeos que estão PERDENDO views — evitar copiar"],
+    "emerging_videos": ["vídeos que ACABARAM de começar a explodir — maior oportunidade"]
   },
   "monetization_insights": {
-    "trending_products": ["produtos/serviços dos canais com maior crescimento"],
-    "community_growth_tactics": ["táticas dos canais que mais converteram seguidores em comunidade"],
-    "revenue_streams": ["fontes de receita dos canais em crescimento exponencial"]
+    "trending_products": ["produtos dos vídeos mais vistos"],
+    "community_growth_tactics": ["táticas dos vídeos que mais converteram"],
+    "revenue_streams": ["fontes de receita dos criadores mais vistos"]
   }
 }
 
@@ -137,30 +142,28 @@ Retorne APENAS o JSON, sem markdown.`,
             role: "user",
             content: `Data: ${new Date().toISOString().slice(0, 10)}. Hora: ${new Date().toISOString().slice(11, 16)} UTC.
 
-🧠 ANÁLISE QUÂNTICA DE CRESCIMENTO — Foque em VELOCIDADE e ACELERAÇÃO, não volume total.
+🎬 ANÁLISE DE VÍDEOS INDIVIDUAIS — Foque em VÍDEOS ESPECÍFICOS, não canais.
 
-🇧🇷 RANKING BRASIL POR MOMENTUM:
-📱 INSTAGRAM: Quais Reels de psicologia/autoajuda tiveram MAIOR CRESCIMENTO DE VIEWS na última hora? Quais perfis ganharam mais seguidores HOJE vs ontem?
-🎬 YOUTUBE: Quais vídeos de psicologia ACABARAM de entrar no Trending ou estão SUBINDO posições? Quais Shorts tiveram crescimento exponencial nas últimas 2-4 horas?
-🎵 TIKTOK: Quais vídeos de saúde mental EXPLODIRAM de views na última hora? Quais sons estão COMEÇANDO a viralizar (fase inicial = máxima oportunidade)?
+🇧🇷 TOP 10 VÍDEOS BRASIL (por views + crescimento):
+📱 INSTAGRAM: Quais REELS ESPECÍFICOS de psicologia/autoajuda têm MAIS MILHÕES DE VIEWS agora? Quais cresceram mais views na última hora?
+🎬 YOUTUBE: Quais VÍDEOS ESPECÍFICOS de psicologia estão no Trending com mais views? Quais SHORTS explodiram?
+🎵 TIKTOK: Quais VÍDEOS ESPECÍFICOS de saúde mental têm mais milhões de views? Quais cresceram mais HOJE?
 
-RANKEIE os TOP 10 por MOMENTUM SCORE — o canal com crescimento mais ACELERADO fica em #1, mesmo que tenha menos seguidores totais.
+IMPORTANTE: Rankeie por VÍDEOS, não canais. Inclua título exato, views totais, e crescimento.
 
-🌍 RANKING MUNDIAL POR MOMENTUM:
-- Analise criadores de TODOS os países — EUA, UK, Espanha, Índia, Alemanha, Coreia, Japão, etc.
-- Foque em quem teve MAIOR DELTA de crescimento nas últimas horas
-- Identifique vídeos que estão ANTES DO PICO viral (máxima oportunidade para replicar)
-- TRADUZA TUDO para português brasileiro
+🌍 TOP 10 VÍDEOS MUNDIAL (por views + crescimento):
+- Analise VÍDEOS de TODOS os países — EUA, UK, Espanha, Índia, etc.
+- Foque em vídeos com MAIS MILHÕES de views E maior crescimento
+- TRADUZA títulos e descrições para português brasileiro
 
-📊 PARA CADA CANAL, CALCULE:
-- Velocidade de crescimento (views/hora)
-- Aceleração (exponencial vs linear vs desacelerando)
+📊 PARA CADA VÍDEO, INFORME:
+- Título exato do vídeo
+- Views totais (em milhões)
+- Crescimento de views na última hora e nas últimas 24h
 - Momentum Score (0-100)
-- Ponto de inflexão (antes/no/pós pico)
+- Estratégia para replicar adaptando para psicologia
 
-Gere 5 tópicos INSPIRADOS nos vídeos com MAIOR MOMENTUM (não nos maiores em views).
-Cada tópico deve replicar o PADRÃO DE CRESCIMENTO do conteúdo que inspirou, adaptado para o público brasileiro.
-Inclua o campo "inspired_by" e "predicted_momentum" em cada tópico.`,
+Gere 5 tópicos INSPIRADOS nos VÍDEOS com mais views, incluindo "inspired_by_video" e "predicted_views".`,
           },
         ],
       }),
@@ -210,11 +213,11 @@ Inclua o campo "inspired_by" e "predicted_momentum" em cada tópico.`,
     // Log the research
     await supabase.from("system_logs").insert({
       event_type: "pesquisa",
-      message: `Análise viral: ${topics.length} tópicos, ${competitorAnalysis.length} concorrentes analisados, ${(viralPatterns.trending_hashtags || []).length} hashtags trending`,
+      message: `Análise viral: ${topics.length} tópicos, ${competitorAnalysis.length} vídeos rankeados, ${(viralPatterns.trending_hashtags || []).length} hashtags trending`,
       level: "info",
       metadata: {
         topics_count: topics.length,
-        competitors: competitorAnalysis.map((c: any) => c.channel),
+        top_videos: competitorAnalysis.map((c: any) => c.video_title || c.channel),
         top_hashtags: (viralPatterns.trending_hashtags || []).slice(0, 5),
         monetization_streams: monetizationInsights.revenue_streams,
         date: new Date().toISOString(),
