@@ -210,17 +210,15 @@ export default function ContentPage() {
                         <Shield className={`h-4 w-4 ${item.ethics_valid ? "text-success" : "text-destructive"}`} />
                         <span className="text-xs">Ética {item.ethics_valid ? "✓" : "✗"}</span>
                       </div>
+                      {item.status === "publicado" && (
+                        <Badge variant="default" className="ml-auto text-[10px]">
+                          ✅ Publicado automaticamente
+                        </Badge>
+                      )}
                       {item.status !== "publicado" && (
-                        <div className="ml-auto flex gap-2">
-                          <Button
-                            size="sm"
-                            className="bg-gradient-primary text-primary-foreground"
-                            onClick={() => publishMutation.mutate(item.id)}
-                            disabled={publishMutation.isPending}
-                          >
-                            <Send className="h-3 w-3 mr-1" /> Publicar
-                          </Button>
-                        </div>
+                        <Badge variant="outline" className="ml-auto text-[10px]">
+                          ⏳ Aguardando pipeline automático
+                        </Badge>
                       )}
                     </div>
                   </CardContent>
