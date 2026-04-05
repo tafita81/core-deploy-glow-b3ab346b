@@ -166,6 +166,7 @@ Cada título deve ser MELHOR que o #1 trending atual.`,
       value: {
         viral_patterns: viralPatterns,
         competitor_analysis: competitorAnalysis,
+        world_ranking: worldRanking,
         monetization_insights: monetizationInsights,
         updated_at: new Date().toISOString(),
       },
