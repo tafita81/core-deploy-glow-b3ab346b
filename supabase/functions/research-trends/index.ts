@@ -444,7 +444,8 @@ serve(async (req) => {
 
     console.log(`Data fetched — Called: ${apisCalled.join(",")} | Skipped: ${apisSkipped.join(",") || "none"} | Google: ${googleTrends.length}, YT BR: ${ytBR.length}, YT US: ${ytUS.length}, Reddit: ${redditPosts.length}, News: ${news.length}`);
 
-    // Build rankings — sorted by VIDEO views (not channel views)
+    // Build rankings — sorted by VIDEO views, focused on psychology/mental health
+    // BRASIL — trending + psicologia
     const brRanking = [...ytBR, ...ytNicheBR]
       .sort((a: any, b: any) => (b.raw_views || 0) - (a.raw_views || 0))
       .slice(0, 10)
@@ -452,20 +453,27 @@ serve(async (req) => {
         ...v,
         rank: i + 1,
         momentum_score: Math.max(50, 95 - i * 5),
-        why_relevant: `Vídeo com ${v.total_views || "N/A"} views`,
+        why_relevant: `🇧🇷 ${v.total_views || "N/A"} views`,
       }));
 
-    const worldRanking = [...ytUS, ...ytNicheEN]
+    // MUNDIAL (EUA + Europa) — prioridade máxima, menos riscos de conteúdo
+    const worldRanking = [...ytUS, ...ytNicheEN, ...ytGB, ...ytNicheDE]
+      .filter((v: any) => v.region !== "BR") // excluir Brasil
       .sort((a: any, b: any) => (b.raw_views || 0) - (a.raw_views || 0))
-      .slice(0, 10)
-      .map((v: any, i: number) => ({
-        ...v,
-        rank: i + 1,
-        momentum_score: Math.max(50, 95 - i * 5),
-        country: v.region === "US" ? "Estados Unidos" : "Internacional",
-        why_relevant: `Vídeo com ${v.total_views || "N/A"} views`,
-        adaptation_guide: "Traduzir e adaptar para o contexto brasileiro",
-      }));
+      .slice(0, 15) // mais vídeos no mundial (prioridade)
+      .map((v: any, i: number) => {
+        const regionMap: Record<string, string> = { US: "🇺🇸 EUA", GB: "🇬🇧 Reino Unido", DE: "🇩🇪 Alemanha" };
+        const country = regionMap[v.region] || "🌍 Internacional";
+        return {
+          ...v,
+          rank: i + 1,
+          momentum_score: Math.max(50, 98 - i * 3), // scores mais altos (prioridade)
+          country,
+          why_relevant: `${country} — ${v.total_views || "N/A"} views`,
+          adaptation_guide: "Traduzir, adaptar culturalmente e focar no gancho emocional para público BR",
+          risk_level: "baixo",
+        };
+      });
 
     // Save results
     const viralData = {
