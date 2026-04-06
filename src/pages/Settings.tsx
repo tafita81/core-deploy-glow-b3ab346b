@@ -481,6 +481,17 @@ export default function SettingsPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="px-4 pb-3 space-y-2.5">
+                    {/* Setup Guide */}
+                    {(platform as any).setupGuide && (
+                      <div className="rounded-md bg-accent/50 border border-border p-3 mb-2">
+                        <p className="text-[11px] font-medium text-foreground mb-1.5">📋 Passo a passo para obter:</p>
+                        <ol className="space-y-0.5">
+                          {(platform as any).setupGuide.map((step: string, i: number) => (
+                            <li key={i} className="text-[10px] text-muted-foreground leading-relaxed">{step}</li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
                     {platform.fields.map((field) => (
                       <div key={field.key} className="space-y-1">
                         <Label className="text-[11px]">{field.label}</Label>
