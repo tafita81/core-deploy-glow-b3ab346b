@@ -190,6 +190,7 @@ export default function SettingsPage() {
     if (settings) {
       const heygenKey = settings.find((s) => s.key === "heygen_api_key")?.value;
       const elevenKey = settings.find((s) => s.key === "elevenlabs_api_key")?.value;
+      const amazonConfig = settings.find((s) => s.key === "amazon_affiliate_tag")?.value as any;
       const saved: Record<string, boolean> = {};
       const vals: Record<string, string> = {};
       if (heygenKey && typeof heygenKey === "string" && heygenKey.length > 0) {
@@ -199,6 +200,11 @@ export default function SettingsPage() {
       if (elevenKey && typeof elevenKey === "string" && elevenKey.length > 0) {
         saved.elevenlabs = true;
         vals.elevenlabs = elevenKey;
+      }
+      if (amazonConfig?.tag) {
+        saved.amazon = true;
+        vals.amazon_tag = amazonConfig.tag;
+        if (amazonConfig.store_id) vals.amazon_store_id = amazonConfig.store_id;
       }
       setSavedApiKeys(saved);
       setApiKeys((prev) => ({ ...vals, ...prev }));
