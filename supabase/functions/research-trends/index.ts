@@ -185,9 +185,11 @@ async function fetchYouTubeTrending(apiKey: string, regionCode: string): Promise
       creator: item.snippet?.channelTitle || "",
       creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
       total_views: formatViews(item.statistics?.viewCount),
+      raw_views: parseInt(item.statistics?.viewCount || "0"),
+      likes: parseInt(item.statistics?.likeCount || "0"),
+      comments: parseInt(item.statistics?.commentCount || "0"),
       platform: "youtube",
       region: regionCode,
-      category: item.snippet?.categoryId,
       published_at: item.snippet?.publishedAt,
     }));
   } catch (e) {
@@ -199,15 +201,36 @@ async function fetchYouTubeTrending(apiKey: string, regionCode: string): Promise
 async function searchYouTubeNiche(apiKey: string, query: string): Promise<any[]> {
   try {
     const q = encodeURIComponent(query);
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${q}&type=video&order=viewCount&publishedAfter=${getDateDaysAgo(7)}&maxResults=10&key=${apiKey}`;
-    const res = await fetch(url);
+    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${q}&type=video&order=viewCount&publishedAfter=${getDateDaysAgo(7)}&maxResults=10&key=${apiKey}`;
+    const res = await fetch(searchUrl);
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.items || []).map((item: any) => ({
+    const videoIds = (data.items || []).map((item: any) => item.id?.videoId).filter(Boolean);
+    if (videoIds.length === 0) return [];
+
+    // Fetch actual view counts for each video
+    const statsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${videoIds.join(",")}&key=${apiKey}`;
+    const statsRes = await fetch(statsUrl);
+    if (!statsRes.ok) {
+      // Fallback without stats
+      return (data.items || []).map((item: any) => ({
+        video_title: item.snippet?.title || "",
+        video_url: `https://www.youtube.com/watch?v=${item.id?.videoId}`,
+        creator: item.snippet?.channelTitle || "",
+        platform: "youtube",
+        published_at: item.snippet?.publishedAt,
+      }));
+    }
+    const statsData = await statsRes.json();
+    return (statsData.items || []).map((item: any) => ({
       video_title: item.snippet?.title || "",
-      video_url: `https://www.youtube.com/watch?v=${item.id?.videoId}`,
+      video_url: `https://www.youtube.com/watch?v=${item.id}`,
       creator: item.snippet?.channelTitle || "",
       creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
+      total_views: formatViews(item.statistics?.viewCount),
+      raw_views: parseInt(item.statistics?.viewCount || "0"),
+      likes: parseInt(item.statistics?.likeCount || "0"),
+      comments: parseInt(item.statistics?.commentCount || "0"),
       platform: "youtube",
       published_at: item.snippet?.publishedAt,
     }));
@@ -414,22 +437,28 @@ serve(async (req) => {
 
     console.log(`Data fetched — Called: ${apisCalled.join(",")} | Skipped: ${apisSkipped.join(",") || "none"} | Google: ${googleTrends.length}, YT BR: ${ytBR.length}, YT US: ${ytUS.length}, Reddit: ${redditPosts.length}, News: ${news.length}`);
 
-    // Build rankings
-    const brRanking = [...ytBR, ...ytNicheBR].slice(0, 10).map((v: any, i: number) => ({
-      ...v,
-      rank: i + 1,
-      momentum_score: Math.max(50, 95 - i * 5),
-      why_relevant: "Vídeo real do YouTube Trending/Search",
-    }));
+    // Build rankings — sorted by VIDEO views (not channel views)
+    const brRanking = [...ytBR, ...ytNicheBR]
+      .sort((a: any, b: any) => (b.raw_views || 0) - (a.raw_views || 0))
+      .slice(0, 10)
+      .map((v: any, i: number) => ({
+        ...v,
+        rank: i + 1,
+        momentum_score: Math.max(50, 95 - i * 5),
+        why_relevant: `Vídeo com ${v.total_views || "N/A"} views`,
+      }));
 
-    const worldRanking = [...ytUS, ...ytNicheEN].slice(0, 10).map((v: any, i: number) => ({
-      ...v,
-      rank: i + 1,
-      momentum_score: Math.max(50, 95 - i * 5),
-      country: v.region === "US" ? "Estados Unidos" : "Internacional",
-      why_relevant: "Vídeo real do YouTube Trending/Search mundial",
-      adaptation_guide: "Traduzir e adaptar para o contexto brasileiro",
-    }));
+    const worldRanking = [...ytUS, ...ytNicheEN]
+      .sort((a: any, b: any) => (b.raw_views || 0) - (a.raw_views || 0))
+      .slice(0, 10)
+      .map((v: any, i: number) => ({
+        ...v,
+        rank: i + 1,
+        momentum_score: Math.max(50, 95 - i * 5),
+        country: v.region === "US" ? "Estados Unidos" : "Internacional",
+        why_relevant: `Vídeo com ${v.total_views || "N/A"} views`,
+        adaptation_guide: "Traduzir e adaptar para o contexto brasileiro",
+      }));
 
     // Save results
     const viralData = {
