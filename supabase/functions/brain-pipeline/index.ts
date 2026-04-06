@@ -309,23 +309,47 @@ serve(async (req) => {
       }
     }
 
-    // STEP 6: GENERATE WHATSAPP COMMUNITY CONTENT
-    const whatsappTypes = ["conversa", "dica_rapida", "enquete"];
-    for (let i = 0; i < Math.min(2, whatsappTypes.length); i++) {
+    // STEP 6: GENERATE WHATSAPP COMMUNITY CONTENT (includes book catalog)
+    const whatsappTypes = ["conversa", "dica_rapida", "enquete", "recomendacao", "catalogo_sutil"];
+    // Rotate: 2 regular types + 1 book recommendation per run
+    const regularTypes = whatsappTypes.slice(0, 3);
+    const bookTypes = whatsappTypes.slice(3);
+    const typesToGenerate = [
+      regularTypes[Math.floor(Math.random() * regularTypes.length)],
+      regularTypes[Math.floor(Math.random() * regularTypes.length)],
+      bookTypes[Math.floor(Math.random() * bookTypes.length)], // Always include a book rec
+    ];
+
+    for (const tipo of typesToGenerate) {
       try {
         const whatsappRes = await fetch(`${supabaseUrl}/functions/v1/generate-whatsapp-content`, {
           method: "POST",
           headers: { Authorization: `Bearer ${supabaseKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             group_type: "geral",
-            content_type: whatsappTypes[i],
+            content_type: tipo,
             source_content_id: contentIds[0] || null,
           }),
         });
         if (whatsappRes.ok) results.whatsapp_generated++;
       } catch (e) {
-        results.errors.push(`WhatsApp ${whatsappTypes[i]}: ${e instanceof Error ? e.message : "erro"}`);
+        results.errors.push(`WhatsApp ${tipo}: ${e instanceof Error ? e.message : "erro"}`);
       }
+    }
+
+    // STEP 6.5: CURATE AMAZON BOOK CATALOG (runs every cycle to stay fresh)
+    try {
+      const bookRes = await fetch(`${supabaseUrl}/functions/v1/curate-amazon-books`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${supabaseKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ platform: "todas" }),
+      });
+      if (bookRes.ok) {
+        const bookData = await bookRes.json();
+        (results as any).books_curated = (bookData.catalog || []).length;
+      }
+    } catch (e) {
+      results.errors.push(`Curadoria livros: ${e instanceof Error ? e.message : "erro"}`);
     }
 
     // STEP 7: MONITOR ALL CHANNELS — Real-time metrics & profile data
