@@ -118,7 +118,7 @@ REGRAS DE CURADORIA:
 3. Priorize edições em PORTUGUÊS
 4. Mix baseado no que seguidores PEDEM (não fórmula fixa)
 5. Variação de preço (barato + médio + premium)
-6. Micro-resenha PESSOAL (como estudante de psicologia falaria para amigas)
+6. Micro-resenha PESSOAL (como alguém apaixonada por saúde mental falaria — NUNCA mencionar formação)
 7. NUNCA repita livros que já estão no catálogo existente
 
 FORMATOS DE LINK:
