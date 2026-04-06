@@ -179,38 +179,56 @@ async function fetchYouTubeTrending(apiKey: string, regionCode: string): Promise
       return [];
     }
     const data = await res.json();
-    return (data.items || []).map((item: any) => ({
-      video_title: item.snippet?.title || "",
-      description: item.snippet?.description || "",
-      channel_title: item.snippet?.channelTitle || "",
-      video_url: `https://www.youtube.com/watch?v=${item.id}`,
-      creator: item.snippet?.channelTitle || "",
-      creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
-      total_views: formatViews(item.statistics?.viewCount),
-      raw_views: parseInt(item.statistics?.viewCount || "0"),
-      likes: parseInt(item.statistics?.likeCount || "0"),
-      comments: parseInt(item.statistics?.commentCount || "0"),
-      platform: "youtube",
-      region: regionCode,
-      published_at: item.snippet?.publishedAt,
-    }));
+    const now = Date.now();
+    return (data.items || []).map((item: any) => {
+      const rawViews = parseInt(item.statistics?.viewCount || "0");
+      const likes = parseInt(item.statistics?.likeCount || "0");
+      const comments = parseInt(item.statistics?.commentCount || "0");
+      const publishedAt = item.snippet?.publishedAt;
+      const ageMs = now - new Date(publishedAt || now).getTime();
+      const ageDays = Math.max(1, ageMs / 86400000);
+      const viewsPerDay = Math.round(rawViews / ageDays);
+      const engagementRate = rawViews > 0 ? (likes + comments) / rawViews : 0;
+      const engMultiplier = 1 + Math.min(1, engagementRate * 20);
+      const viralScore = Math.round(viewsPerDay * engMultiplier);
+
+      return {
+        video_title: item.snippet?.title || "",
+        description: item.snippet?.description || "",
+        channel_title: item.snippet?.channelTitle || "",
+        video_url: `https://www.youtube.com/watch?v=${item.id}`,
+        creator: item.snippet?.channelTitle || "",
+        creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
+        total_views: formatViews(item.statistics?.viewCount),
+        raw_views: rawViews,
+        likes,
+        comments,
+        platform: "youtube",
+        region: regionCode,
+        published_at: publishedAt,
+        age_days: Math.round(ageDays),
+        views_per_day: viewsPerDay,
+        engagement_rate: Math.round(engagementRate * 10000) / 100,
+        viral_score: viralScore,
+      };
+    });
   } catch (e) {
     console.error(`YouTube API error for ${regionCode}:`, e);
     return [];
   }
 }
 
-async function searchYouTubeNiche(apiKey: string, query: string, daysBack = 30): Promise<any[]> {
+async function searchYouTubeNiche(apiKey: string, query: string, daysBack = 14): Promise<any[]> {
   try {
     const q = encodeURIComponent(query);
-    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${q}&type=video&order=viewCount&publishedAfter=${getDateDaysAgo(daysBack)}&maxResults=15&key=${apiKey}`;
+    // order=viewCount + recent period = explosive new videos
+    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${q}&type=video&order=viewCount&publishedAfter=${getDateDaysAgo(daysBack)}&maxResults=20&key=${apiKey}`;
     const res = await fetch(searchUrl);
     if (!res.ok) return [];
     const data = await res.json();
     const videoIds = (data.items || []).map((item: any) => item.id?.videoId).filter(Boolean);
     if (videoIds.length === 0) return [];
 
-    // Fetch actual view counts for each video
     const statsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${videoIds.join(",")}&key=${apiKey}`;
     const statsRes = await fetch(statsUrl);
     if (!statsRes.ok) {
@@ -220,25 +238,52 @@ async function searchYouTubeNiche(apiKey: string, query: string, daysBack = 30):
         creator: item.snippet?.channelTitle || "",
         platform: "youtube",
         published_at: item.snippet?.publishedAt,
+        raw_views: 0,
       }));
     }
     const statsData = await statsRes.json();
+    const now = Date.now();
     return (statsData.items || [])
-      .map((item: any) => ({
-        video_title: item.snippet?.title || "",
-        description: item.snippet?.description || "",
-        channel_title: item.snippet?.channelTitle || "",
-        video_url: `https://www.youtube.com/watch?v=${item.id}`,
-        creator: item.snippet?.channelTitle || "",
-        creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
-        total_views: formatViews(item.statistics?.viewCount),
-        raw_views: parseInt(item.statistics?.viewCount || "0"),
-        likes: parseInt(item.statistics?.likeCount || "0"),
-        comments: parseInt(item.statistics?.commentCount || "0"),
-        platform: "youtube",
-        published_at: item.snippet?.publishedAt,
-      }))
-      .filter((v: any) => v.raw_views >= 1000000); // Only videos with 1M+ views
+      .map((item: any) => {
+        const rawViews = parseInt(item.statistics?.viewCount || "0");
+        const likes = parseInt(item.statistics?.likeCount || "0");
+        const comments = parseInt(item.statistics?.commentCount || "0");
+        const publishedAt = item.snippet?.publishedAt;
+        
+        // Calculate age in days and views/day velocity
+        const ageMs = now - new Date(publishedAt || now).getTime();
+        const ageDays = Math.max(1, ageMs / 86400000);
+        const viewsPerDay = Math.round(rawViews / ageDays);
+        
+        // Engagement rate: (likes + comments) / views — higher = more followers potential
+        const engagementRate = rawViews > 0 ? (likes + comments) / rawViews : 0;
+        // Engagement multiplier: 1.0 (baseline) up to 2.0 (exceptional engagement)
+        const engMultiplier = 1 + Math.min(1, engagementRate * 20);
+        
+        // VIRAL SCORE = views/day × engagement multiplier
+        // This prioritizes FAST-GROWING videos that also convert to followers
+        const viralScore = Math.round(viewsPerDay * engMultiplier);
+        
+        return {
+          video_title: item.snippet?.title || "",
+          description: item.snippet?.description || "",
+          channel_title: item.snippet?.channelTitle || "",
+          video_url: `https://www.youtube.com/watch?v=${item.id}`,
+          creator: item.snippet?.channelTitle || "",
+          creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
+          total_views: formatViews(item.statistics?.viewCount),
+          raw_views: rawViews,
+          likes,
+          comments,
+          platform: "youtube",
+          published_at: publishedAt,
+          age_days: Math.round(ageDays),
+          views_per_day: viewsPerDay,
+          engagement_rate: Math.round(engagementRate * 10000) / 100, // percentage
+          viral_score: viralScore,
+        };
+      })
+      .filter((v: any) => v.raw_views >= 500000); // 500K+ views minimum
   } catch (e) {
     console.error("YouTube search error:", e);
     return [];
@@ -356,14 +401,14 @@ serve(async (req) => {
     if (youtubeApiKey) {
       const check = await canCallApi(supabase, "youtube", currentHour, forceAll);
       if (check.allowed) {
-        // BRASIL — trending geral + busca focada em psicologia (30 dias, mais resultados)
+        // BRASIL — trending geral + buscas focadas (14 dias, vídeos explosivos)
         promises.push(fetchYouTubeTrending(youtubeApiKey, "BR"));
-        promises.push(searchYouTubeNiche(youtubeApiKey, "psicologia saúde mental ansiedade depressão terapia", 30));
-        // MUNDIAL (EUA + Europa) — prioridade, menos riscos
+        promises.push(searchYouTubeNiche(youtubeApiKey, "psicologia ansiedade depressão autoconhecimento narcisismo terapia", 14));
+        // MUNDIAL — máxima prioridade para adaptação BR
         promises.push(fetchYouTubeTrending(youtubeApiKey, "US"));
-        promises.push(searchYouTubeNiche(youtubeApiKey, "psychology mental health anxiety depression therapy self improvement", 30));
-        promises.push(fetchYouTubeTrending(youtubeApiKey, "GB")); // Reino Unido
-        promises.push(searchYouTubeNiche(youtubeApiKey, "psychology therapy mental health motivational", 30)); // broader
+        promises.push(searchYouTubeNiche(youtubeApiKey, "psychology anxiety depression narcissist therapy self improvement motivation", 14));
+        promises.push(fetchYouTubeTrending(youtubeApiKey, "GB"));
+        promises.push(searchYouTubeNiche(youtubeApiKey, "mental health emotional intelligence toxic people stoicism mindset", 14));
         apisCalled.push("youtube");
       } else {
         apisSkipped.push(`youtube (${check.reason})`);
@@ -496,30 +541,33 @@ serve(async (req) => {
       return descMatches.length >= 3;
     }
 
-    // Build rankings — sorted by VIDEO views, ONLY psychology/mental health
-    // Minimum view thresholds to ensure quality rankings
-    const MIN_VIEWS_BR = 1000000;      // 1M minimum for Brazil
-    const MIN_VIEWS_WORLD = 1000000;   // 1M minimum for World
+    // ===== RANKING STRATEGY: MÁXIMA VIRALIZAÇÃO + MONETIZAÇÃO =====
+    // Critério: vídeos NOVOS (últimos 14 dias) que EXPLODIRAM
+    // Ranking por VIRAL SCORE = (views/dia) × engagement_multiplier
+    // Isso encontra vídeos que estão crescendo AGORA — ideal para surfar a onda
+    // Mínimo: 500K views (em 14 dias = crescimento real, não vídeo antigo)
+    
+    const MIN_VIEWS = 500000; // 500K — vídeos que realmente explodiram
 
-    // BRASIL — trending + psicologia (filtrado + mínimo de views)
+    // BRASIL — trending + psicologia (ordenado por viral_score)
     const brRanking = [...ytBR, ...ytNicheBR]
       .filter(isPsychRelated)
-      .filter((v: any) => (v.raw_views || 0) >= MIN_VIEWS_BR)
-      .sort((a: any, b: any) => (b.raw_views || 0) - (a.raw_views || 0))
+      .filter((v: any) => (v.raw_views || 0) >= MIN_VIEWS)
+      .sort((a: any, b: any) => (b.viral_score || b.raw_views || 0) - (a.viral_score || a.raw_views || 0))
       .slice(0, 10)
       .map((v: any, i: number) => ({
         ...v,
         rank: i + 1,
         momentum_score: Math.max(50, 95 - i * 5),
-        why_relevant: `🇧🇷 ${v.total_views || "N/A"} views`,
+        why_relevant: `🇧🇷 ${v.total_views} • ${formatViews(String(v.views_per_day || 0))}/dia • ${v.age_days || "?"}d • Eng: ${v.engagement_rate || 0}%`,
       }));
 
-    // MUNDIAL (EUA + Europa) — prioridade máxima, FILTRADO psicologia + mínimo de views
+    // MUNDIAL — prioridade máxima, ordenado por viral_score
     const worldRanking = [...ytUS, ...ytNicheEN, ...ytGB, ...ytNicheDE]
       .filter((v: any) => v.region !== "BR")
       .filter(isPsychRelated)
-      .filter((v: any) => (v.raw_views || 0) >= MIN_VIEWS_WORLD)
-      .sort((a: any, b: any) => (b.raw_views || 0) - (a.raw_views || 0))
+      .filter((v: any) => (v.raw_views || 0) >= MIN_VIEWS)
+      .sort((a: any, b: any) => (b.viral_score || b.raw_views || 0) - (a.viral_score || a.raw_views || 0))
       .slice(0, 15)
       .map((v: any, i: number) => {
         const regionMap: Record<string, string> = { US: "🇺🇸 EUA", GB: "🇬🇧 Reino Unido", DE: "🇩🇪 Alemanha" };
@@ -529,7 +577,7 @@ serve(async (req) => {
           rank: i + 1,
           momentum_score: Math.max(50, 98 - i * 3),
           country,
-          why_relevant: `${country} — ${v.total_views || "N/A"} views`,
+          why_relevant: `${country} • ${v.total_views} • ${formatViews(String(v.views_per_day || 0))}/dia • ${v.age_days || "?"}d • Eng: ${v.engagement_rate || 0}%`,
           adaptation_guide: "Traduzir, adaptar culturalmente e focar no gancho emocional para público BR",
           risk_level: "baixo",
         };
