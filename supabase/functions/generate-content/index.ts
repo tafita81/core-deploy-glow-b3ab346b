@@ -109,8 +109,8 @@ FUNIL SOCIAL → WHATSAPP:
 - Use: "Tem muito mais no nosso grupo gratuito — link na bio 💬"
 
 REGRAS ÉTICAS (INVIOLÁVEIS):
-- NUNCA mencione "psicóloga", "dra.", "consultório", "atendimento" — ela é ESTUDANTE
-- Nunca faça diagnósticos
+- NUNCA mencione "psicóloga", "dra.", "consultório", "atendimento", "estudante de psicologia", "futura psicóloga"
+- NUNCA mencione formação acadêmica, faculdade ou universidade
 - Nunca prometa curas
 - Use linguagem acolhedora e acessível
 - Cite referências científicas quando possível

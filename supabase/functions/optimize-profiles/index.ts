@@ -90,8 +90,8 @@ ESTRATÉGIA DE TRANSIÇÃO SEM PERDER SEGUIDORES:
 4. O nome do canal NUNCA deve ter referência a formação — deve ser uma marca que EVOLUI
 
 FOCO:
-1. BIO/DESCRIÇÃO: texto exato otimizado (emojis, CTA, keywords SEO) — SEMPRE como estudante
-2. NOME DE EXIBIÇÃO: MARCA memorável que funcione pré e pós formatura
+1. BIO/DESCRIÇÃO: texto exato otimizado (emojis, CTA, keywords SEO) — SEM mencionar formação
+2. NOME DE EXIBIÇÃO: MARCA memorável que funcione independente de credenciais
 3. CATEGORIAS/TAGS: as melhores para o nicho
 4. LINKS: estratégia de link na bio (Linktree/direto)
 5. PALAVRAS-CHAVE: SEO para cada plataforma
