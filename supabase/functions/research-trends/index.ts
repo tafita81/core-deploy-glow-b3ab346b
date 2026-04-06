@@ -201,15 +201,36 @@ async function fetchYouTubeTrending(apiKey: string, regionCode: string): Promise
 async function searchYouTubeNiche(apiKey: string, query: string): Promise<any[]> {
   try {
     const q = encodeURIComponent(query);
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${q}&type=video&order=viewCount&publishedAfter=${getDateDaysAgo(7)}&maxResults=10&key=${apiKey}`;
-    const res = await fetch(url);
+    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${q}&type=video&order=viewCount&publishedAfter=${getDateDaysAgo(7)}&maxResults=10&key=${apiKey}`;
+    const res = await fetch(searchUrl);
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.items || []).map((item: any) => ({
+    const videoIds = (data.items || []).map((item: any) => item.id?.videoId).filter(Boolean);
+    if (videoIds.length === 0) return [];
+
+    // Fetch actual view counts for each video
+    const statsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${videoIds.join(",")}&key=${apiKey}`;
+    const statsRes = await fetch(statsUrl);
+    if (!statsRes.ok) {
+      // Fallback without stats
+      return (data.items || []).map((item: any) => ({
+        video_title: item.snippet?.title || "",
+        video_url: `https://www.youtube.com/watch?v=${item.id?.videoId}`,
+        creator: item.snippet?.channelTitle || "",
+        platform: "youtube",
+        published_at: item.snippet?.publishedAt,
+      }));
+    }
+    const statsData = await statsRes.json();
+    return (statsData.items || []).map((item: any) => ({
       video_title: item.snippet?.title || "",
-      video_url: `https://www.youtube.com/watch?v=${item.id?.videoId}`,
+      video_url: `https://www.youtube.com/watch?v=${item.id}`,
       creator: item.snippet?.channelTitle || "",
       creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
+      total_views: formatViews(item.statistics?.viewCount),
+      raw_views: parseInt(item.statistics?.viewCount || "0"),
+      likes: parseInt(item.statistics?.likeCount || "0"),
+      comments: parseInt(item.statistics?.commentCount || "0"),
       platform: "youtube",
       published_at: item.snippet?.publishedAt,
     }));
