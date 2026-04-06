@@ -349,7 +349,7 @@ serve(async (req) => {
     const apisSkipped: string[] = [];
 
     if (youtubeApiKey) {
-      const check = await canCallApi(supabase, "youtube", currentHour);
+      const check = await canCallApi(supabase, "youtube", currentHour, forceAll);
       if (check.allowed) {
         // BRASIL — trending geral + busca focada em psicologia
         promises.push(fetchYouTubeTrending(youtubeApiKey, "BR"));
@@ -366,7 +366,7 @@ serve(async (req) => {
     }
 
     if (redditClientId && redditSecret) {
-      const check = await canCallApi(supabase, "reddit", currentHour);
+      const check = await canCallApi(supabase, "reddit", currentHour, forceAll);
       if (check.allowed) {
         promises.push(fetchRedditTrending(redditClientId, redditSecret));
         apisCalled.push("reddit");
@@ -376,7 +376,7 @@ serve(async (req) => {
     }
 
     if (newsApiKey) {
-      const check = await canCallApi(supabase, "newsapi", currentHour);
+      const check = await canCallApi(supabase, "newsapi", currentHour, forceAll);
       if (check.allowed) {
         promises.push(fetchMentalHealthNews(newsApiKey));
         apisCalled.push("newsapi");
@@ -388,7 +388,7 @@ serve(async (req) => {
     // SerpAPI monthly limit check
     const serpApiKey = getSetting("serpapi_key") as string | null;
     if (serpApiKey) {
-      const check = await canCallApi(supabase, "serpapi", currentHour);
+      const check = await canCallApi(supabase, "serpapi", currentHour, forceAll);
       if (check.allowed) {
         apisCalled.push("serpapi");
         await logApiCall(supabase, "serpapi", 1);
