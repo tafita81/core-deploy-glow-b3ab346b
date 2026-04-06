@@ -181,6 +181,8 @@ async function fetchYouTubeTrending(apiKey: string, regionCode: string): Promise
     const data = await res.json();
     return (data.items || []).map((item: any) => ({
       video_title: item.snippet?.title || "",
+      description: item.snippet?.description || "",
+      channel_title: item.snippet?.channelTitle || "",
       video_url: `https://www.youtube.com/watch?v=${item.id}`,
       creator: item.snippet?.channelTitle || "",
       creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
