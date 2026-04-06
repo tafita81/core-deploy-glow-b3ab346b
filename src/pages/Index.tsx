@@ -328,6 +328,65 @@ const Index = () => {
           </Card>
         )}
 
+        {/* Reddit & News */}
+        {(redditTrending.length > 0 || newsTrending.length > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {redditTrending.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">🟠 Reddit — Trending em Psicologia</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {redditTrending.slice(0, 8).map((p: any, i: number) => (
+                    <div
+                      key={i}
+                      onClick={() => window.open(p.url, "_blank")}
+                      className="flex items-start gap-2 text-xs hover:bg-muted/50 rounded-md p-1.5 -mx-1.5 cursor-pointer"
+                    >
+                      <span className="font-bold text-primary min-w-[20px]">⬆{p.score}</span>
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{p.title}</p>
+                        <p className="text-[10px] text-muted-foreground">r/{p.subreddit} • {p.comments} comentários</p>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+            {newsTrending.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">📰 Notícias — Saúde Mental</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {newsTrending.slice(0, 8).map((n: any, i: number) => (
+                    <div
+                      key={i}
+                      onClick={() => window.open(n.url, "_blank")}
+                      className="flex items-start gap-2 text-xs hover:bg-muted/50 rounded-md p-1.5 -mx-1.5 cursor-pointer"
+                    >
+                      <span className="text-primary">📄</span>
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{n.title}</p>
+                        <p className="text-[10px] text-muted-foreground">{n.source}</p>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Data Sources Status */}
+        {dataSources.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] text-muted-foreground">Fontes ativas:</span>
+            {dataSources.map((s: string) => (
+              <Badge key={s} variant="outline" className="text-[9px]">✅ {s}</Badge>
+            ))}
+          </div>
+        )}
 
         {(patterns.trending_hashtags || []).length > 0 && (
           <Card>
