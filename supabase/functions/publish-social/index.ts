@@ -6,9 +6,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-async function publishToInstagram(token: string, pageId: string, content: any) {
+async function publishToInstagram(token: string, pageId: string, content: any, bookMention?: string) {
   const hashtags = extractHashtags(content.body || "");
-  const caption = `${content.title}\n\n${(content.body || "").replace(/---METADATA---[\s\S]*/, "").slice(0, 1800)}\n\n${hashtags}\n\n💬 Entre na comunidade gratuita — link na bio`;
+  const bookLine = bookMention ? `\n\n📚 ${bookMention}` : "";
+  const caption = `${content.title}\n\n${(content.body || "").replace(/---METADATA---[\s\S]*/, "").slice(0, 1700)}${bookLine}\n\n${hashtags}\n\n💬 Entre na comunidade gratuita — link na bio`;
 
   if (content.thumbnail_url || content.media_url) {
     // Create media container with image
