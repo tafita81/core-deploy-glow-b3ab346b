@@ -172,6 +172,71 @@ export type Database = {
         }
         Relationships: []
       }
+      social_metrics_snapshots: {
+        Row: {
+          channel_id: string | null
+          channel_name: string
+          comments: number | null
+          created_at: string
+          engagement_rate: number | null
+          followers: number | null
+          id: string
+          impressions: number | null
+          likes: number | null
+          metadata: Json | null
+          platform: string
+          posts_count: number | null
+          reach: number | null
+          shares: number | null
+          snapshot_type: string
+          total_views: number | null
+        }
+        Insert: {
+          channel_id?: string | null
+          channel_name?: string
+          comments?: number | null
+          created_at?: string
+          engagement_rate?: number | null
+          followers?: number | null
+          id?: string
+          impressions?: number | null
+          likes?: number | null
+          metadata?: Json | null
+          platform: string
+          posts_count?: number | null
+          reach?: number | null
+          shares?: number | null
+          snapshot_type?: string
+          total_views?: number | null
+        }
+        Update: {
+          channel_id?: string | null
+          channel_name?: string
+          comments?: number | null
+          created_at?: string
+          engagement_rate?: number | null
+          followers?: number | null
+          id?: string
+          impressions?: number | null
+          likes?: number | null
+          metadata?: Json | null
+          platform?: string
+          posts_count?: number | null
+          reach?: number | null
+          shares?: number | null
+          snapshot_type?: string
+          total_views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_metrics_snapshots_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_logs: {
         Row: {
           created_at: string

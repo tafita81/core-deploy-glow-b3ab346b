@@ -10,6 +10,7 @@ import Logs from "./pages/Logs.tsx";
 import Settings from "./pages/Settings.tsx";
 import Community from "./pages/Community.tsx";
 import Strategy from "./pages/Strategy.tsx";
+import Monitoring from "./pages/Monitoring.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/settings" element={<Settings />} />
           <Route path="/community" element={<Community />} />
           <Route path="/strategy" element={<Strategy />} />
+          <Route path="/monitoring" element={<Monitoring />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
