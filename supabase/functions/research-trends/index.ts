@@ -200,17 +200,17 @@ async function fetchYouTubeTrending(apiKey: string, regionCode: string): Promise
   }
 }
 
-async function searchYouTubeNiche(apiKey: string, query: string, daysBack = 30): Promise<any[]> {
+async function searchYouTubeNiche(apiKey: string, query: string, daysBack = 14): Promise<any[]> {
   try {
     const q = encodeURIComponent(query);
-    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${q}&type=video&order=viewCount&publishedAfter=${getDateDaysAgo(daysBack)}&maxResults=15&key=${apiKey}`;
+    // order=viewCount + recent period = explosive new videos
+    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${q}&type=video&order=viewCount&publishedAfter=${getDateDaysAgo(daysBack)}&maxResults=20&key=${apiKey}`;
     const res = await fetch(searchUrl);
     if (!res.ok) return [];
     const data = await res.json();
     const videoIds = (data.items || []).map((item: any) => item.id?.videoId).filter(Boolean);
     if (videoIds.length === 0) return [];
 
-    // Fetch actual view counts for each video
     const statsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${videoIds.join(",")}&key=${apiKey}`;
     const statsRes = await fetch(statsUrl);
     if (!statsRes.ok) {
@@ -220,25 +220,52 @@ async function searchYouTubeNiche(apiKey: string, query: string, daysBack = 30):
         creator: item.snippet?.channelTitle || "",
         platform: "youtube",
         published_at: item.snippet?.publishedAt,
+        raw_views: 0,
       }));
     }
     const statsData = await statsRes.json();
+    const now = Date.now();
     return (statsData.items || [])
-      .map((item: any) => ({
-        video_title: item.snippet?.title || "",
-        description: item.snippet?.description || "",
-        channel_title: item.snippet?.channelTitle || "",
-        video_url: `https://www.youtube.com/watch?v=${item.id}`,
-        creator: item.snippet?.channelTitle || "",
-        creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
-        total_views: formatViews(item.statistics?.viewCount),
-        raw_views: parseInt(item.statistics?.viewCount || "0"),
-        likes: parseInt(item.statistics?.likeCount || "0"),
-        comments: parseInt(item.statistics?.commentCount || "0"),
-        platform: "youtube",
-        published_at: item.snippet?.publishedAt,
-      }))
-      .filter((v: any) => v.raw_views >= 1000000); // Only videos with 1M+ views
+      .map((item: any) => {
+        const rawViews = parseInt(item.statistics?.viewCount || "0");
+        const likes = parseInt(item.statistics?.likeCount || "0");
+        const comments = parseInt(item.statistics?.commentCount || "0");
+        const publishedAt = item.snippet?.publishedAt;
+        
+        // Calculate age in days and views/day velocity
+        const ageMs = now - new Date(publishedAt || now).getTime();
+        const ageDays = Math.max(1, ageMs / 86400000);
+        const viewsPerDay = Math.round(rawViews / ageDays);
+        
+        // Engagement rate: (likes + comments) / views — higher = more followers potential
+        const engagementRate = rawViews > 0 ? (likes + comments) / rawViews : 0;
+        // Engagement multiplier: 1.0 (baseline) up to 2.0 (exceptional engagement)
+        const engMultiplier = 1 + Math.min(1, engagementRate * 20);
+        
+        // VIRAL SCORE = views/day × engagement multiplier
+        // This prioritizes FAST-GROWING videos that also convert to followers
+        const viralScore = Math.round(viewsPerDay * engMultiplier);
+        
+        return {
+          video_title: item.snippet?.title || "",
+          description: item.snippet?.description || "",
+          channel_title: item.snippet?.channelTitle || "",
+          video_url: `https://www.youtube.com/watch?v=${item.id}`,
+          creator: item.snippet?.channelTitle || "",
+          creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
+          total_views: formatViews(item.statistics?.viewCount),
+          raw_views: rawViews,
+          likes,
+          comments,
+          platform: "youtube",
+          published_at: publishedAt,
+          age_days: Math.round(ageDays),
+          views_per_day: viewsPerDay,
+          engagement_rate: Math.round(engagementRate * 10000) / 100, // percentage
+          viral_score: viralScore,
+        };
+      })
+      .filter((v: any) => v.raw_views >= 500000); // 500K+ views minimum
   } catch (e) {
     console.error("YouTube search error:", e);
     return [];
