@@ -179,21 +179,39 @@ async function fetchYouTubeTrending(apiKey: string, regionCode: string): Promise
       return [];
     }
     const data = await res.json();
-    return (data.items || []).map((item: any) => ({
-      video_title: item.snippet?.title || "",
-      description: item.snippet?.description || "",
-      channel_title: item.snippet?.channelTitle || "",
-      video_url: `https://www.youtube.com/watch?v=${item.id}`,
-      creator: item.snippet?.channelTitle || "",
-      creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
-      total_views: formatViews(item.statistics?.viewCount),
-      raw_views: parseInt(item.statistics?.viewCount || "0"),
-      likes: parseInt(item.statistics?.likeCount || "0"),
-      comments: parseInt(item.statistics?.commentCount || "0"),
-      platform: "youtube",
-      region: regionCode,
-      published_at: item.snippet?.publishedAt,
-    }));
+    const now = Date.now();
+    return (data.items || []).map((item: any) => {
+      const rawViews = parseInt(item.statistics?.viewCount || "0");
+      const likes = parseInt(item.statistics?.likeCount || "0");
+      const comments = parseInt(item.statistics?.commentCount || "0");
+      const publishedAt = item.snippet?.publishedAt;
+      const ageMs = now - new Date(publishedAt || now).getTime();
+      const ageDays = Math.max(1, ageMs / 86400000);
+      const viewsPerDay = Math.round(rawViews / ageDays);
+      const engagementRate = rawViews > 0 ? (likes + comments) / rawViews : 0;
+      const engMultiplier = 1 + Math.min(1, engagementRate * 20);
+      const viralScore = Math.round(viewsPerDay * engMultiplier);
+
+      return {
+        video_title: item.snippet?.title || "",
+        description: item.snippet?.description || "",
+        channel_title: item.snippet?.channelTitle || "",
+        video_url: `https://www.youtube.com/watch?v=${item.id}`,
+        creator: item.snippet?.channelTitle || "",
+        creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
+        total_views: formatViews(item.statistics?.viewCount),
+        raw_views: rawViews,
+        likes,
+        comments,
+        platform: "youtube",
+        region: regionCode,
+        published_at: publishedAt,
+        age_days: Math.round(ageDays),
+        views_per_day: viewsPerDay,
+        engagement_rate: Math.round(engagementRate * 10000) / 100,
+        viral_score: viralScore,
+      };
+    });
   } catch (e) {
     console.error(`YouTube API error for ${regionCode}:`, e);
     return [];
