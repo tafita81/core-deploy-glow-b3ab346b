@@ -12,14 +12,16 @@ serve(async (req) => {
   try {
     const { topic, channel, content_type, instructions, viral_title, hook, hashtags, whatsapp_cta, monetization_angle } = await req.json();
 
-    // REGRA ABSOLUTA: Daniela é ESTUDANTE de psicologia (2027). NUNCA "psicóloga".
+    // REGRA ABSOLUTA: NUNCA mencionar formação, título ou status acadêmico
     const IDENTITY_GUARD = `
 REGRA INVIOLÁVEL DE IDENTIDADE:
-- Daniela Coelho é ESTUDANTE de psicologia (formatura 2027). NUNCA diga "psicóloga", "dra.", "consultório", "atendimento clínico"
-- Use: "estudante de psicologia", "futura psicóloga", "quem estuda psicologia"
-- NUNCA inclua foto pessoal dela em thumbnails/posts — use identidade visual da marca
-- A marca dos canais é independente do nome dela — funciona antes E depois de 2027
-- Fale como estudante que compartilha aprendizados: "aprendi na faculdade que...", "estudando sobre isso descobri..."
+- NUNCA diga "psicóloga", "dra.", "consultório", "atendimento clínico"
+- NUNCA diga "estudante de psicologia", "futura psicóloga", "graduanda", "formanda"
+- NUNCA mencione faculdade, universidade, curso ou qualquer referência acadêmica
+- A marca é uma CRIADORA DE CONTEÚDO sobre saúde mental e autoconhecimento — sem credenciais
+- NUNCA inclua foto pessoal em thumbnails/posts — use identidade visual da marca
+- Fale como alguém que estuda e se interessa pelo tema: "pesquisando sobre isso, descobri...", "li um estudo que mostrou..."
+- A autoridade vem do CONTEÚDO, não de títulos
 `;
 
     if (!topic || !channel) {
@@ -107,8 +109,8 @@ FUNIL SOCIAL → WHATSAPP:
 - Use: "Tem muito mais no nosso grupo gratuito — link na bio 💬"
 
 REGRAS ÉTICAS (INVIOLÁVEIS):
-- NUNCA mencione "psicóloga", "dra.", "consultório", "atendimento" — ela é ESTUDANTE
-- Nunca faça diagnósticos
+- NUNCA mencione "psicóloga", "dra.", "consultório", "atendimento", "estudante de psicologia", "futura psicóloga"
+- NUNCA mencione formação acadêmica, faculdade ou universidade
 - Nunca prometa curas
 - Use linguagem acolhedora e acessível
 - Cite referências científicas quando possível
