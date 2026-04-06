@@ -563,6 +563,141 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* FREE DATA & ANALYTICS TOOLS */}
+        <Card className="border-cyan-500/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="font-heading text-lg flex items-center gap-2">
+              📊 Ferramentas Gratuitas de Dados em Tempo Real
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              APIs gratuitas que trazem dados estatísticos reais para alimentar o cérebro. Configure quantas quiser.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {[
+              {
+                id: "youtube_data_api",
+                name: "YouTube Data API v3",
+                emoji: "🎬",
+                settingsKey: "youtube_data_api_key",
+                placeholder: "Cole sua YouTube Data API Key",
+                help: "100% GRATUITO — 10.000 unidades/dia. console.cloud.google.com → APIs → YouTube Data API v3 → Credentials → Create API Key. Traz vídeos trending, estatísticas de canais e busca em tempo real.",
+                free: true,
+                units: "10.000 unidades/dia grátis",
+              },
+              {
+                id: "reddit_client",
+                name: "Reddit API",
+                emoji: "🟠",
+                settingsKey: "reddit_client_id",
+                placeholder: "Cole seu Reddit Client ID",
+                help: "100% GRATUITO — reddit.com/prefs/apps → Create App → Script. Monitora subreddits de psicologia/saúde mental para identificar temas que estão bombando na comunidade.",
+                free: true,
+                units: "60 requests/min grátis",
+              },
+              {
+                id: "reddit_secret",
+                name: "Reddit Secret",
+                emoji: "🔐",
+                settingsKey: "reddit_client_secret",
+                placeholder: "Cole seu Reddit Client Secret",
+                help: "Par do Client ID acima — encontre no mesmo local.",
+                free: true,
+                units: "",
+              },
+              {
+                id: "newsapi",
+                name: "NewsAPI",
+                emoji: "📰",
+                settingsKey: "newsapi_key",
+                placeholder: "Cole sua NewsAPI Key",
+                help: "100% GRATUITO (100 req/dia) — newsapi.org → Register. Busca notícias sobre saúde mental, psicologia e bem-estar em tempo real para criar conteúdo sobre assuntos do momento.",
+                free: true,
+                units: "100 requests/dia grátis",
+              },
+              {
+                id: "serpapi",
+                name: "SerpAPI (Google Trends)",
+                emoji: "📈",
+                settingsKey: "serpapi_key",
+                placeholder: "Cole sua SerpAPI Key",
+                help: "100 buscas/mês GRÁTIS — serpapi.com → Register. Acessa Google Trends em tempo real: o que as pessoas estão pesquisando sobre saúde mental, ansiedade, autoajuda AGORA.",
+                free: true,
+                units: "100 buscas/mês grátis",
+              },
+            ].map((api) => {
+              const currentVal = apiKeys[api.id] || "";
+              const isSaved = !!savedApiKeys[api.id];
+              const isApiVisible = showApiKeys[api.id];
+
+              return (
+                <Card key={api.id} className={isSaved ? "border-green-500/30" : "border-muted"}>
+                  <CardContent className="px-4 py-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span>{api.emoji}</span>
+                        <span className="font-heading font-medium text-sm">{api.name}</span>
+                        {api.free && (
+                          <Badge variant="outline" className="text-[9px] text-cyan-400 border-cyan-500/30">
+                            GRÁTIS
+                          </Badge>
+                        )}
+                        {isSaved ? (
+                          <Badge variant="outline" className="text-[10px] text-green-400 border-green-500/30">
+                            <CheckCircle2 className="h-3 w-3 mr-1" /> Ativa
+                          </Badge>
+                        ) : null}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => setShowApiKeys((prev) => ({ ...prev, [api.id]: !prev[api.id] }))}
+                      >
+                        {isApiVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </Button>
+                    </div>
+                    <Input
+                      type={isApiVisible ? "text" : "password"}
+                      placeholder={api.placeholder}
+                      value={currentVal}
+                      onChange={(e) => setApiKeys((prev) => ({ ...prev, [api.id]: e.target.value }))}
+                      className="h-8 text-xs"
+                    />
+                    <p className="text-[9px] text-muted-foreground">{api.help}</p>
+                    {api.units && (
+                      <p className="text-[9px] text-cyan-400/70">🆓 {api.units}</p>
+                    )}
+                    <Button
+                      size="sm"
+                      className="w-full h-8 text-xs"
+                      onClick={() => saveApiKey(api.id, api.settingsKey)}
+                      disabled={savingApiKey === api.id || !currentVal.trim()}
+                    >
+                      {savingApiKey === api.id ? (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <Save className="h-3 w-3 mr-1" />
+                      )}
+                      Salvar {api.name}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+
+            <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+              <p className="text-[11px] font-medium text-primary">💡 APIs gratuitas já integradas (sem chave necessária):</p>
+              <div className="grid grid-cols-1 gap-1">
+                <p className="text-[10px] text-muted-foreground">✅ <strong>Google Trends RSS</strong> — Tendências de busca em tempo real (automático)</p>
+                <p className="text-[10px] text-muted-foreground">✅ <strong>Wikipedia API</strong> — Validação de termos científicos (automático)</p>
+                <p className="text-[10px] text-muted-foreground">✅ <strong>Open Library API</strong> — Dados de livros para catálogo Amazon (automático)</p>
+                <p className="text-[10px] text-muted-foreground">✅ <strong>RSS Feeds</strong> — Monitoramento de blogs de psicologia (automático)</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Pipeline config */}
         <Card>
           <CardHeader className="pb-3">
