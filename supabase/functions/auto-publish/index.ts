@@ -301,7 +301,8 @@ serve(async (req) => {
 
         if (pubRes.ok) {
           published++;
-          results.push({ title: content.title, channel: targetChannel, status: "publicado", confidence: viralAnalysis.confidence });
+          platformPublishCounts[targetChannel] = (platformPublishCounts[targetChannel] || 0) + 1;
+          results.push({ title: content.title, channel: targetChannel, status: "publicado", confidence: viralAnalysis.confidence, daily_count: `${platformPublishCounts[targetChannel]}/${dailyLimit}` });
         } else {
           results.push({ title: content.title, channel: targetChannel, status: "erro", code: pubRes.status });
         }
@@ -312,11 +313,18 @@ serve(async (req) => {
 
     const brHour = (new Date().getUTCHours() - 3 + 24) % 24;
     const held = results.filter((r) => r.status === "segurado_baixa_confianca").length;
+    const limited = results.filter((r) => r.status === "limite_diario_atingido").length;
+    
+    // Build daily usage summary
+    const dailyUsage = Object.entries(platformPublishCounts).map(([p, count]) => 
+      `${p}: ${count}/${DAILY_POST_LIMITS[p] || 2}`
+    ).join(", ");
+
     await supabase.from("system_logs").insert({
       event_type: "publicacao",
-      message: `🚀 Auto-publish (${brHour}h BR): ${published} publicados, ${held} segurados (baixa confiança viral), ${platformsReady.length} canais prontos`,
+      message: `🚀 Auto-publish (${brHour}h BR): ${published} publicados, ${held} segurados, ${limited} limitados | Uso diário: ${dailyUsage}`,
       level: published > 0 ? "info" : "warning",
-      metadata: { published, held, results, platforms_ready: platformsReady, br_hour: brHour },
+      metadata: { published, held, limited, results, platforms_ready: platformsReady, br_hour: brHour, daily_usage: platformPublishCounts, daily_limits: DAILY_POST_LIMITS },
     });
 
     return new Response(JSON.stringify({ published, held, results, platforms_ready: platformsReady }), {
