@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { MessageCircle, Users, Plus, Send, Sparkles, Trash2, Link, Save, Loader2 } from "lucide-react";
+import { MessageCircle, Users, Plus, Send, Sparkles, Trash2, Link, Save, Loader2, Bot, Copy, CheckCircle } from "lucide-react";
 import { useState } from "react";
 
 const GROUP_TYPES = [
@@ -117,6 +117,33 @@ const Community = () => {
   // Find the active group with space (for display)
   const activeGroupWithSpace = groups?.find((g) => g.is_active && g.invite_link && (g.members_count || 0) < MAX_WHATSAPP_GROUP);
 
+  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whatsapp-webhook`;
+  const verifyToken = "dani_whatsapp_verify_2024";
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    toast.success("Copiado!");
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  // Auto-reply activity
+  const { data: autoReplyLogs } = useQuery({
+    queryKey: ["whatsapp-auto-logs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("system_logs")
+        .select("*")
+        .eq("event_type", "whatsapp_message")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 10000,
+  });
+
   const parseBody = (body: string | null) => {
     if (!body) return null;
     try { return JSON.parse(body); } catch { return { message: body }; }
@@ -165,6 +192,73 @@ const Community = () => {
                 <p className="text-[10px] text-muted-foreground">
                   {activeGroupWithSpace.members_count}/{MAX_WHATSAPP_GROUP} membros — {MAX_WHATSAPP_GROUP - (activeGroupWithSpace.members_count || 0)} vagas restantes
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Webhook Config */}
+        <Card className="border-blue-500/30 bg-blue-500/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Bot className="w-4 h-4" /> 🤖 Auto-Reply WhatsApp (Webhook)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-[10px] text-muted-foreground">
+              Configure no painel da Meta → WhatsApp → Configuration → Webhook:
+            </p>
+            <div>
+              <Label className="text-[10px]">Callback URL</Label>
+              <div className="flex items-center gap-1">
+                <Input value={webhookUrl} readOnly className="h-7 text-[10px] font-mono" />
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 shrink-0" onClick={() => copyToClipboard(webhookUrl, "url")}>
+                  {copiedField === "url" ? <CheckCircle className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                </Button>
+              </div>
+            </div>
+            <div>
+              <Label className="text-[10px]">Verify Token</Label>
+              <div className="flex items-center gap-1">
+                <Input value={verifyToken} readOnly className="h-7 text-[10px] font-mono" />
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 shrink-0" onClick={() => copyToClipboard(verifyToken, "token")}>
+                  {copiedField === "token" ? <CheckCircle className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                </Button>
+              </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              📌 Assine o campo <strong>messages</strong>. A IA responde SOMENTE quando extremamente necessário.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Auto-Reply Activity */}
+        {autoReplyLogs && autoReplyLogs.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <MessageCircle className="w-4 h-4" /> Atividade do Grupo (Tempo Real)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1.5 max-h-60 overflow-y-auto">
+                {autoReplyLogs.map((log) => {
+                  const meta = log.metadata as any;
+                  const isOutgoing = meta?.direction === "outgoing";
+                  return (
+                    <div key={log.id} className={`text-[10px] p-1.5 rounded ${isOutgoing ? "bg-primary/10 border-l-2 border-primary" : "bg-muted/30"}`}>
+                      <span className={`font-medium ${isOutgoing ? "text-primary" : ""}`}>
+                        {isOutgoing ? "🤖 Dani (auto)" : `📩 ${meta?.sender_name || "Membro"}`}
+                      </span>
+                      <span className="text-muted-foreground ml-1">
+                        {(meta?.message_text || log.message).slice(0, 120)}
+                      </span>
+                      <span className="text-muted-foreground/50 ml-1">
+                        {new Date(log.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
