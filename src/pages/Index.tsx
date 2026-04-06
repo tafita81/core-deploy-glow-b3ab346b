@@ -8,7 +8,7 @@ import { PendingActions } from "@/components/PendingActions";
 import { VideoRankingCard } from "@/components/VideoRankingCard";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, Zap, TrendingUp, Target, Users, DollarSign, Lightbulb } from "lucide-react";
+import { Eye, Zap, TrendingUp, Target, Users, DollarSign, Lightbulb, Brain } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,44 +26,39 @@ const Index = () => {
   const { data: viralIntel } = useQuery({
     queryKey: ["viral-intelligence"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("settings")
-        .select("value")
-        .eq("key", "viral_intelligence")
-        .single();
+      const { data } = await supabase.from("settings").select("value").eq("key", "viral_intelligence").single();
       return data?.value as any;
     },
+    refetchInterval: 60000, // Real-time: refresh every 60s
   });
 
   const published = contents?.filter((c) => c.status === "publicado").length ?? 0;
   const pending = contents?.filter((c) => c.status !== "publicado" && c.status !== "rejeitado").length ?? 0;
-  const avgScore = contents?.length
-    ? Math.round(contents.reduce((a, b) => a + (b.score ?? 0), 0) / contents.length)
-    : 0;
+  const avgScore = contents?.length ? Math.round(contents.reduce((a, b) => a + (b.score ?? 0), 0) / contents.length) : 0;
   const viralReady = contents?.filter((c) => (c.score ?? 0) >= 85).length ?? 0;
 
   const topVideosBrasil = viralIntel?.top_10_ranking_brasil || viralIntel?.competitor_analysis || [];
   const topVideosMundial = viralIntel?.world_ranking || [];
   const monetization = viralIntel?.monetization_insights || {};
   const patterns = viralIntel?.viral_patterns || {};
-  const momentum = viralIntel?.momentum_analysis || {};
   const redditTrending = viralIntel?.reddit_trending || [];
   const newsTrending = viralIntel?.news_trending || [];
   const dataSources = viralIntel?.data_sources || [];
   const rankingCriteria = viralIntel?.ranking_criteria || {};
+  const evolution = monetization?.algorithm_evolution || {};
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-heading text-2xl font-bold">Dashboard Viral</h1>
+            <h1 className="font-heading text-2xl font-bold">Dashboard Viral Extremo</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              🧠 Cérebro VIRAL autônomo — análise de concorrentes + monetização 24/7
+              🧬 Algoritmo Auto-Evolutivo v4 (Gen {evolution.generation || 0}) — Máxima monetização + seguidores + engajamento
             </p>
           </div>
           <Badge variant="outline" className="text-[10px] animate-pulse-glow">
-            🔥 Modo Viral Ativo
+            🧬 Auto-Evolving
           </Badge>
         </div>
 
@@ -84,57 +79,62 @@ const Index = () => {
 
         <PendingActions />
 
+        {/* EXTREME METRICS ROW */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <MetricCard
-            title="Gerados"
-            value={String(contents?.length ?? 0)}
-            change="Total"
-            changeType="neutral"
-            icon={Eye}
-            iconColor="bg-primary/10 text-primary"
-          />
-          <MetricCard
-            title="Publicados"
-            value={String(published)}
-            change={`${pending} pendentes`}
-            changeType="positive"
-            icon={Zap}
-            iconColor="bg-success/10 text-success"
-          />
-          <MetricCard
-            title="Score Médio"
-            value={String(avgScore)}
-            change={avgScore >= 85 ? "🔥 Viral" : avgScore >= 75 ? "✓ Bom" : "↑ Melhorar"}
-            changeType={avgScore >= 75 ? "positive" : "negative"}
-            icon={TrendingUp}
-            iconColor="bg-warning/10 text-warning"
-          />
-          <MetricCard
-            title="Viral-Ready"
-            value={String(viralReady)}
-            change="Score ≥ 85"
-            changeType="positive"
-            icon={Target}
-            iconColor="bg-destructive/10 text-destructive"
-          />
-          <MetricCard
-            title="Vídeos Virais"
-            value={String(topVideosBrasil.length)}
-            change="Rankeados"
-            changeType="neutral"
-            icon={Users}
-            iconColor="bg-accent/50 text-accent-foreground"
-          />
-          <MetricCard
-            title="Hashtags"
-            value={String((patterns.trending_hashtags || []).length)}
-            change="Trending"
-            changeType="positive"
-            icon={DollarSign}
-            iconColor="bg-primary/10 text-primary"
-          />
+          <MetricCard title="Gerados" value={String(contents?.length ?? 0)} change="Total" changeType="neutral" icon={Eye} iconColor="bg-primary/10 text-primary" />
+          <MetricCard title="Publicados" value={String(published)} change={`${pending} pendentes`} changeType="positive" icon={Zap} iconColor="bg-success/10 text-success" />
+          <MetricCard title="Score Médio" value={String(avgScore)} change={avgScore >= 85 ? "🔥 Viral" : avgScore >= 75 ? "✓ Bom" : "↑ Melhorar"} changeType={avgScore >= 75 ? "positive" : "negative"} icon={TrendingUp} iconColor="bg-warning/10 text-warning" />
+          <MetricCard title="Conv. Seguidores" value={`${monetization.avg_follower_conversion || 0}%`} change="Média dos virais" changeType="positive" icon={Users} iconColor="bg-accent/50 text-accent-foreground" />
+          <MetricCard title="💬 Comment Rate" value={`${monetization.avg_comment_rate || 0}%`} change="Média virais" changeType="positive" icon={Target} iconColor="bg-destructive/10 text-destructive" />
+          <MetricCard title="💵 Revenue Mkt" value={monetization.total_market_revenue ? `$${(monetization.total_market_revenue / 1000).toFixed(0)}K` : "$0"} change="Estimado total" changeType="positive" icon={DollarSign} iconColor="bg-primary/10 text-primary" />
         </div>
 
+        {/* ALGORITHM EVOLUTION CARD */}
+        {evolution.generation > 0 && (
+          <Card className="border-purple-500/30 bg-gradient-to-r from-purple-500/5 to-primary/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Brain className="h-4 w-4 text-purple-400" />
+                🧬 Motor de Evolução Autônoma — Geração {evolution.generation}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-muted/30 rounded-md p-2">
+                  <p className="text-muted-foreground">Peso dos Comentários</p>
+                  <p className="font-bold text-primary">{evolution.comment_weight}x</p>
+                </div>
+                <div className="bg-muted/30 rounded-md p-2">
+                  <p className="text-muted-foreground">Poder do Engajamento</p>
+                  <p className="font-bold text-primary">{evolution.engagement_power}x</p>
+                </div>
+              </div>
+              {(evolution.learned_hooks || []).length > 0 && (
+                <div className="text-xs">
+                  <p className="text-muted-foreground mb-1">🎯 Hooks aprendidos (mais eficazes):</p>
+                  <div className="flex flex-wrap gap-1">
+                    {(evolution.learned_hooks || []).map((h: string, i: number) => (
+                      <Badge key={i} variant="secondary" className="text-[9px] bg-purple-500/10 text-purple-400">{h}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {(evolution.learned_topics || []).length > 0 && (
+                <div className="text-xs">
+                  <p className="text-muted-foreground mb-1">🏆 Tópicos que mais performam:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {(evolution.learned_topics || []).map((t: string, i: number) => (
+                      <Badge key={i} variant="secondary" className="text-[9px] bg-green-500/10 text-green-400">{t}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <p className="text-[9px] text-muted-foreground">Última evolução: {evolution.last_evolved ? new Date(evolution.last_evolved).toLocaleString("pt-BR") : "—"}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* VIRAL RANKINGS */}
         {(topVideosMundial.length > 0 || topVideosBrasil.length > 0 || (monetization.revenue_streams || []).length > 0) && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <VideoRankingCard
@@ -152,13 +152,15 @@ const Index = () => {
               updatedAt={viralIntel?.updated_at}
               rankingInfo={rankingCriteria}
             />
+
+            {/* MONETIZATION INTELLIGENCE */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  💰 Estratégias de Monetização
+                  💰 Inteligência de Monetização Extrema
                   {monetization.avg_viral_score > 0 && (
                     <Badge variant="secondary" className="text-[9px]">
-                      Viral Score Médio: {monetization.avg_viral_score > 1000000 ? `${(monetization.avg_viral_score / 1000000).toFixed(1)}M` : monetization.avg_viral_score > 1000 ? `${(monetization.avg_viral_score / 1000).toFixed(0)}K` : monetization.avg_viral_score}
+                      Viral Score: {monetization.avg_viral_score > 1000000 ? `${(monetization.avg_viral_score / 1000000).toFixed(1)}M` : monetization.avg_viral_score > 1000 ? `${(monetization.avg_viral_score / 1000).toFixed(0)}K` : monetization.avg_viral_score}
                     </Badge>
                   )}
                 </CardTitle>
@@ -182,6 +184,12 @@ const Index = () => {
                     <span className="font-medium">Duração ideal: {monetization.ideal_duration}</span>
                   </div>
                 )}
+                {(monetization.best_topics || []).length > 0 && (
+                  <div className="text-xs bg-green-500/5 rounded-md p-2">
+                    <span className="font-medium">🔥 Tópicos explosivos: </span>
+                    <span>{(monetization.best_topics || []).join(", ")}</span>
+                  </div>
+                )}
                 {(monetization.revenue_streams || []).map((stream: string, i: number) => (
                   <div key={`rev-${i}`} className="flex items-center gap-2 text-xs">
                     <span className="text-success">💵</span>
@@ -196,53 +204,34 @@ const Index = () => {
                 ))}
               </CardContent>
             </Card>
+
+            {/* FOLLOWER GROWTH STRATEGY */}
+            <Card className="border-blue-500/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  🧲 Estratégia Extrema de Seguidores
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-xs">
+                <div className="bg-blue-500/5 rounded-md p-2 space-y-1">
+                  <p className="font-semibold text-blue-400">📊 Métricas que Convertem em Seguidores:</p>
+                  <p>• Comment Rate médio dos virais: <span className="text-primary font-bold">{monetization.avg_comment_rate || 0}%</span></p>
+                  <p>• Like Rate médio: <span className="text-primary font-bold">{monetization.avg_like_rate || 0}%</span></p>
+                  <p>• Score médio de conversão: <span className="text-primary font-bold">{monetization.avg_follower_conversion || 0}%</span></p>
+                </div>
+                <div className="space-y-1">
+                  <p className="font-semibold">🎯 Táticas de Conversão Extrema:</p>
+                  <p>• CTA de follow no segundo 3 (antes de perder atenção)</p>
+                  <p>• Pinned comment com pergunta provocativa</p>
+                  <p>• "Siga para parte 2" no final (séries = retenção)</p>
+                  <p>• Responder TODOS os comentários nas primeiras 2h</p>
+                  <p>• Criar polêmica saudável (mais comentários = mais alcance)</p>
+                  <p>• Thumbnail com expressão facial extrema + texto bold</p>
+                  <p>• Títulos com números: "5 sinais de que..." converte mais</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        )}
-        {/* Momentum Analysis */}
-        {(momentum.hottest_video_now || momentum.fastest_growing_topic || (momentum.emerging_trends || momentum.emerging_videos || []).length > 0) && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">⚡ Análise de Momentum em Tempo Real</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {(momentum.hottest_video_now || momentum.fastest_growing_topic) && (
-                <div className="text-xs">
-                  <span className="font-medium text-success">🚀 Vídeo mais quente agora:</span>{" "}
-                  <span>{momentum.hottest_video_now || momentum.fastest_growing_topic}</span>
-                </div>
-              )}
-              {momentum.best_time_to_post && (
-                <div className="text-xs">
-                  <span className="font-medium text-primary">⏰ Melhor horário para postar:</span>{" "}
-                  <span>{momentum.best_time_to_post}</span>
-                </div>
-              )}
-              {(momentum.emerging_trends || []).length > 0 && (
-                <div>
-                  <p className="text-xs font-medium text-success mb-1">🌱 Tendências EMERGENTES (máxima oportunidade):</p>
-                  <div className="flex flex-wrap gap-1">
-                    {(momentum.emerging_trends || []).map((t: string, i: number) => (
-                      <Badge key={i} variant="secondary" className="text-[10px] bg-success/10 text-success">
-                        {t}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {(momentum.dying_trends || []).length > 0 && (
-                <div>
-                  <p className="text-xs font-medium text-destructive mb-1">💀 Tendências MORRENDO (evitar):</p>
-                  <div className="flex flex-wrap gap-1">
-                    {(momentum.dying_trends || []).map((t: string, i: number) => (
-                      <Badge key={i} variant="secondary" className="text-[10px] bg-destructive/10 text-destructive">
-                        {t}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
         )}
 
         {/* Reddit & News */}
@@ -255,11 +244,7 @@ const Index = () => {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {redditTrending.slice(0, 8).map((p: any, i: number) => (
-                    <div
-                      key={i}
-                      onClick={() => window.open(p.url, "_blank")}
-                      className="flex items-start gap-2 text-xs hover:bg-muted/50 rounded-md p-1.5 -mx-1.5 cursor-pointer"
-                    >
+                    <div key={i} onClick={() => window.open(p.url, "_blank")} className="flex items-start gap-2 text-xs hover:bg-muted/50 rounded-md p-1.5 -mx-1.5 cursor-pointer">
                       <span className="font-bold text-primary min-w-[20px]">⬆{p.score}</span>
                       <div className="min-w-0">
                         <p className="font-medium truncate">{p.title}</p>
@@ -277,11 +262,7 @@ const Index = () => {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {newsTrending.slice(0, 8).map((n: any, i: number) => (
-                    <div
-                      key={i}
-                      onClick={() => window.open(n.url, "_blank")}
-                      className="flex items-start gap-2 text-xs hover:bg-muted/50 rounded-md p-1.5 -mx-1.5 cursor-pointer"
-                    >
+                    <div key={i} onClick={() => window.open(n.url, "_blank")} className="flex items-start gap-2 text-xs hover:bg-muted/50 rounded-md p-1.5 -mx-1.5 cursor-pointer">
                       <span className="text-primary">📄</span>
                       <div className="min-w-0">
                         <p className="font-medium truncate">{n.title}</p>
@@ -295,16 +276,7 @@ const Index = () => {
           </div>
         )}
 
-        {/* Data Sources Status */}
-        {dataSources.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] text-muted-foreground">Fontes ativas:</span>
-            {dataSources.map((s: string) => (
-              <Badge key={s} variant="outline" className="text-[9px]">✅ {s}</Badge>
-            ))}
-          </div>
-        )}
-
+        {/* Hashtags + Data Sources */}
         {(patterns.trending_hashtags || []).length > 0 && (
           <Card>
             <CardHeader className="pb-2">
@@ -313,13 +285,21 @@ const Index = () => {
             <CardContent>
               <div className="flex flex-wrap gap-1.5">
                 {(patterns.trending_hashtags || []).map((tag: string, i: number) => (
-                  <Badge key={i} variant="secondary" className="text-[10px]">
-                    {tag}
-                  </Badge>
+                  <Badge key={i} variant="secondary" className="text-[10px]">{tag}</Badge>
                 ))}
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {dataSources.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] text-muted-foreground">Fontes ativas:</span>
+            {dataSources.map((s: string) => (
+              <Badge key={s} variant="outline" className="text-[9px]">✅ {s}</Badge>
+            ))}
+            <Badge variant="outline" className="text-[9px] border-purple-500/50 text-purple-400">🧬 Gen {evolution.generation || 0}</Badge>
+          </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
