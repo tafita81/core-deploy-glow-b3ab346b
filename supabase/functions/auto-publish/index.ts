@@ -6,6 +6,34 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Optimal number of posts per day per platform (industry best practice)
+const DAILY_POST_LIMITS: Record<string, number> = {
+  instagram: 2,    // 1-2 posts/day (feed) — mais satura o algoritmo
+  youtube: 1,      // 1 vídeo/dia máximo — qualidade > quantidade
+  tiktok: 3,       // 1-3 vídeos/dia — plataforma recompensa volume
+  whatsapp: 3,     // 2-3 mensagens/dia — não ser spam
+  pinterest: 5,    // 3-5 pins/dia — plataforma de alto volume
+  facebook: 2,     // 1-2 posts/dia — alcance cai com excesso
+  linkedin: 1,     // 1 post/dia — profissional, qualidade importa
+  twitter: 5,      // 3-5 tweets/dia — plataforma de alto volume
+};
+
+// Check how many posts were already published today for a platform
+async function getTodayPublishCount(supabase: any, platform: string): Promise<number> {
+  const today = new Date().toISOString().split("T")[0];
+  const { count } = await supabase
+    .from("contents")
+    .select("id", { count: "exact", head: true })
+    .eq("channel", platform)
+    .eq("status", "publicado")
+    .gte("published_at", `${today}T00:00:00Z`);
+  return count || 0;
+}
+
+function getRemainingSlots(dailyLimit: number, published: number): number {
+  return Math.max(0, dailyLimit - published);
+}
+
 // Optimal posting times for Brazil (UTC-3 → UTC)
 function isOptimalTime(platform: string): boolean {
   const utcHour = new Date().getUTCHours();
@@ -207,8 +235,31 @@ serve(async (req) => {
     let published = 0;
     const results: any[] = [];
 
+    // Pre-check daily limits for all platforms
+    const platformPublishCounts: Record<string, number> = {};
+    for (const p of connectedPlatforms) {
+      platformPublishCounts[p] = await getTodayPublishCount(supabase, p);
+    }
+
     for (const content of contents || []) {
       const targetChannel = content.channel || "instagram";
+      
+      // Check daily limit for this platform
+      const dailyLimit = DAILY_POST_LIMITS[targetChannel] || 2;
+      const todayCount = (platformPublishCounts[targetChannel] || 0);
+      const remaining = getRemainingSlots(dailyLimit, todayCount);
+      
+      if (remaining <= 0) {
+        results.push({ 
+          title: content.title, channel: targetChannel, 
+          status: "limite_diario_atingido", 
+          daily_limit: dailyLimit, 
+          published_today: todayCount,
+          message: `Já publicou ${todayCount}/${dailyLimit} hoje em ${targetChannel}` 
+        });
+        continue;
+      }
+
       if (!isOptimalTime(targetChannel)) {
         results.push({ title: content.title, channel: targetChannel, status: "aguardando_horario", next: getNextOptimalTime(targetChannel) });
         continue;
@@ -250,7 +301,8 @@ serve(async (req) => {
 
         if (pubRes.ok) {
           published++;
-          results.push({ title: content.title, channel: targetChannel, status: "publicado", confidence: viralAnalysis.confidence });
+          platformPublishCounts[targetChannel] = (platformPublishCounts[targetChannel] || 0) + 1;
+          results.push({ title: content.title, channel: targetChannel, status: "publicado", confidence: viralAnalysis.confidence, daily_count: `${platformPublishCounts[targetChannel]}/${dailyLimit}` });
         } else {
           results.push({ title: content.title, channel: targetChannel, status: "erro", code: pubRes.status });
         }
@@ -261,11 +313,18 @@ serve(async (req) => {
 
     const brHour = (new Date().getUTCHours() - 3 + 24) % 24;
     const held = results.filter((r) => r.status === "segurado_baixa_confianca").length;
+    const limited = results.filter((r) => r.status === "limite_diario_atingido").length;
+    
+    // Build daily usage summary
+    const dailyUsage = Object.entries(platformPublishCounts).map(([p, count]) => 
+      `${p}: ${count}/${DAILY_POST_LIMITS[p] || 2}`
+    ).join(", ");
+
     await supabase.from("system_logs").insert({
       event_type: "publicacao",
-      message: `🚀 Auto-publish (${brHour}h BR): ${published} publicados, ${held} segurados (baixa confiança viral), ${platformsReady.length} canais prontos`,
+      message: `🚀 Auto-publish (${brHour}h BR): ${published} publicados, ${held} segurados, ${limited} limitados | Uso diário: ${dailyUsage}`,
       level: published > 0 ? "info" : "warning",
-      metadata: { published, held, results, platforms_ready: platformsReady, br_hour: brHour },
+      metadata: { published, held, limited, results, platforms_ready: platformsReady, br_hour: brHour, daily_usage: platformPublishCounts, daily_limits: DAILY_POST_LIMITS },
     });
 
     return new Response(JSON.stringify({ published, held, results, platforms_ready: platformsReady }), {
