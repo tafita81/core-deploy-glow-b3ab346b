@@ -143,7 +143,7 @@ Retorne EXATAMENTE um JSON com esta estrutura:
     {
       "rank": 1,
       "video_title": "TÍTULO TRADUZIDO para PT-BR",
-      "original_title": "título original",
+      "original_title": "título original no idioma de origem",
       "creator": "nome",
       "platform": "youtube|instagram|tiktok",
       "country": "país (em português)",
@@ -156,6 +156,9 @@ Retorne EXATAMENTE um JSON com esta estrutura:
       "content_format": "formato",
       "language": "idioma original",
       "inflection_point": "antes_do_pico|no_pico|pos_pico",
+      "adaptation_potential": 95,
+      "adaptation_guide": "exatamente o que mudar para parecer 100% original BR",
+      "plagiarism_risk": "baixo|medio|alto — quanto menor melhor",
       "insight_for_brazil": "como adaptar para psicologia BR"
     }
   ],
