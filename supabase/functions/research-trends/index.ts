@@ -102,9 +102,9 @@ async function checkDailyUnits(supabase: any, apiName: string): Promise<number> 
 }
 
 // Returns { allowed: boolean, reason: string }
-async function canCallApi(supabase: any, apiName: string, currentHour: number): Promise<{ allowed: boolean; reason: string }> {
-  // 1. Schedule check
-  if (!shouldCallApi(apiName, currentHour)) {
+async function canCallApi(supabase: any, apiName: string, currentHour: number, forceSchedule = false): Promise<{ allowed: boolean; reason: string }> {
+  // 1. Schedule check (skip if forced)
+  if (!forceSchedule && !shouldCallApi(apiName, currentHour)) {
     return { allowed: false, reason: "fora do horário programado" };
   }
 
