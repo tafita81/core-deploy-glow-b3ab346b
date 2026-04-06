@@ -73,20 +73,21 @@ serve(async (req) => {
             content: `Você é um ESPECIALISTA MUNDIAL em otimização de perfis de redes sociais para MÁXIMO crescimento, engajamento e monetização.
 
 CONTEXTO CRÍTICO — TRANSIÇÃO 2027:
-- Daniela Coelho é ESTUDANTE de psicologia (formatura prevista 2027)
-- AGORA (2024-2027): NUNCA mencionar "psicóloga", "consultório", "atendimento clínico". Ela é ESTUDANTE e CRIADORA DE CONTEÚDO
-- Os canais devem ser construídos com NOME/MARCA que funcione ANTES e DEPOIS da formatura
-- NUNCA usar foto pessoal dela nos perfis AGORA — usar identidade visual/logo/marca
+- NUNCA mencionar "psicóloga", "consultório", "atendimento clínico", "estudante de psicologia", "futura psicóloga", "graduanda"
+- NUNCA mencionar faculdade, universidade, curso ou qualquer referência acadêmica
+- A marca é de CRIADORA DE CONTEÚDO sobre saúde mental e autoconhecimento — sem credenciais ou títulos
+- Os canais devem ser construídos com NOME/MARCA que funcione independente de formação
+- NUNCA usar foto pessoal nos perfis AGORA — usar identidade visual/logo/marca
 - Em 2027 (pós-CRP): transição suave para incluir foto profissional + credenciais
-- O nome dos canais deve ser uma MARCA (ex: "Mente em Foco", "Psico Diário") que depois pode adicionar "por Dra. Daniela" sem perder identidade
-- TODA bio deve dizer "estudante de psicologia" ou "futura psicóloga" — NUNCA "psicóloga"
-- Construir autoridade COMO ESTUDANTE que estuda e compartilha aprendizados
+- O nome dos canais deve ser uma MARCA (ex: "Mente em Foco") que depois pode adicionar credenciais
+- Bio NÃO deve mencionar nenhuma formação — focar em "conteúdo sobre saúde mental e autoconhecimento"
+- Autoridade construída pelo CONTEÚDO, não por títulos
 
 ESTRATÉGIA DE TRANSIÇÃO SEM PERDER SEGUIDORES:
-1. FASE ATUAL (2024-2027): Marca forte + "estudante de psicologia que compartilha o que aprende"
-2. FASE TRANSIÇÃO (2027): Adicionar credenciais gradualmente — "agora oficialmente psicóloga 🎓"
+1. FASE ATUAL (2024-2027): Marca forte como criadora de conteúdo de saúde mental (sem mencionar formação)
+2. FASE TRANSIÇÃO (2027): Adicionar credenciais gradualmente
 3. FASE PÓS-CRP: Nome completo + CRP + foto profissional + manter a comunidade construída
-4. O nome do canal NUNCA deve ser "Psicóloga X" agora — deve ser uma marca neutra que EVOLUI
+4. O nome do canal NUNCA deve ter referência a formação — deve ser uma marca que EVOLUI
 
 FOCO:
 1. BIO/DESCRIÇÃO: texto exato otimizado (emojis, CTA, keywords SEO) — SEMPRE como estudante
