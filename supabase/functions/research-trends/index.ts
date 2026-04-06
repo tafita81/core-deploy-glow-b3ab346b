@@ -497,9 +497,14 @@ serve(async (req) => {
     }
 
     // Build rankings — sorted by VIDEO views, ONLY psychology/mental health
-    // BRASIL — trending + psicologia (filtrado)
+    // Minimum view thresholds to ensure quality rankings
+    const MIN_VIEWS_BR = 10000;      // 10K minimum for Brazil
+    const MIN_VIEWS_WORLD = 50000;   // 50K minimum for World
+
+    // BRASIL — trending + psicologia (filtrado + mínimo de views)
     const brRanking = [...ytBR, ...ytNicheBR]
       .filter(isPsychRelated)
+      .filter((v: any) => (v.raw_views || 0) >= MIN_VIEWS_BR)
       .sort((a: any, b: any) => (b.raw_views || 0) - (a.raw_views || 0))
       .slice(0, 10)
       .map((v: any, i: number) => ({
@@ -509,10 +514,11 @@ serve(async (req) => {
         why_relevant: `🇧🇷 ${v.total_views || "N/A"} views`,
       }));
 
-    // MUNDIAL (EUA + Europa) — prioridade máxima, FILTRADO psicologia
+    // MUNDIAL (EUA + Europa) — prioridade máxima, FILTRADO psicologia + mínimo de views
     const worldRanking = [...ytUS, ...ytNicheEN, ...ytGB, ...ytNicheDE]
       .filter((v: any) => v.region !== "BR")
       .filter(isPsychRelated)
+      .filter((v: any) => (v.raw_views || 0) >= MIN_VIEWS_WORLD)
       .sort((a: any, b: any) => (b.raw_views || 0) - (a.raw_views || 0))
       .slice(0, 15)
       .map((v: any, i: number) => {
