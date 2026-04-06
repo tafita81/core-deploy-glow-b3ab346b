@@ -35,6 +35,23 @@ serve(async (req) => {
     const viralIntel = (viralSetting?.value as any) || {};
     const momentumAnalysis = viralIntel.momentum_analysis || {};
 
+    // Get Amazon affiliate config
+    const { data: amazonRow } = await supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "amazon_affiliate_tag")
+      .single();
+    const amazonConfig = (amazonRow?.value as any) || {};
+    const affiliateTag = amazonConfig.tag || "";
+
+    // Get curated book catalog
+    const { data: catalogRow } = await supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "amazon_book_catalog")
+      .single();
+    const bookCatalog = (catalogRow?.value as any) || {};
+
     // Get existing groups
     const { data: groups } = await supabase.from("whatsapp_groups").select("*").eq("is_active", true);
 
