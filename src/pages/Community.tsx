@@ -117,6 +117,33 @@ const Community = () => {
   // Find the active group with space (for display)
   const activeGroupWithSpace = groups?.find((g) => g.is_active && g.invite_link && (g.members_count || 0) < MAX_WHATSAPP_GROUP);
 
+  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whatsapp-webhook`;
+  const verifyToken = "dani_whatsapp_verify_2024";
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    toast.success("Copiado!");
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  // Auto-reply activity
+  const { data: autoReplyLogs } = useQuery({
+    queryKey: ["whatsapp-auto-logs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("system_logs")
+        .select("*")
+        .eq("event_type", "whatsapp_message")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 10000,
+  });
+
   const parseBody = (body: string | null) => {
     if (!body) return null;
     try { return JSON.parse(body); } catch { return { message: body }; }
