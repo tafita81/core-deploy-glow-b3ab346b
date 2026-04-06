@@ -175,7 +175,17 @@ PADRÕES VISUAIS DOS VIRAIS:
 - Thumbnails: ${JSON.stringify(visualGuide?.thumbnail_patterns?.compositions || []).slice(0, 200)}
 - Avatar specs: ${JSON.stringify(visualGuide?.avatar_specs || {}).slice(0, 200)}
 
-REGRA ABSOLUTA: Daniela é ESTUDANTE de psicologia (2027). NUNCA "psicóloga". NUNCA foto pessoal nos perfis agora. Construir MARCA que evolui. Gere otimizações com plano de transição 2027 incluído.`
+REGRA ABSOLUTA: Daniela é ESTUDANTE de psicologia (2027). NUNCA "psicóloga". NUNCA foto pessoal nos perfis agora. Construir MARCA que evolui.
+
+LINK DO WHATSAPP PARA INCLUIR NAS BIOS:
+${whatsappInviteLink ? `✅ Link ativo: ${whatsappInviteLink} (grupo: ${whatsappGroupName})
+OBRIGATÓRIO: Incluir este link na bio/descrição de CADA plataforma com CTA tipo "📱 Comunidade exclusiva: [link]"
+No YouTube: incluir na descrição do canal E em cada descrição de vídeo` : "⚠️ Nenhum link WhatsApp configurado ainda — sugerir que cadastre"}
+
+REDES SOCIAIS DA MARCA (incluir links cruzados nas bios):
+${Object.entries(socialLinks).map(([p, n]) => `- ${p}: ${n}`).join("\n")}
+
+Gere otimizações com plano de transição 2027 incluído.`
           }
         ],
       }),
