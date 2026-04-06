@@ -93,15 +93,21 @@ MÉTRICAS POR VÍDEO:
 4. **Momentum Score (0-100)**: combina views totais + crescimento + engajamento
 5. **Ponto de Inflexão**: antes/no/após pico viral
 
-PESQUISE nas 4 plataformas (Brasil + Mundo):
-- INSTAGRAM: Reels ESPECÍFICOS com mais views e maior crescimento AGORA
-- YOUTUBE: Vídeos ESPECÍFICOS no Trending, Shorts que EXPLODIRAM
-- TIKTOK: Vídeos ESPECÍFICOS que acumularam milhões de views nas últimas horas
-- PINTEREST: Pins ESPECÍFICOS de psicologia/saúde mental com mais saves, impressões e cliques AGORA — inclua Idea Pins (vídeo) e Pins estáticos
+PESQUISE nas 4 plataformas — PRIORIZE MUNDIAL sobre BRASIL:
+- Vídeos virais do MUNDO INTEIRO são a melhor fonte de inspiração: menor risco de plágio, conteúdo inédito para o público BR
+- PRIORIZE vídeos em INGLÊS, ESPANHOL, FRANCÊS, ALEMÃO, COREANO, JAPONÊS — traduzir e adaptar = conteúdo original + viral comprovado
+- INSTAGRAM: Reels ESPECÍFICOS com mais views e maior crescimento AGORA (BR + mundo)
+- YOUTUBE: Vídeos ESPECÍFICOS no Trending global, Shorts que EXPLODIRAM internacionalmente
+- TIKTOK: Vídeos ESPECÍFICOS que acumularam milhões de views nas últimas horas (TODOS os países)
+- PINTEREST: Pins ESPECÍFICOS de psicologia/saúde mental com mais saves globalmente
+
+ESTRATÉGIA DE TRADUÇÃO/ADAPTAÇÃO:
+- Para cada vídeo mundial, indique o POTENCIAL DE ADAPTAÇÃO para Brasil (1-100)
+- Quanto mais distante culturalmente o original, MELHOR (menos chance de parecer cópia)
+- Indique EXATAMENTE o que adaptar: idioma, exemplos culturais, referências locais
+- O conteúdo adaptado deve ser IRRECONHECÍVEL como tradução — deve parecer 100% original brasileiro
 
 Foque: psicologia, saúde mental, autoajuda, desenvolvimento pessoal, neurociência, relacionamentos, comportamento humano.
-
-REGRA DE TRADUÇÃO: Para o ranking MUNDIAL, TODOS os campos em PORTUGUÊS BRASILEIRO.
 
 Retorne EXATAMENTE um JSON com esta estrutura:
 {

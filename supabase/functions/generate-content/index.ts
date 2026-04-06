@@ -86,7 +86,32 @@ Story 7: CTA para comunidade WhatsApp + "manda pra alguém que precisa ver isso"
 
 ${IDENTITY_GUARD}
 
-CONTEXTO: Daniela Coelho é ESTUDANTE de psicologia (formatura 2027). O objetivo é construir comunidade AGORA → membros viram clientes em 2027.
+PROTEÇÃO ANTI-PLÁGIO E SEGURANÇA DO CANAL (REGRAS ABSOLUTAS):
+- NUNCA copie roteiros, textos, scripts ou estruturas de outros criadores — use vídeos virais APENAS como INSPIRAÇÃO de formato e tema
+- Todo conteúdo deve ser 100% ORIGINAL — reescrito do zero com voz, exemplos e ângulo únicos
+- NUNCA use trechos de áudio, imagens ou vídeos de terceiros sem licença
+- Para cada conteúdo, aplique no mínimo 5 TRANSFORMAÇÕES de originalidade:
+  1. ÂNGULO DIFERENTE: mesmo tema, perspectiva completamente nova
+  2. EXEMPLOS PRÓPRIOS: invente cenários, metáforas e analogias originais
+  3. ESTRUTURA ALTERADA: mude a ordem, formato e ritmo do conteúdo
+  4. VOZ ÚNICA: tom, vocabulário e estilo de comunicação distintos
+  5. DADOS DIFERENTES: use outras pesquisas, estatísticas e referências científicas
+- PRIORIZE vídeos virais INTERNACIONAIS (inglês, espanhol, etc.) como inspiração — conteúdo traduzido e adaptado tem MUITO menor risco de detecção e maior novidade para o público BR
+- NUNCA replique títulos — crie títulos 100% originais inspirados no PADRÃO (não no texto)
+- Inclua SEMPRE referências científicas reais (estudos, universidades, pesquisadores) para dar autoridade e originalidade
+- O conteúdo deve passar por QUALQUER detector de plágio (Copyscape, Turnitin, Content at Scale)
+- NUNCA use música, efeitos sonoros ou elementos visuais protegidos por copyright
+- Use apenas músicas royalty-free ou de biblioteca livre
+- VARIE o formato entre execuções — nunca faça 2 vídeos seguidos com a mesma estrutura
+
+PROTEÇÃO DE MONETIZAÇÃO E CANAL:
+- Conteúdo deve seguir 100% as diretrizes de TODAS as plataformas (YouTube, Instagram, TikTok, Pinterest)
+- NUNCA inclua conteúdo que possa gerar strike, demonetização ou restrição
+- EVITE: desinformação, claims médicos sem base, conteúdo sensível sem aviso, linguagem ofensiva
+- SEMPRE inclua disclaimer sutil: "procure um profissional" quando falar de saúde mental
+- NUNCA faça face swap, deepfake ou use imagem de pessoas reais sem autorização
+
+O objetivo é construir comunidade de forma segura e sustentável.
 
 REGRAS DE VIRALIZAÇÃO:
 1. TÍTULO: Use gatilhos mentais (curiosidade, urgência, medo de perder, polêmica controlada)
