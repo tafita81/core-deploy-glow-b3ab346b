@@ -200,10 +200,10 @@ async function fetchYouTubeTrending(apiKey: string, regionCode: string): Promise
   }
 }
 
-async function searchYouTubeNiche(apiKey: string, query: string): Promise<any[]> {
+async function searchYouTubeNiche(apiKey: string, query: string, daysBack = 30): Promise<any[]> {
   try {
     const q = encodeURIComponent(query);
-    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${q}&type=video&order=viewCount&publishedAfter=${getDateDaysAgo(7)}&maxResults=10&key=${apiKey}`;
+    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${q}&type=video&order=viewCount&publishedAfter=${getDateDaysAgo(daysBack)}&maxResults=15&key=${apiKey}`;
     const res = await fetch(searchUrl);
     if (!res.ok) return [];
     const data = await res.json();
@@ -214,7 +214,6 @@ async function searchYouTubeNiche(apiKey: string, query: string): Promise<any[]>
     const statsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${videoIds.join(",")}&key=${apiKey}`;
     const statsRes = await fetch(statsUrl);
     if (!statsRes.ok) {
-      // Fallback without stats
       return (data.items || []).map((item: any) => ({
         video_title: item.snippet?.title || "",
         video_url: `https://www.youtube.com/watch?v=${item.id?.videoId}`,
@@ -224,20 +223,22 @@ async function searchYouTubeNiche(apiKey: string, query: string): Promise<any[]>
       }));
     }
     const statsData = await statsRes.json();
-    return (statsData.items || []).map((item: any) => ({
-      video_title: item.snippet?.title || "",
-      description: item.snippet?.description || "",
-      channel_title: item.snippet?.channelTitle || "",
-      video_url: `https://www.youtube.com/watch?v=${item.id}`,
-      creator: item.snippet?.channelTitle || "",
-      creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
-      total_views: formatViews(item.statistics?.viewCount),
-      raw_views: parseInt(item.statistics?.viewCount || "0"),
-      likes: parseInt(item.statistics?.likeCount || "0"),
-      comments: parseInt(item.statistics?.commentCount || "0"),
-      platform: "youtube",
-      published_at: item.snippet?.publishedAt,
-    }));
+    return (statsData.items || [])
+      .map((item: any) => ({
+        video_title: item.snippet?.title || "",
+        description: item.snippet?.description || "",
+        channel_title: item.snippet?.channelTitle || "",
+        video_url: `https://www.youtube.com/watch?v=${item.id}`,
+        creator: item.snippet?.channelTitle || "",
+        creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
+        total_views: formatViews(item.statistics?.viewCount),
+        raw_views: parseInt(item.statistics?.viewCount || "0"),
+        likes: parseInt(item.statistics?.likeCount || "0"),
+        comments: parseInt(item.statistics?.commentCount || "0"),
+        platform: "youtube",
+        published_at: item.snippet?.publishedAt,
+      }))
+      .filter((v: any) => v.raw_views >= 50000); // Only videos with 50K+ views
   } catch (e) {
     console.error("YouTube search error:", e);
     return [];
