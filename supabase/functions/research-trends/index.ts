@@ -181,6 +181,8 @@ async function fetchYouTubeTrending(apiKey: string, regionCode: string): Promise
     const data = await res.json();
     return (data.items || []).map((item: any) => ({
       video_title: item.snippet?.title || "",
+      description: item.snippet?.description || "",
+      channel_title: item.snippet?.channelTitle || "",
       video_url: `https://www.youtube.com/watch?v=${item.id}`,
       creator: item.snippet?.channelTitle || "",
       creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
@@ -224,6 +226,8 @@ async function searchYouTubeNiche(apiKey: string, query: string): Promise<any[]>
     const statsData = await statsRes.json();
     return (statsData.items || []).map((item: any) => ({
       video_title: item.snippet?.title || "",
+      description: item.snippet?.description || "",
+      channel_title: item.snippet?.channelTitle || "",
       video_url: `https://www.youtube.com/watch?v=${item.id}`,
       creator: item.snippet?.channelTitle || "",
       creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
@@ -451,9 +455,50 @@ serve(async (req) => {
 
     console.log(`Data fetched — Called: ${apisCalled.join(",")} | Skipped: ${apisSkipped.join(",") || "none"} | Google: ${googleTrends.length}, YT BR: ${ytBR.length}, YT US: ${ytUS.length}, Reddit: ${redditPosts.length}, News: ${news.length}`);
 
-    // Build rankings — sorted by VIDEO views, focused on psychology/mental health
-    // BRASIL — trending + psicologia
+    // ===== FILTRO DE PSICOLOGIA (restritivo) =====
+    // Termos específicos — evita falsos positivos como "mind-blowing", "brainrot"
+    const psychExact = [
+      "psicolog", "psycholog", "mental health", "saúde mental", "terapia cognitiv",
+      "therap", "ansiedade", "anxiety disorder", "depressão", "depression",
+      "autoconhecimento", "self improvement", "self-improvement",
+      "narcisis", "narcisist", "trauma psic", "ptsd", "mindfulness",
+      "meditação", "meditation practice", "burnout", "transtorno",
+      "bipolar", "adhd", "tdah", "autismo", "autism spectrum",
+      "toxic relationship", "relacionamento tóxic", "attachment style", "apego",
+      "neurociência", "neuroscience", "cognitive behavior", "comportament",
+      "resiliência", "resilience", "autocuidado", "self-care", "self care",
+      "bem-estar mental", "mental wellbeing", "mental wellness",
+      "psychotherap", "psicotera", "aconselhamento", "counseling",
+      "panic attack", "pânico", "obsessive compulsive", "ocd", "toc",
+      "autoestima", "self-esteem", "self esteem", "emotional intelligence",
+      "inteligência emocional", "emotional regulation", "regulação emocional",
+      "inner child", "criança interior", "shadow work", "sombra",
+      "psychology tips", "dicas de psicologia", "mental health awareness",
+      "saúde emocional", "emotional health", "psychology explained",
+      "psicólogo", "psychologist", "psychiatr", "psiquiatr",
+      "anxiety tips", "overcome depression", "superar depressão",
+      "self development", "desenvolvimento pessoal", "personal development",
+      "stoicism", "estoicismo", "emotional healing", "cura emocional",
+    ];
+
+    function isPsychRelated(video: any): boolean {
+      const title = `${video.video_title || ""}`.toLowerCase();
+      const channel = `${video.channel_title || ""}`.toLowerCase();
+      const desc = `${video.description || ""}`.toLowerCase();
+      
+      // Strong match: keyword in title or channel name → definitely relevant
+      const titleMatch = psychExact.some(kw => title.includes(kw) || channel.includes(kw));
+      if (titleMatch) return true;
+      
+      // Weak match: keyword only in description → need at least 3 different keywords
+      const descMatches = psychExact.filter(kw => desc.includes(kw));
+      return descMatches.length >= 3;
+    }
+
+    // Build rankings — sorted by VIDEO views, ONLY psychology/mental health
+    // BRASIL — trending + psicologia (filtrado)
     const brRanking = [...ytBR, ...ytNicheBR]
+      .filter(isPsychRelated)
       .sort((a: any, b: any) => (b.raw_views || 0) - (a.raw_views || 0))
       .slice(0, 10)
       .map((v: any, i: number) => ({
@@ -463,18 +508,19 @@ serve(async (req) => {
         why_relevant: `🇧🇷 ${v.total_views || "N/A"} views`,
       }));
 
-    // MUNDIAL (EUA + Europa) — prioridade máxima, menos riscos de conteúdo
+    // MUNDIAL (EUA + Europa) — prioridade máxima, FILTRADO psicologia
     const worldRanking = [...ytUS, ...ytNicheEN, ...ytGB, ...ytNicheDE]
-      .filter((v: any) => v.region !== "BR") // excluir Brasil
+      .filter((v: any) => v.region !== "BR")
+      .filter(isPsychRelated)
       .sort((a: any, b: any) => (b.raw_views || 0) - (a.raw_views || 0))
-      .slice(0, 15) // mais vídeos no mundial (prioridade)
+      .slice(0, 15)
       .map((v: any, i: number) => {
         const regionMap: Record<string, string> = { US: "🇺🇸 EUA", GB: "🇬🇧 Reino Unido", DE: "🇩🇪 Alemanha" };
         const country = regionMap[v.region] || "🌍 Internacional";
         return {
           ...v,
           rank: i + 1,
-          momentum_score: Math.max(50, 98 - i * 3), // scores mais altos (prioridade)
+          momentum_score: Math.max(50, 98 - i * 3),
           country,
           why_relevant: `${country} — ${v.total_views || "N/A"} views`,
           adaptation_guide: "Traduzir, adaptar culturalmente e focar no gancho emocional para público BR",
