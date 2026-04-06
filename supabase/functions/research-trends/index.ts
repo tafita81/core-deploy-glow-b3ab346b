@@ -102,9 +102,9 @@ async function checkDailyUnits(supabase: any, apiName: string): Promise<number> 
 }
 
 // Returns { allowed: boolean, reason: string }
-async function canCallApi(supabase: any, apiName: string, currentHour: number): Promise<{ allowed: boolean; reason: string }> {
-  // 1. Schedule check
-  if (!shouldCallApi(apiName, currentHour)) {
+async function canCallApi(supabase: any, apiName: string, currentHour: number, forceSchedule = false): Promise<{ allowed: boolean; reason: string }> {
+  // 1. Schedule check (skip if forced)
+  if (!forceSchedule && !shouldCallApi(apiName, currentHour)) {
     return { allowed: false, reason: "fora do horário programado" };
   }
 
@@ -320,7 +320,14 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const currentHour = new Date().getUTCHours();
+    // Parse body for force flag
+    let forceAll = false;
+    try {
+      const body = await req.json();
+      forceAll = body?.force === true;
+    } catch { /* no body */ }
+
+    const currentHour = forceAll ? 0 : new Date().getUTCHours(); // hour 0 matches youtube (even), newsapi, etc.
 
     // Load API keys from settings
     const { data: allSettings } = await supabase.from("settings").select("key, value");
@@ -342,7 +349,7 @@ serve(async (req) => {
     const apisSkipped: string[] = [];
 
     if (youtubeApiKey) {
-      const check = await canCallApi(supabase, "youtube", currentHour);
+      const check = await canCallApi(supabase, "youtube", currentHour, forceAll);
       if (check.allowed) {
         // BRASIL — trending geral + busca focada em psicologia
         promises.push(fetchYouTubeTrending(youtubeApiKey, "BR"));
@@ -359,7 +366,7 @@ serve(async (req) => {
     }
 
     if (redditClientId && redditSecret) {
-      const check = await canCallApi(supabase, "reddit", currentHour);
+      const check = await canCallApi(supabase, "reddit", currentHour, forceAll);
       if (check.allowed) {
         promises.push(fetchRedditTrending(redditClientId, redditSecret));
         apisCalled.push("reddit");
@@ -369,7 +376,7 @@ serve(async (req) => {
     }
 
     if (newsApiKey) {
-      const check = await canCallApi(supabase, "newsapi", currentHour);
+      const check = await canCallApi(supabase, "newsapi", currentHour, forceAll);
       if (check.allowed) {
         promises.push(fetchMentalHealthNews(newsApiKey));
         apisCalled.push("newsapi");
@@ -381,7 +388,7 @@ serve(async (req) => {
     // SerpAPI monthly limit check
     const serpApiKey = getSetting("serpapi_key") as string | null;
     if (serpApiKey) {
-      const check = await canCallApi(supabase, "serpapi", currentHour);
+      const check = await canCallApi(supabase, "serpapi", currentHour, forceAll);
       if (check.allowed) {
         apisCalled.push("serpapi");
         await logApiCall(supabase, "serpapi", 1);
