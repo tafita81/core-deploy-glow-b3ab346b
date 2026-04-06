@@ -172,46 +172,15 @@ async function fetchGoogleTrends(): Promise<string[]> {
 
 async function fetchYouTubeTrending(apiKey: string, regionCode: string): Promise<any[]> {
   try {
-    const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&regionCode=${regionCode}&maxResults=25&key=${apiKey}`;
+    // Get 50 trending (max allowed) for broader coverage
+    const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&chart=mostPopular&regionCode=${regionCode}&maxResults=50&key=${apiKey}`;
     const res = await fetch(url);
     if (!res.ok) {
       console.log(`YouTube API ${res.status} for ${regionCode}`);
       return [];
     }
     const data = await res.json();
-    const now = Date.now();
-    return (data.items || []).map((item: any) => {
-      const rawViews = parseInt(item.statistics?.viewCount || "0");
-      const likes = parseInt(item.statistics?.likeCount || "0");
-      const comments = parseInt(item.statistics?.commentCount || "0");
-      const publishedAt = item.snippet?.publishedAt;
-      const ageMs = now - new Date(publishedAt || now).getTime();
-      const ageDays = Math.max(1, ageMs / 86400000);
-      const viewsPerDay = Math.round(rawViews / ageDays);
-      const engagementRate = rawViews > 0 ? (likes + comments) / rawViews : 0;
-      const engMultiplier = 1 + Math.min(1, engagementRate * 20);
-      const viralScore = Math.round(viewsPerDay * engMultiplier);
-
-      return {
-        video_title: item.snippet?.title || "",
-        description: item.snippet?.description || "",
-        channel_title: item.snippet?.channelTitle || "",
-        video_url: `https://www.youtube.com/watch?v=${item.id}`,
-        creator: item.snippet?.channelTitle || "",
-        creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
-        total_views: formatViews(item.statistics?.viewCount),
-        raw_views: rawViews,
-        likes,
-        comments,
-        platform: "youtube",
-        region: regionCode,
-        published_at: publishedAt,
-        age_days: Math.round(ageDays),
-        views_per_day: viewsPerDay,
-        engagement_rate: Math.round(engagementRate * 10000) / 100,
-        viral_score: viralScore,
-      };
-    });
+    return (data.items || []).map((item: any) => enrichVideoData(item, regionCode));
   } catch (e) {
     console.error(`YouTube API error for ${regionCode}:`, e);
     return [];
@@ -222,14 +191,16 @@ async function searchYouTubeNiche(apiKey: string, query: string, daysBack = 14):
   try {
     const q = encodeURIComponent(query);
     // order=viewCount + recent period = explosive new videos
-    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${q}&type=video&order=viewCount&publishedAfter=${getDateDaysAgo(daysBack)}&maxResults=20&key=${apiKey}`;
+    // maxResults=25 for broader coverage
+    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${q}&type=video&order=viewCount&publishedAfter=${getDateDaysAgo(daysBack)}&maxResults=25&key=${apiKey}`;
     const res = await fetch(searchUrl);
     if (!res.ok) return [];
     const data = await res.json();
     const videoIds = (data.items || []).map((item: any) => item.id?.videoId).filter(Boolean);
     if (videoIds.length === 0) return [];
 
-    const statsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${videoIds.join(",")}&key=${apiKey}`;
+    // contentDetails gives us video duration (for monetization scoring)
+    const statsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet,contentDetails&id=${videoIds.join(",")}&key=${apiKey}`;
     const statsRes = await fetch(statsUrl);
     if (!statsRes.ok) {
       return (data.items || []).map((item: any) => ({
@@ -242,52 +213,160 @@ async function searchYouTubeNiche(apiKey: string, query: string, daysBack = 14):
       }));
     }
     const statsData = await statsRes.json();
-    const now = Date.now();
     return (statsData.items || [])
-      .map((item: any) => {
-        const rawViews = parseInt(item.statistics?.viewCount || "0");
-        const likes = parseInt(item.statistics?.likeCount || "0");
-        const comments = parseInt(item.statistics?.commentCount || "0");
-        const publishedAt = item.snippet?.publishedAt;
-        
-        // Calculate age in days and views/day velocity
-        const ageMs = now - new Date(publishedAt || now).getTime();
-        const ageDays = Math.max(1, ageMs / 86400000);
-        const viewsPerDay = Math.round(rawViews / ageDays);
-        
-        // Engagement rate: (likes + comments) / views — higher = more followers potential
-        const engagementRate = rawViews > 0 ? (likes + comments) / rawViews : 0;
-        // Engagement multiplier: 1.0 (baseline) up to 2.0 (exceptional engagement)
-        const engMultiplier = 1 + Math.min(1, engagementRate * 20);
-        
-        // VIRAL SCORE = views/day × engagement multiplier
-        // This prioritizes FAST-GROWING videos that also convert to followers
-        const viralScore = Math.round(viewsPerDay * engMultiplier);
-        
-        return {
-          video_title: item.snippet?.title || "",
-          description: item.snippet?.description || "",
-          channel_title: item.snippet?.channelTitle || "",
-          video_url: `https://www.youtube.com/watch?v=${item.id}`,
-          creator: item.snippet?.channelTitle || "",
-          creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
-          total_views: formatViews(item.statistics?.viewCount),
-          raw_views: rawViews,
-          likes,
-          comments,
-          platform: "youtube",
-          published_at: publishedAt,
-          age_days: Math.round(ageDays),
-          views_per_day: viewsPerDay,
-          engagement_rate: Math.round(engagementRate * 10000) / 100, // percentage
-          viral_score: viralScore,
-        };
-      })
-      .filter((v: any) => v.raw_views >= 500000); // 500K+ views minimum
+      .map((item: any) => enrichVideoData(item))
+      .filter((v: any) => v.raw_views >= 100000); // 100K minimum pre-filter (final filter is stricter)
   } catch (e) {
     console.error("YouTube search error:", e);
     return [];
   }
+}
+
+// ========================
+// VIRAL SCORE ALGORITHM v3 — MAXIMUM MONETIZATION + ENGAGEMENT
+// ========================
+// Formula: viral_score = (views_per_day ^ 1.15) × freshness_bonus × engagement_multiplier × monetization_multiplier
+//
+// FRESHNESS BONUS (newer = more opportunity to ride the wave):
+//   1-3 days old  → 2.5x  (EXPLOSIVE — maximum opportunity, content is HOT right now)
+//   4-7 days old  → 1.8x  (VERY HOT — still growing, proven viral)
+//   8-14 days old → 1.3x  (WARM — established viral, good for adaptation)
+//   15-30 days old → 1.0x (BASELINE — still relevant but wave is passing)
+//   30+ days old  → 0.6x  (COLD — wave passed, only if exceptionally high views)
+//
+// ENGAGEMENT MULTIPLIER (higher engagement = more followers conversion):
+//   Based on weighted engagement: comments × 3 + likes × 1 (comments are 3x more valuable)
+//   Comments indicate deeper audience connection → more followers
+//   Range: 1.0 to 2.5x
+//
+// MONETIZATION MULTIPLIER (content that generates more revenue):
+//   Video duration 8-20 min → 1.5x (mid-roll ads possible, ideal length)
+//   Video duration 3-8 min → 1.2x (good for engagement, 1 ad)
+//   Shorts < 60s → 0.8x (low ad revenue but high follower growth)
+//   20+ min → 1.3x (multiple mid-rolls but lower completion rate)
+//
+// SUBSCRIBER POTENTIAL (channels that convert viewers to subscribers):
+//   High engagement + medium channel size = highest conversion
+//   Very large channels (10M+) = lower conversion (audience already saturated)
+//
+// CPM TIER BONUS (psychology/mental health = premium advertiser niche):
+//   Applied as base 1.3x for all psychology content (high-CPM niche)
+
+function parseDuration(iso8601: string | undefined): number {
+  if (!iso8601) return 0;
+  const match = iso8601.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!match) return 0;
+  return (parseInt(match[1] || "0") * 3600) + (parseInt(match[2] || "0") * 60) + parseInt(match[3] || "0");
+}
+
+function enrichVideoData(item: any, regionCode?: string): any {
+  const now = Date.now();
+  const rawViews = parseInt(item.statistics?.viewCount || "0");
+  const likes = parseInt(item.statistics?.likeCount || "0");
+  const comments = parseInt(item.statistics?.commentCount || "0");
+  const publishedAt = item.snippet?.publishedAt;
+  const durationSec = parseDuration(item.contentDetails?.duration);
+  const durationMin = durationSec / 60;
+
+  // Age calculation
+  const ageMs = now - new Date(publishedAt || now).getTime();
+  const ageDays = Math.max(0.5, ageMs / 86400000); // minimum half a day
+  const viewsPerDay = Math.round(rawViews / ageDays);
+
+  // ===== FRESHNESS BONUS =====
+  let freshnessBonus = 0.6;
+  if (ageDays <= 3) freshnessBonus = 2.5;
+  else if (ageDays <= 7) freshnessBonus = 1.8;
+  else if (ageDays <= 14) freshnessBonus = 1.3;
+  else if (ageDays <= 30) freshnessBonus = 1.0;
+
+  // ===== ENGAGEMENT MULTIPLIER =====
+  // Comments are 3x more valuable than likes (deeper connection, algorithm boost)
+  const weightedEngagement = rawViews > 0 ? ((comments * 3) + likes) / rawViews : 0;
+  const engMultiplier = 1 + Math.min(1.5, weightedEngagement * 25);
+
+  // Comment-to-view ratio (key metric for follower conversion)
+  const commentRate = rawViews > 0 ? (comments / rawViews) * 100 : 0;
+  // Like-to-view ratio
+  const likeRate = rawViews > 0 ? (likes / rawViews) * 100 : 0;
+
+  // ===== MONETIZATION MULTIPLIER =====
+  let monetizationMultiplier = 1.0;
+  if (durationMin >= 8 && durationMin <= 20) monetizationMultiplier = 1.5; // Sweet spot: mid-roll ads
+  else if (durationMin >= 3 && durationMin < 8) monetizationMultiplier = 1.2;
+  else if (durationMin > 20) monetizationMultiplier = 1.3;
+  else if (durationMin > 0 && durationMin < 1) monetizationMultiplier = 0.8; // Shorts
+
+  // Duration label
+  let durationLabel = "";
+  if (durationMin > 0) {
+    if (durationMin < 1) durationLabel = `${Math.round(durationSec)}s (Short)`;
+    else if (durationMin < 60) durationLabel = `${Math.round(durationMin)}min`;
+    else durationLabel = `${Math.floor(durationMin / 60)}h${Math.round(durationMin % 60)}min`;
+  }
+
+  // ===== CPM TIER BONUS (psychology = premium niche) =====
+  const cpmBonus = 1.3;
+
+  // ===== FINAL VIRAL SCORE =====
+  const viralScore = Math.round(
+    Math.pow(viewsPerDay, 1.15) * freshnessBonus * engMultiplier * monetizationMultiplier * cpmBonus
+  );
+
+  // ===== MONETIZATION POTENTIAL LABEL =====
+  let monetizationPotential = "💰";
+  if (viralScore > 5000000) monetizationPotential = "💎💎💎 JACKPOT";
+  else if (viralScore > 1000000) monetizationPotential = "💎💎 Altíssimo";
+  else if (viralScore > 500000) monetizationPotential = "💎 Alto";
+  else if (viralScore > 100000) monetizationPotential = "💰 Bom";
+  else monetizationPotential = "📈 Moderado";
+
+  // ===== REPLICABILITY ANALYSIS =====
+  const title = (item.snippet?.title || "").toLowerCase();
+  let contentFormat = "desconhecido";
+  if (durationMin > 0 && durationMin < 1) contentFormat = "🎬 Short/Reel";
+  else if (durationMin >= 1 && durationMin < 5) contentFormat = "📱 Vídeo Curto";
+  else if (durationMin >= 5 && durationMin < 15) contentFormat = "🎥 Vídeo Médio";
+  else if (durationMin >= 15) contentFormat = "📺 Vídeo Longo";
+
+  // Hook pattern detection
+  let hookPattern = "";
+  if (title.includes("?")) hookPattern = "❓ Pergunta";
+  else if (title.match(/^\d+|top \d+|🔴|⚠️|nunca|sempre|pare de|stop/i)) hookPattern = "🔥 Comando/Lista";
+  else if (title.match(/secret|segredo|truth|verdade|ninguém|nobody|hidden/i)) hookPattern = "🤫 Segredo/Revelação";
+  else if (title.match(/why|por que|como|how to/i)) hookPattern = "🧠 Educativo";
+  else if (title.match(/fake|lie|mentir|manipulation|manipula/i)) hookPattern = "⚡ Polêmico";
+  else hookPattern = "📌 Declaração";
+
+  return {
+    video_title: item.snippet?.title || "",
+    description: item.snippet?.description || "",
+    channel_title: item.snippet?.channelTitle || "",
+    video_url: `https://www.youtube.com/watch?v=${item.id?.videoId || item.id}`,
+    creator: item.snippet?.channelTitle || "",
+    creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
+    total_views: formatViews(item.statistics?.viewCount),
+    raw_views: rawViews,
+    likes,
+    comments,
+    platform: "youtube",
+    region: regionCode || "",
+    published_at: publishedAt,
+    // Advanced metrics
+    age_days: Math.round(ageDays * 10) / 10,
+    views_per_day: viewsPerDay,
+    engagement_rate: Math.round((likes + comments) / Math.max(1, rawViews) * 10000) / 100,
+    comment_rate: Math.round(commentRate * 100) / 100,
+    like_rate: Math.round(likeRate * 100) / 100,
+    duration_sec: durationSec,
+    duration_label: durationLabel,
+    content_format: contentFormat,
+    hook_pattern: hookPattern,
+    freshness_bonus: freshnessBonus,
+    monetization_multiplier: monetizationMultiplier,
+    monetization_potential: monetizationPotential,
+    viral_score: viralScore,
+  };
 }
 
 async function fetchRedditTrending(clientId: string, clientSecret: string): Promise<any[]> {
