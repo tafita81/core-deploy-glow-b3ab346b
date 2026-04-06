@@ -24,25 +24,43 @@ function getDailyBudget(monthlyLimit: number, daysInMonth = 31): number {
   return Math.floor(monthlyLimit / daysInMonth);
 }
 
+// ========================
+// HARD LIMITS — never exceed these
+// ========================
+// YouTube Data API v3: 10,000 units/day
+//   mostPopular = 1 unit, search = 100 units
+//   Per run: 2 mostPopular (2 units) + 2 searches (200 units) = 202 units
+//   Safe max: floor(10000 / 202) = 49 calls/day → use 10/day for safety margin
+//
+// Reddit API: 60 req/min, effectively unlimited daily but be respectful → 3/day
+//
+// NewsAPI: 100 req/day → 3/day to stay safe
+//
+// SerpAPI: 100 searches/MONTH → floor(100/31) = 3/day, track monthly too
+//
+// Google Trends RSS: unlimited, no key needed
+
+const API_LIMITS = {
+  youtube: { daily_calls: 10, daily_units: 10000, units_per_call: 202 },
+  reddit: { daily_calls: 3 },
+  newsapi: { daily_calls: 3, daily_requests: 100 },
+  serpapi: { monthly_searches: 100, daily_calls: 3 },
+  google_trends: { daily_calls: 999 }, // unlimited RSS
+};
+
 function shouldCallApi(apiName: string, currentHour: number): boolean {
   switch (apiName) {
     case "google_trends":
-      // Free unlimited RSS — call every time
       return true;
-
     case "youtube":
-      // 10k units/day, ~202 per run. Safe up to 49x/day.
-      // Run every 2 hours to be conservative = 12x/day = 2,424 units/day
+      // Spread 10 calls across 24h → every ~2.4h, use even hours
       return currentHour % 2 === 0;
-
     case "reddit":
-      // ~100 req/day free → budget 3/day (every 8h)
       return [6, 14, 22].includes(currentHour);
-
     case "newsapi":
-      // 100 req/day free → budget 3/day (every 8h)
       return [8, 16, 0].includes(currentHour);
-
+    case "serpapi":
+      return [10, 18].includes(currentHour); // 2x/day max
     default:
       return false;
   }
@@ -58,12 +76,69 @@ async function checkDailyUsage(supabase: any, apiName: string): Promise<number> 
   return count || 0;
 }
 
-const DAILY_LIMITS: Record<string, number> = {
-  youtube: getDailyBudget(31 * 12, 31),    // 12 calls/day
-  reddit: getDailyBudget(31 * 3, 31),      // 3 calls/day
-  newsapi: getDailyBudget(31 * 3, 31),     // 3 calls/day
-  google_trends: 999,                       // unlimited
-};
+async function checkMonthlyUsage(supabase: any, apiName: string): Promise<number> {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const { count } = await supabase
+    .from("system_logs")
+    .select("id", { count: "exact", head: true })
+    .eq("event_type", `api_call_${apiName}`)
+    .gte("created_at", monthStart);
+  return count || 0;
+}
+
+async function checkDailyUnits(supabase: any, apiName: string): Promise<number> {
+  const today = new Date().toISOString().split("T")[0];
+  const { data } = await supabase
+    .from("system_logs")
+    .select("metadata")
+    .eq("event_type", `api_call_${apiName}`)
+    .gte("created_at", `${today}T00:00:00Z`);
+  let total = 0;
+  for (const row of data || []) {
+    total += (row.metadata as any)?.units || 0;
+  }
+  return total;
+}
+
+// Returns { allowed: boolean, reason: string }
+async function canCallApi(supabase: any, apiName: string, currentHour: number): Promise<{ allowed: boolean; reason: string }> {
+  // 1. Schedule check
+  if (!shouldCallApi(apiName, currentHour)) {
+    return { allowed: false, reason: "fora do horário programado" };
+  }
+
+  const limits = API_LIMITS[apiName as keyof typeof API_LIMITS];
+  if (!limits) return { allowed: false, reason: "API desconhecida" };
+
+  // 2. Daily call count check
+  const dailyCalls = await checkDailyUsage(supabase, apiName);
+  const maxDaily = (limits as any).daily_calls || 999;
+  if (dailyCalls >= maxDaily) {
+    return { allowed: false, reason: `limite diário atingido (${dailyCalls}/${maxDaily} chamadas)` };
+  }
+
+  // 3. Daily units check (YouTube)
+  if ((limits as any).daily_units) {
+    const usedUnits = await checkDailyUnits(supabase, apiName);
+    const maxUnits = (limits as any).daily_units;
+    const nextCallUnits = (limits as any).units_per_call || 0;
+    if (usedUnits + nextCallUnits > maxUnits) {
+      return { allowed: false, reason: `limite de unidades diárias atingido (${usedUnits}/${maxUnits} units)` };
+    }
+  }
+
+  // 4. Monthly check (SerpAPI)
+  if ((limits as any).monthly_searches) {
+    const monthlyUsage = await checkMonthlyUsage(supabase, apiName);
+    const maxMonthly = (limits as any).monthly_searches;
+    if (monthlyUsage >= maxMonthly) {
+      return { allowed: false, reason: `limite MENSAL atingido (${monthlyUsage}/${maxMonthly}) — aguardando próximo mês` };
+    }
+  }
+
+  return { allowed: true, reason: "ok" };
+}
 
 async function logApiCall(supabase: any, apiName: string, unitsUsed: number) {
   await supabase.from("system_logs").insert({
@@ -238,48 +313,55 @@ serve(async (req) => {
     const redditSecret = getSetting("reddit_client_secret") as string | null;
     const newsApiKey = getSetting("newsapi_key") as string | null;
 
-    // Check rate limits before calling each API
+    // Check rate limits before calling each API (daily + monthly + units)
     const promises: Promise<any>[] = [fetchGoogleTrends()];
     const apisCalled: string[] = ["google_trends"];
     const apisSkipped: string[] = [];
 
-    if (youtubeApiKey && shouldCallApi("youtube", currentHour)) {
-      const ytUsage = await checkDailyUsage(supabase, "youtube");
-      if (ytUsage < DAILY_LIMITS.youtube) {
+    if (youtubeApiKey) {
+      const check = await canCallApi(supabase, "youtube", currentHour);
+      if (check.allowed) {
         promises.push(fetchYouTubeTrending(youtubeApiKey, "BR"));
         promises.push(fetchYouTubeTrending(youtubeApiKey, "US"));
         promises.push(searchYouTubeNiche(youtubeApiKey, "psicologia saúde mental ansiedade"));
         promises.push(searchYouTubeNiche(youtubeApiKey, "psychology mental health anxiety self improvement"));
         apisCalled.push("youtube");
       } else {
-        apisSkipped.push("youtube (daily limit reached)");
+        apisSkipped.push(`youtube (${check.reason})`);
       }
-    } else if (youtubeApiKey) {
-      apisSkipped.push("youtube (rate schedule)");
     }
 
-    if (redditClientId && redditSecret && shouldCallApi("reddit", currentHour)) {
-      const redditUsage = await checkDailyUsage(supabase, "reddit");
-      if (redditUsage < DAILY_LIMITS.reddit) {
+    if (redditClientId && redditSecret) {
+      const check = await canCallApi(supabase, "reddit", currentHour);
+      if (check.allowed) {
         promises.push(fetchRedditTrending(redditClientId, redditSecret));
         apisCalled.push("reddit");
       } else {
-        apisSkipped.push("reddit (daily limit reached)");
+        apisSkipped.push(`reddit (${check.reason})`);
       }
-    } else if (redditClientId) {
-      apisSkipped.push("reddit (rate schedule)");
     }
 
-    if (newsApiKey && shouldCallApi("newsapi", currentHour)) {
-      const newsUsage = await checkDailyUsage(supabase, "newsapi");
-      if (newsUsage < DAILY_LIMITS.newsapi) {
+    if (newsApiKey) {
+      const check = await canCallApi(supabase, "newsapi", currentHour);
+      if (check.allowed) {
         promises.push(fetchMentalHealthNews(newsApiKey));
         apisCalled.push("newsapi");
       } else {
-        apisSkipped.push("newsapi (daily limit reached)");
+        apisSkipped.push(`newsapi (${check.reason})`);
       }
-    } else if (newsApiKey) {
-      apisSkipped.push("newsapi (rate schedule)");
+    }
+
+    // SerpAPI monthly limit check
+    const serpApiKey = getSetting("serpapi_key") as string | null;
+    if (serpApiKey) {
+      const check = await canCallApi(supabase, "serpapi", currentHour);
+      if (check.allowed) {
+        apisCalled.push("serpapi");
+        // SerpAPI call would go here when integrated
+        await logApiCall(supabase, "serpapi", 1);
+      } else {
+        apisSkipped.push(`serpapi (${check.reason})`);
+      }
     }
 
     const results = await Promise.allSettled(promises);
@@ -298,7 +380,7 @@ serve(async (req) => {
     }
     if (apisCalled.includes("reddit")) {
       redditPosts = (results[idx++] as any)?.value || [];
-      await logApiCall(supabase, "reddit", 1);
+      await logApiCall(supabase, "reddit", 5); // 1 auth + 4 subreddit calls
     }
     if (apisCalled.includes("newsapi")) {
       news = (results[idx++] as any)?.value || [];
@@ -363,10 +445,11 @@ serve(async (req) => {
       data_sources: dataSources,
       apis_skipped: apisSkipped,
       rate_limits: {
-        youtube: `${DAILY_LIMITS.youtube} calls/day (every 2h)`,
-        reddit: `${DAILY_LIMITS.reddit} calls/day (every 8h)`,
-        newsapi: `${DAILY_LIMITS.newsapi} calls/day (every 8h)`,
-        google_trends: "unlimited",
+        youtube: { limit: "10.000 units/dia", calls_max: `${API_LIMITS.youtube.daily_calls}/dia`, units_per_call: API_LIMITS.youtube.units_per_call },
+        reddit: { limit: "60 req/min", calls_max: `${API_LIMITS.reddit.daily_calls}/dia` },
+        newsapi: { limit: "100 req/dia", calls_max: `${API_LIMITS.newsapi.daily_calls}/dia` },
+        serpapi: { limit: "100 buscas/mês", calls_max: `${API_LIMITS.serpapi.daily_calls}/dia` },
+        google_trends: { limit: "ilimitado (RSS)" },
       },
       data_source: apisCalled.includes("youtube") ? "youtube_data_api_real" : "cached+google_trends",
       updated_at: new Date().toISOString(),
