@@ -197,6 +197,73 @@ const Community = () => {
           </Card>
         )}
 
+        {/* Webhook Config */}
+        <Card className="border-blue-500/30 bg-blue-500/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Bot className="w-4 h-4" /> 🤖 Auto-Reply WhatsApp (Webhook)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-[10px] text-muted-foreground">
+              Configure no painel da Meta → WhatsApp → Configuration → Webhook:
+            </p>
+            <div>
+              <Label className="text-[10px]">Callback URL</Label>
+              <div className="flex items-center gap-1">
+                <Input value={webhookUrl} readOnly className="h-7 text-[10px] font-mono" />
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 shrink-0" onClick={() => copyToClipboard(webhookUrl, "url")}>
+                  {copiedField === "url" ? <CheckCircle className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                </Button>
+              </div>
+            </div>
+            <div>
+              <Label className="text-[10px]">Verify Token</Label>
+              <div className="flex items-center gap-1">
+                <Input value={verifyToken} readOnly className="h-7 text-[10px] font-mono" />
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 shrink-0" onClick={() => copyToClipboard(verifyToken, "token")}>
+                  {copiedField === "token" ? <CheckCircle className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                </Button>
+              </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              📌 Assine o campo <strong>messages</strong>. A IA responde SOMENTE quando extremamente necessário.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Auto-Reply Activity */}
+        {autoReplyLogs && autoReplyLogs.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <MessageCircle className="w-4 h-4" /> Atividade do Grupo (Tempo Real)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1.5 max-h-60 overflow-y-auto">
+                {autoReplyLogs.map((log) => {
+                  const meta = log.metadata as any;
+                  const isOutgoing = meta?.direction === "outgoing";
+                  return (
+                    <div key={log.id} className={`text-[10px] p-1.5 rounded ${isOutgoing ? "bg-primary/10 border-l-2 border-primary" : "bg-muted/30"}`}>
+                      <span className={`font-medium ${isOutgoing ? "text-primary" : ""}`}>
+                        {isOutgoing ? "🤖 Dani (auto)" : `📩 ${meta?.sender_name || "Membro"}`}
+                      </span>
+                      <span className="text-muted-foreground ml-1">
+                        {(meta?.message_text || log.message).slice(0, 120)}
+                      </span>
+                      <span className="text-muted-foreground/50 ml-1">
+                        {new Date(log.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Groups */}
         <div>
           <h2 className="text-sm font-medium mb-3">Grupos da Comunidade</h2>
