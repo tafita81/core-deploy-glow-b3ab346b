@@ -504,20 +504,50 @@ serve(async (req) => {
       value: viralData,
     }, { onConflict: "key" });
 
-    // Save video snapshots only when YouTube was freshly called
+    // Save video snapshots with view growth tracking
     if (apisCalled.includes("youtube")) {
-      for (const v of [...brRanking, ...worldRanking].slice(0, 15)) {
-        if (v.video_url) {
-          await supabase.from("video_snapshots").insert({
-            video_title: v.video_title || "",
-            creator: v.creator || "",
-            platform: "youtube",
-            region: v.region || "BR",
-            total_views: v.total_views || "",
-            momentum_score: v.momentum_score || 0,
-            metadata: { video_url: v.video_url, source: "api_real" },
-          });
-        }
+      // Prioritize world ranking (more snapshots saved)
+      const allVideos = [...worldRanking, ...brRanking];
+      for (const v of allVideos.slice(0, 20)) {
+        if (!v.video_url) continue;
+
+        // Check previous snapshot for this video to calculate growth
+        const { data: prevSnapshot } = await supabase
+          .from("video_snapshots")
+          .select("total_views, snapshot_hour")
+          .eq("metadata->>video_url", v.video_url)
+          .order("snapshot_hour", { ascending: false })
+          .limit(1)
+          .single();
+
+        const prevViews = prevSnapshot ? parseInt(prevSnapshot.total_views || "0") : 0;
+        const currentViews = v.raw_views || 0;
+        const viewsGrowth = prevViews > 0 ? currentViews - prevViews : 0;
+        const hoursElapsed = prevSnapshot
+          ? Math.max(1, (Date.now() - new Date(prevSnapshot.snapshot_hour).getTime()) / 3600000)
+          : 1;
+        const viewsPerHour = Math.round(viewsGrowth / hoursElapsed);
+
+        await supabase.from("video_snapshots").insert({
+          video_title: v.video_title || "",
+          creator: v.creator || "",
+          platform: "youtube",
+          region: v.region || v.country || "BR",
+          total_views: String(currentViews),
+          views_growth_1h: viewsPerHour > 0 ? `+${formatViews(String(viewsPerHour))}/h` : "0/h",
+          momentum_score: v.momentum_score || 0,
+          acceleration: viewsPerHour > 10000 ? "🔥 explodindo" : viewsPerHour > 1000 ? "📈 crescendo" : viewsPerHour > 0 ? "➡️ estável" : "⏸️ sem dados",
+          metadata: {
+            video_url: v.video_url,
+            raw_views: currentViews,
+            prev_views: prevViews,
+            views_growth: viewsGrowth,
+            views_per_hour: viewsPerHour,
+            country: v.country || v.region,
+            risk_level: v.risk_level || "normal",
+            source: "api_real",
+          },
+        });
       }
     }
 
