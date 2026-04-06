@@ -208,7 +208,7 @@ serve(async (req) => {
           case "instagram": {
             const pageId = tokens.find((t: any) => t.token_type === "page_id")?.token_value;
             if (!pageId) { results.push({ platform: "instagram", success: false, error: "Page ID não configurado" }); continue; }
-            result = await publishToInstagram(accessToken, pageId, content);
+            result = await publishToInstagram(accessToken, pageId, content, bookMention);
             break;
           }
           case "youtube":
