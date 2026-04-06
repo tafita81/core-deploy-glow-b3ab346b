@@ -282,6 +282,27 @@ serve(async (req) => {
         channelMetrics.error = e instanceof Error ? e.message : "Erro ao monitorar";
       }
 
+      // Save metrics snapshot for historical tracking
+      if (channelMetrics.followers || channelMetrics.posts_count || channelMetrics.total_views) {
+        await supabase.from("social_metrics_snapshots").insert({
+          platform: channel.platform,
+          channel_name: channel.name,
+          channel_id: channel.id,
+          followers: channelMetrics.followers || 0,
+          posts_count: channelMetrics.posts_count || 0,
+          engagement_rate: channelMetrics.engagement_rate ? parseFloat(channelMetrics.engagement_rate) : 0,
+          total_views: channelMetrics.total_views || 0,
+          likes: channelMetrics.recent_posts?.reduce((s: number, p: any) => s + (p.like_count || 0), 0) || 0,
+          comments: channelMetrics.recent_posts?.reduce((s: number, p: any) => s + (p.comments_count || 0), 0) || 0,
+          snapshot_type: "hourly",
+          metadata: {
+            recent_posts: channelMetrics.recent_posts?.slice(0, 5),
+            recent_videos: channelMetrics.recent_videos?.slice(0, 5),
+            boards: channelMetrics.boards?.slice(0, 5),
+          },
+        });
+      }
+
       metrics.push(channelMetrics);
     }
 
@@ -289,7 +310,7 @@ serve(async (req) => {
     const connectedCount = metrics.filter((m) => !m.error).length;
     await supabase.from("system_logs").insert({
       event_type: "monitoramento",
-      message: `📊 Monitoramento: ${connectedCount}/${channels.length} canais verificados — Seguidores totais: ${metrics.reduce((s, m) => s + (m.followers || 0), 0)}`,
+      message: `📊 Monitoramento: ${connectedCount}/${channels.length} canais verificados — Seguidores totais: ${metrics.reduce((s, m) => s + (m.followers || 0), 0)} — Snapshots salvos`,
       level: "info",
       metadata: {
         channels_monitored: connectedCount,
