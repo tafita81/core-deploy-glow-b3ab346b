@@ -180,7 +180,7 @@ const Index = () => {
                         {(v.views_growth_1h || v.growth_velocity) && (
                           <p className="text-[10px] text-success truncate">📈 {v.views_growth_1h || v.growth_velocity} • {v.acceleration || ''}</p>
                         )}
-                        <p className="text-muted-foreground truncate">{v.why_viral || v.why_growing_fast}</p>
+                        <p className="text-muted-foreground truncate">{v.why_relevant || v.why_viral || v.why_growing_fast}</p>
                         {v.replication_strategy && (
                           <p className="text-[10px] text-primary/70 truncate">🔁 {v.replication_strategy}</p>
                         )}
