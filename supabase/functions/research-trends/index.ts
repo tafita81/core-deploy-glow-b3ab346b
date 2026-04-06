@@ -344,10 +344,14 @@ serve(async (req) => {
     if (youtubeApiKey) {
       const check = await canCallApi(supabase, "youtube", currentHour);
       if (check.allowed) {
+        // BRASIL — trending geral + busca focada em psicologia
         promises.push(fetchYouTubeTrending(youtubeApiKey, "BR"));
+        promises.push(searchYouTubeNiche(youtubeApiKey, "psicologia saúde mental terapia ansiedade depressão"));
+        // MUNDIAL (EUA + Europa) — prioridade, menos riscos
         promises.push(fetchYouTubeTrending(youtubeApiKey, "US"));
-        promises.push(searchYouTubeNiche(youtubeApiKey, "psicologia saúde mental ansiedade"));
-        promises.push(searchYouTubeNiche(youtubeApiKey, "psychology mental health anxiety self improvement"));
+        promises.push(searchYouTubeNiche(youtubeApiKey, "psychology therapy mental health anxiety depression self improvement"));
+        promises.push(fetchYouTubeTrending(youtubeApiKey, "GB")); // Reino Unido
+        promises.push(searchYouTubeNiche(youtubeApiKey, "psychologie therapie mentale gesundheit angst")); // Alemanha
         apisCalled.push("youtube");
       } else {
         apisSkipped.push(`youtube (${check.reason})`);
@@ -380,7 +384,6 @@ serve(async (req) => {
       const check = await canCallApi(supabase, "serpapi", currentHour);
       if (check.allowed) {
         apisCalled.push("serpapi");
-        // SerpAPI call would go here when integrated
         await logApiCall(supabase, "serpapi", 1);
       } else {
         apisSkipped.push(`serpapi (${check.reason})`);
@@ -390,16 +393,20 @@ serve(async (req) => {
     const results = await Promise.allSettled(promises);
     const googleTrends = (results[0] as any)?.value || [];
 
-    let ytBR: any[] = [], ytUS: any[] = [], ytNicheBR: any[] = [], ytNicheEN: any[] = [];
+    let ytBR: any[] = [], ytNicheBR: any[] = [];
+    let ytUS: any[] = [], ytNicheEN: any[] = [], ytGB: any[] = [], ytNicheDE: any[] = [];
     let redditPosts: any[] = [], news: any[] = [];
     let idx = 1;
 
     if (apisCalled.includes("youtube")) {
       ytBR = (results[idx++] as any)?.value || [];
-      ytUS = (results[idx++] as any)?.value || [];
       ytNicheBR = (results[idx++] as any)?.value || [];
+      ytUS = (results[idx++] as any)?.value || [];
       ytNicheEN = (results[idx++] as any)?.value || [];
-      await logApiCall(supabase, "youtube", 202);
+      ytGB = (results[idx++] as any)?.value || [];
+      ytNicheDE = (results[idx++] as any)?.value || [];
+      // 2 trending (1 unit each) + 3 searches (100 units each) + 3 stats calls (~1 each) ≈ 305 units
+      await logApiCall(supabase, "youtube", 305);
     }
     if (apisCalled.includes("reddit")) {
       redditPosts = (results[idx++] as any)?.value || [];
