@@ -240,9 +240,9 @@ const Index = () => {
                         {(v.views_growth_1h || v.growth_velocity) && (
                           <p className="text-[10px] text-success truncate">📈 {v.views_growth_1h || v.growth_velocity} • {v.acceleration || ''}</p>
                         )}
-                        <p className="text-muted-foreground truncate">{v.why_viral || v.why_growing_fast}</p>
-                        {v.adaptation_potential && (
-                          <p className="text-[10px] text-warning truncate">🔄 Adaptação: {v.adaptation_potential}/100 • Risco: {v.plagiarism_risk || "baixo"}</p>
+                        <p className="text-muted-foreground truncate">{v.why_relevant || v.why_viral || v.why_growing_fast}</p>
+                        {v.adaptation_guide && (
+                          <p className="text-[10px] text-warning truncate">🔄 {v.adaptation_guide}</p>
                         )}
                         {v.insight_for_brazil && (
                           <p className="text-[10px] text-success truncate">🇧🇷 {v.insight_for_brazil}</p>
