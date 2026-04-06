@@ -455,27 +455,36 @@ serve(async (req) => {
 
     console.log(`Data fetched — Called: ${apisCalled.join(",")} | Skipped: ${apisSkipped.join(",") || "none"} | Google: ${googleTrends.length}, YT BR: ${ytBR.length}, YT US: ${ytUS.length}, Reddit: ${redditPosts.length}, News: ${news.length}`);
 
-    // ===== FILTRO DE PSICOLOGIA =====
-    // Só mostrar vídeos relacionados a psicologia, saúde mental, terapia, autoconhecimento
-    const psychKeywords = [
-      "psicolog", "psycholog", "mental health", "saúde mental", "terapia", "therap",
-      "ansiedade", "anxiety", "depressão", "depression", "autoconhecimento", "self improvement",
-      "self help", "autoajuda", "narcis", "trauma", "emotional", "emocional", "mindfulness",
-      "meditação", "meditation", "burnout", "stress", "estresse", "bipolar", "adhd", "tdah",
-      "autismo", "autism", "toxic", "tóxic", "relacionamento", "relationship", "attachment",
-      "apego", "neuroci", "neuroci", "brain", "cérebro", "cognitiv", "behavior", "comportament",
-      "motivat", "motivaç", "resilience", "resiliência", "self care", "autocuidado",
-      "wellbeing", "bem-estar", "psyche", "psique", "mind", "mente", "disorder", "transtorno",
-      "phobia", "fobia", "panic", "pânico", "obsessive", "obsessiv", "compulsiv",
-      "self esteem", "autoestima", "confidence", "confiança", "introvert", "extrovert",
-      "personality", "personalidade", "emotion", "emoção", "feeling", "sentimento",
-      "healing", "cura", "inner", "interior", "growth", "crescimento", "awareness", "consciência",
-      "psychotherap", "psicotera", "counsel", "aconselhamento", "mental", "wellness"
+    // ===== FILTRO DE PSICOLOGIA (restritivo) =====
+    // Termos específicos — evita falsos positivos como "mind-blowing", "brainrot"
+    const psychExact = [
+      "psicolog", "psycholog", "mental health", "saúde mental", "terapia cognitiv",
+      "therap", "ansiedade", "anxiety disorder", "depressão", "depression",
+      "autoconhecimento", "self improvement", "self-improvement",
+      "narcisis", "narcisist", "trauma psic", "ptsd", "mindfulness",
+      "meditação", "meditation practice", "burnout", "transtorno",
+      "bipolar", "adhd", "tdah", "autismo", "autism spectrum",
+      "toxic relationship", "relacionamento tóxic", "attachment style", "apego",
+      "neurociência", "neuroscience", "cognitive behavior", "comportament",
+      "resiliência", "resilience", "autocuidado", "self-care", "self care",
+      "bem-estar mental", "mental wellbeing", "mental wellness",
+      "psychotherap", "psicotera", "aconselhamento", "counseling",
+      "panic attack", "pânico", "obsessive compulsive", "ocd", "toc",
+      "autoestima", "self-esteem", "self esteem", "emotional intelligence",
+      "inteligência emocional", "emotional regulation", "regulação emocional",
+      "inner child", "criança interior", "shadow work", "sombra",
+      "psychology tips", "dicas de psicologia", "mental health awareness",
+      "saúde emocional", "emotional health", "psychology explained",
+      "psicólogo", "psychologist", "psychiatr", "psiquiatr",
+      "anxiety tips", "overcome depression", "superar depressão",
+      "self development", "desenvolvimento pessoal", "personal development",
+      "stoicism", "estoicismo", "emotional healing", "cura emocional",
     ];
 
     function isPsychRelated(video: any): boolean {
       const text = `${video.video_title || ""} ${video.channel_title || ""} ${video.description || ""}`.toLowerCase();
-      return psychKeywords.some(kw => text.includes(kw));
+      // Must match at least one specific psychology term
+      return psychExact.some(kw => text.includes(kw));
     }
 
     // Build rankings — sorted by VIDEO views, ONLY psychology/mental health
