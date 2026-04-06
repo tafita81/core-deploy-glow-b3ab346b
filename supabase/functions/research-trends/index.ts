@@ -6,7 +6,78 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Fetch Google Trends RSS (100% free, no API key)
+// ========================
+// RATE LIMITER — divide free quotas across 31 days
+// ========================
+// YouTube Data API: 10,000 units/day → each mostPopular=1 unit, search=100 units
+//   Per call: 2 mostPopular (2 units) + 2 searches (200 units) = ~202 units
+//   10,000/day ÷ 202 = ~49 calls/day safe → run hourly (24/day) is fine
+//   Monthly: 24 × 31 = 744 calls, well within 310,000 monthly units
+//
+// NewsAPI free: 100 requests/day → 100/31 ≈ 3/day → every 8h
+// Reddit free: 60 req/min, 100/day unofficial → 100/31 ≈ 3/day → every 8h
+// Google Trends RSS: unlimited → every hour
+//
+// Strategy: check current hour, only call expensive APIs at specific hours
+
+function getDailyBudget(monthlyLimit: number, daysInMonth = 31): number {
+  return Math.floor(monthlyLimit / daysInMonth);
+}
+
+function shouldCallApi(apiName: string, currentHour: number): boolean {
+  switch (apiName) {
+    case "google_trends":
+      // Free unlimited RSS — call every time
+      return true;
+
+    case "youtube":
+      // 10k units/day, ~202 per run. Safe up to 49x/day.
+      // Run every 2 hours to be conservative = 12x/day = 2,424 units/day
+      return currentHour % 2 === 0;
+
+    case "reddit":
+      // ~100 req/day free → budget 3/day (every 8h)
+      return [6, 14, 22].includes(currentHour);
+
+    case "newsapi":
+      // 100 req/day free → budget 3/day (every 8h)
+      return [8, 16, 0].includes(currentHour);
+
+    default:
+      return false;
+  }
+}
+
+async function checkDailyUsage(supabase: any, apiName: string): Promise<number> {
+  const today = new Date().toISOString().split("T")[0];
+  const { count } = await supabase
+    .from("system_logs")
+    .select("id", { count: "exact", head: true })
+    .eq("event_type", `api_call_${apiName}`)
+    .gte("created_at", `${today}T00:00:00Z`);
+  return count || 0;
+}
+
+const DAILY_LIMITS: Record<string, number> = {
+  youtube: getDailyBudget(31 * 12, 31),    // 12 calls/day
+  reddit: getDailyBudget(31 * 3, 31),      // 3 calls/day
+  newsapi: getDailyBudget(31 * 3, 31),     // 3 calls/day
+  google_trends: 999,                       // unlimited
+};
+
+async function logApiCall(supabase: any, apiName: string, unitsUsed: number) {
+  await supabase.from("system_logs").insert({
+    event_type: `api_call_${apiName}`,
+    message: `API call: ${apiName} — ${unitsUsed} units used`,
+    level: "debug",
+    metadata: { api: apiName, units: unitsUsed, timestamp: new Date().toISOString() },
+  });
+}
+
+// ========================
+// DATA FETCHERS
+// ========================
+
 async function fetchGoogleTrends(): Promise<string[]> {
   try {
     const res = await fetch("https://trends.google.com/trending/rss?geo=BR");
@@ -24,7 +95,6 @@ async function fetchGoogleTrends(): Promise<string[]> {
   }
 }
 
-// Fetch YouTube trending via Data API v3 (free: 10k units/day)
 async function fetchYouTubeTrending(apiKey: string, regionCode: string): Promise<any[]> {
   try {
     const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&regionCode=${regionCode}&maxResults=25&videoCategoryId=27&key=${apiKey}`;
@@ -51,7 +121,6 @@ async function fetchYouTubeTrending(apiKey: string, regionCode: string): Promise
   }
 }
 
-// Search YouTube for psychology niche videos
 async function searchYouTubeNiche(apiKey: string, query: string): Promise<any[]> {
   try {
     const q = encodeURIComponent(query);
@@ -73,10 +142,8 @@ async function searchYouTubeNiche(apiKey: string, query: string): Promise<any[]>
   }
 }
 
-// Fetch Reddit trending from psychology subreddits (free, needs client_id)
 async function fetchRedditTrending(clientId: string, clientSecret: string): Promise<any[]> {
   try {
-    // Get access token
     const authRes = await fetch("https://www.reddit.com/api/v1/access_token", {
       method: "POST",
       headers: {
@@ -114,7 +181,6 @@ async function fetchRedditTrending(clientId: string, clientSecret: string): Prom
   }
 }
 
-// Fetch news about mental health (free: 100/day)
 async function fetchMentalHealthNews(apiKey: string): Promise<any[]> {
   try {
     const q = encodeURIComponent("saúde mental OR psicologia OR ansiedade OR terapia");
@@ -156,6 +222,8 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    const currentHour = new Date().getUTCHours();
+
     // Load API keys from settings
     const { data: allSettings } = await supabase.from("settings").select("key, value");
     const getSetting = (key: string) => {
@@ -170,20 +238,48 @@ serve(async (req) => {
     const redditSecret = getSetting("reddit_client_secret") as string | null;
     const newsApiKey = getSetting("newsapi_key") as string | null;
 
-    // Fetch ALL available data sources in parallel
+    // Check rate limits before calling each API
     const promises: Promise<any>[] = [fetchGoogleTrends()];
+    const apisCalled: string[] = ["google_trends"];
+    const apisSkipped: string[] = [];
 
-    if (youtubeApiKey) {
-      promises.push(fetchYouTubeTrending(youtubeApiKey, "BR"));
-      promises.push(fetchYouTubeTrending(youtubeApiKey, "US"));
-      promises.push(searchYouTubeNiche(youtubeApiKey, "psicologia saúde mental ansiedade"));
-      promises.push(searchYouTubeNiche(youtubeApiKey, "psychology mental health anxiety self improvement"));
+    if (youtubeApiKey && shouldCallApi("youtube", currentHour)) {
+      const ytUsage = await checkDailyUsage(supabase, "youtube");
+      if (ytUsage < DAILY_LIMITS.youtube) {
+        promises.push(fetchYouTubeTrending(youtubeApiKey, "BR"));
+        promises.push(fetchYouTubeTrending(youtubeApiKey, "US"));
+        promises.push(searchYouTubeNiche(youtubeApiKey, "psicologia saúde mental ansiedade"));
+        promises.push(searchYouTubeNiche(youtubeApiKey, "psychology mental health anxiety self improvement"));
+        apisCalled.push("youtube");
+      } else {
+        apisSkipped.push("youtube (daily limit reached)");
+      }
+    } else if (youtubeApiKey) {
+      apisSkipped.push("youtube (rate schedule)");
     }
-    if (redditClientId && redditSecret) {
-      promises.push(fetchRedditTrending(redditClientId, redditSecret));
+
+    if (redditClientId && redditSecret && shouldCallApi("reddit", currentHour)) {
+      const redditUsage = await checkDailyUsage(supabase, "reddit");
+      if (redditUsage < DAILY_LIMITS.reddit) {
+        promises.push(fetchRedditTrending(redditClientId, redditSecret));
+        apisCalled.push("reddit");
+      } else {
+        apisSkipped.push("reddit (daily limit reached)");
+      }
+    } else if (redditClientId) {
+      apisSkipped.push("reddit (rate schedule)");
     }
-    if (newsApiKey) {
-      promises.push(fetchMentalHealthNews(newsApiKey));
+
+    if (newsApiKey && shouldCallApi("newsapi", currentHour)) {
+      const newsUsage = await checkDailyUsage(supabase, "newsapi");
+      if (newsUsage < DAILY_LIMITS.newsapi) {
+        promises.push(fetchMentalHealthNews(newsApiKey));
+        apisCalled.push("newsapi");
+      } else {
+        apisSkipped.push("newsapi (daily limit reached)");
+      }
+    } else if (newsApiKey) {
+      apisSkipped.push("newsapi (rate schedule)");
     }
 
     const results = await Promise.allSettled(promises);
@@ -193,35 +289,58 @@ serve(async (req) => {
     let redditPosts: any[] = [], news: any[] = [];
     let idx = 1;
 
-    if (youtubeApiKey) {
+    if (apisCalled.includes("youtube")) {
       ytBR = (results[idx++] as any)?.value || [];
       ytUS = (results[idx++] as any)?.value || [];
       ytNicheBR = (results[idx++] as any)?.value || [];
       ytNicheEN = (results[idx++] as any)?.value || [];
+      await logApiCall(supabase, "youtube", 202);
     }
-    if (redditClientId && redditSecret) {
+    if (apisCalled.includes("reddit")) {
       redditPosts = (results[idx++] as any)?.value || [];
+      await logApiCall(supabase, "reddit", 1);
     }
-    if (newsApiKey) {
+    if (apisCalled.includes("newsapi")) {
       news = (results[idx++] as any)?.value || [];
+      await logApiCall(supabase, "newsapi", 1);
     }
 
-    const dataSources: string[] = ["google_trends"];
-    if (ytBR.length > 0 || ytUS.length > 0) dataSources.push("youtube_data_api");
-    if (redditPosts.length > 0) dataSources.push("reddit");
-    if (news.length > 0) dataSources.push("newsapi");
+    // If APIs were skipped this hour, load cached data
+    if (!apisCalled.includes("youtube") || !apisCalled.includes("reddit") || !apisCalled.includes("newsapi")) {
+      const { data: cached } = await supabase
+        .from("settings")
+        .select("value")
+        .eq("key", "viral_intelligence")
+        .single();
 
-    console.log(`Data fetched — Google Trends: ${googleTrends.length}, YT BR: ${ytBR.length}, YT US: ${ytUS.length}, YT Niche BR: ${ytNicheBR.length}, YT Niche EN: ${ytNicheEN.length}, Reddit: ${redditPosts.length}, News: ${news.length}`);
+      if (cached?.value) {
+        const cv = cached.value as any;
+        if (!apisCalled.includes("youtube") && cv.competitor_analysis?.length) {
+          ytBR = cv.competitor_analysis || [];
+          ytUS = cv.world_ranking || [];
+        }
+        if (!apisCalled.includes("reddit") && cv.reddit_trending?.length) {
+          redditPosts = cv.reddit_trending || [];
+        }
+        if (!apisCalled.includes("newsapi") && cv.news_trending?.length) {
+          news = cv.news_trending || [];
+        }
+      }
+    }
 
-    // Build rankings from real data
-    const brRanking = [...ytBR, ...ytNicheBR].slice(0, 10).map((v, i) => ({
+    const dataSources: string[] = apisCalled;
+
+    console.log(`Data fetched — Called: ${apisCalled.join(",")} | Skipped: ${apisSkipped.join(",") || "none"} | Google: ${googleTrends.length}, YT BR: ${ytBR.length}, YT US: ${ytUS.length}, Reddit: ${redditPosts.length}, News: ${news.length}`);
+
+    // Build rankings
+    const brRanking = [...ytBR, ...ytNicheBR].slice(0, 10).map((v: any, i: number) => ({
       ...v,
       rank: i + 1,
       momentum_score: Math.max(50, 95 - i * 5),
       why_relevant: "Vídeo real do YouTube Trending/Search",
     }));
 
-    const worldRanking = [...ytUS, ...ytNicheEN].slice(0, 10).map((v, i) => ({
+    const worldRanking = [...ytUS, ...ytNicheEN].slice(0, 10).map((v: any, i: number) => ({
       ...v,
       rank: i + 1,
       momentum_score: Math.max(50, 95 - i * 5),
@@ -242,7 +361,14 @@ serve(async (req) => {
       reddit_trending: redditPosts.slice(0, 10),
       news_trending: news.slice(0, 10),
       data_sources: dataSources,
-      data_source: dataSources.includes("youtube_data_api") ? "youtube_data_api_real" : "google_trends_real",
+      apis_skipped: apisSkipped,
+      rate_limits: {
+        youtube: `${DAILY_LIMITS.youtube} calls/day (every 2h)`,
+        reddit: `${DAILY_LIMITS.reddit} calls/day (every 8h)`,
+        newsapi: `${DAILY_LIMITS.newsapi} calls/day (every 8h)`,
+        google_trends: "unlimited",
+      },
+      data_source: apisCalled.includes("youtube") ? "youtube_data_api_real" : "cached+google_trends",
       updated_at: new Date().toISOString(),
     };
 
@@ -251,27 +377,29 @@ serve(async (req) => {
       value: viralData,
     }, { onConflict: "key" });
 
-    // Save video snapshots
-    for (const v of [...brRanking, ...worldRanking].slice(0, 15)) {
-      if (v.video_url) {
-        await supabase.from("video_snapshots").insert({
-          video_title: v.video_title || "",
-          creator: v.creator || "",
-          platform: "youtube",
-          region: v.region || "BR",
-          total_views: v.total_views || "",
-          momentum_score: v.momentum_score || 0,
-          metadata: { video_url: v.video_url, source: "api_real" },
-        });
+    // Save video snapshots only when YouTube was freshly called
+    if (apisCalled.includes("youtube")) {
+      for (const v of [...brRanking, ...worldRanking].slice(0, 15)) {
+        if (v.video_url) {
+          await supabase.from("video_snapshots").insert({
+            video_title: v.video_title || "",
+            creator: v.creator || "",
+            platform: "youtube",
+            region: v.region || "BR",
+            total_views: v.total_views || "",
+            momentum_score: v.momentum_score || 0,
+            metadata: { video_url: v.video_url, source: "api_real" },
+          });
+        }
       }
     }
 
     // Log
     await supabase.from("system_logs").insert({
       event_type: "pesquisa",
-      message: `📊 Dados REAIS: ${dataSources.join(" + ")} — ${brRanking.length} BR, ${worldRanking.length} mundo, ${googleTrends.length} trends Google, ${redditPosts.length} Reddit, ${news.length} notícias`,
+      message: `📊 Rate-limited: ${apisCalled.join("+")} chamados | ${apisSkipped.join(", ") || "nenhum"} pulados — BR:${brRanking.length} Mundo:${worldRanking.length} Trends:${googleTrends.length} Reddit:${redditPosts.length} News:${news.length}`,
       level: "info",
-      metadata: { sources: dataSources, counts: { br: brRanking.length, world: worldRanking.length, trends: googleTrends.length, reddit: redditPosts.length, news: news.length } },
+      metadata: { called: apisCalled, skipped: apisSkipped, counts: { br: brRanking.length, world: worldRanking.length, trends: googleTrends.length, reddit: redditPosts.length, news: news.length } },
     });
 
     return new Response(JSON.stringify({
@@ -281,6 +409,8 @@ serve(async (req) => {
       reddit_trending: redditPosts.slice(0, 10),
       news_trending: news.slice(0, 10),
       data_sources: dataSources,
+      apis_skipped: apisSkipped,
+      rate_limits: viralData.rate_limits,
       data_source: viralData.data_source,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
