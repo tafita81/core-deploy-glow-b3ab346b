@@ -135,58 +135,75 @@ const Index = () => {
 
         {(topVideosBrasil.length > 0 || topVideosMundial.length > 0 || (monetization.revenue_streams || []).length > 0) && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* MUNDIAL PRIMEIRO — prioridade, menos riscos */}
+            {topVideosMundial.length > 0 && (
+              <Card className="border-primary/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    🌍 Top Vídeos Mundial (EUA + Europa) — Psicologia
+                    <Badge variant="secondary" className="text-[9px]">⭐ Prioridade</Badge>
+                  </CardTitle>
+                  <p className="text-[9px] text-muted-foreground">
+                    {viralIntel?.updated_at ? `✅ Dados reais • ${new Date(viralIntel.updated_at).toLocaleString("pt-BR")}` : ""}
+                    {" • Ranking por views do vídeo • Risco baixo"}
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {topVideosMundial.slice(0, 15).map((v: any, i: number) => {
+                    const videoUrl = v.video_url || `https://www.youtube.com/results?search_query=${encodeURIComponent(v.video_title || "")}`;
+                    return (
+                    <div key={i} onClick={() => window.open(videoUrl, "_blank")} className="flex items-start gap-2 text-xs hover:bg-muted/50 rounded-md p-1.5 -mx-1.5 transition-colors cursor-pointer group/link">
+                      <span className="font-bold text-primary min-w-[20px]">#{v.rank || i + 1}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1">
+                          <p className="font-medium truncate group-hover/link:text-primary transition-colors">🎬 {v.video_title}</p>
+                          {v.momentum_score && <Badge variant="secondary" className="text-[9px] shrink-0">⚡{v.momentum_score}</Badge>}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground truncate">
+                          {v.creator} • {v.country || v.region} • <span className="text-primary underline font-medium">ver vídeo ↗</span>
+                        </p>
+                        {v.total_views && <p className="text-[10px] text-success font-medium">👁 {v.total_views}</p>}
+                        {v.likes > 0 && <p className="text-[10px] text-muted-foreground">❤️ {v.likes?.toLocaleString()} likes • 💬 {v.comments?.toLocaleString()} comentários</p>}
+                        <p className="text-muted-foreground truncate">{v.why_relevant}</p>
+                        {v.adaptation_guide && <p className="text-[10px] text-warning truncate">🔄 {v.adaptation_guide}</p>}
+                        {v.risk_level && <Badge variant="outline" className="text-[8px] mt-0.5">🛡️ Risco: {v.risk_level}</Badge>}
+                      </div>
+                    </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* BRASIL — segundo */}
             {topVideosBrasil.length > 0 && (
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    🇧🇷 Top Vídeos Brasil — YouTube Trending
+                    🇧🇷 Top Vídeos Brasil — Psicologia & Trending
                   </CardTitle>
-                  {viralIntel?.data_source === "youtube_trending_real" && (
-                    <p className="text-[9px] text-muted-foreground">✅ Dados reais do YouTube • Atualizado: {viralIntel?.updated_at ? new Date(viralIntel.updated_at).toLocaleString("pt-BR") : ""}</p>
-                  )}
+                  <p className="text-[9px] text-muted-foreground">
+                    {viralIntel?.updated_at ? `✅ Dados reais • ${new Date(viralIntel.updated_at).toLocaleString("pt-BR")}` : ""}
+                    {" • Ranking por views do vídeo"}
+                  </p>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {topVideosBrasil.slice(0, 10).map((v: any, i: number) => {
-                    const buildSearchUrl = (title: string, platform: string, creator?: string) => {
-                      const q = encodeURIComponent(`${title} ${creator || ""}`.trim());
-                      if (platform === "youtube") return `https://www.youtube.com/results?search_query=${q}`;
-                      if (platform === "instagram") return `https://www.instagram.com/${creator?.replace(/^@/, "") || "explore"}`;
-                      if (platform === "tiktok") return `https://www.tiktok.com/search?q=${q}`;
-                      if (platform === "pinterest") return `https://br.pinterest.com/search/pins/?q=${q}`;
-                      return `https://www.google.com/search?q=${q}`;
-                    };
-                    const videoUrl = v.video_url || v.url || buildSearchUrl(v.video_title || v.top_video_title || "", v.platform, v.creator);
+                    const videoUrl = v.video_url || `https://www.youtube.com/results?search_query=${encodeURIComponent(v.video_title || "")}`;
                     return (
-                    <div
-                      key={i}
-                      onClick={() => window.open(videoUrl, "_blank")}
-                      className="flex items-start gap-2 text-xs hover:bg-muted/50 rounded-md p-1.5 -mx-1.5 transition-colors cursor-pointer group/link"
-                    >
+                    <div key={i} onClick={() => window.open(videoUrl, "_blank")} className="flex items-start gap-2 text-xs hover:bg-muted/50 rounded-md p-1.5 -mx-1.5 transition-colors cursor-pointer group/link">
                       <span className="font-bold text-primary min-w-[20px]">#{v.rank || i + 1}</span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1">
-                          <p className="font-medium truncate group-hover/link:text-primary transition-colors">
-                            🎬 {v.video_title || v.top_video_title || v.channel}
-                          </p>
-                          {v.momentum_score && (
-                            <Badge variant="secondary" className="text-[9px] shrink-0">
-                              ⚡{v.momentum_score}
-                            </Badge>
-                          )}
+                          <p className="font-medium truncate group-hover/link:text-primary transition-colors">🎬 {v.video_title}</p>
+                          {v.momentum_score && <Badge variant="secondary" className="text-[9px] shrink-0">⚡{v.momentum_score}</Badge>}
                         </div>
                         <p className="text-[10px] text-muted-foreground truncate">
-                          {v.creator || v.channel} • {v.platform} • <span className="text-primary underline font-medium">ver vídeo ↗</span>
+                          {v.creator} • <span className="text-primary underline font-medium">ver vídeo ↗</span>
                         </p>
-                        {v.total_views && (
-                          <p className="text-[10px] text-success font-medium">👁 {v.total_views}</p>
-                        )}
-                        {(v.views_growth_1h || v.growth_velocity) && (
-                          <p className="text-[10px] text-success truncate">📈 {v.views_growth_1h || v.growth_velocity} • {v.acceleration || ''}</p>
-                        )}
-                        <p className="text-muted-foreground truncate">{v.why_relevant || v.why_viral || v.why_growing_fast}</p>
-                        {v.replication_strategy && (
-                          <p className="text-[10px] text-primary/70 truncate">🔁 {v.replication_strategy}</p>
-                        )}
+                        {v.total_views && <p className="text-[10px] text-success font-medium">👁 {v.total_views}</p>}
+                        {v.likes > 0 && <p className="text-[10px] text-muted-foreground">❤️ {v.likes?.toLocaleString()} likes • 💬 {v.comments?.toLocaleString()} comentários</p>}
+                        <p className="text-muted-foreground truncate">{v.why_relevant}</p>
                       </div>
                     </div>
                     );
