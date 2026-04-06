@@ -238,7 +238,7 @@ async function searchYouTubeNiche(apiKey: string, query: string, daysBack = 30):
         platform: "youtube",
         published_at: item.snippet?.publishedAt,
       }))
-      .filter((v: any) => v.raw_views >= 50000); // Only videos with 50K+ views
+      .filter((v: any) => v.raw_views >= 1000000); // Only videos with 1M+ views
   } catch (e) {
     console.error("YouTube search error:", e);
     return [];
