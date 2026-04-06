@@ -702,6 +702,37 @@ serve(async (req) => {
       .slice(0, 15)
       .map((v: any, i: number) => buildRankingEntry(v, i, undefined));
 
+    // ===== MONETIZATION INTELLIGENCE =====
+    const allRanked = [...worldRanking, ...brRanking];
+    const avgViralScore = allRanked.length > 0 ? Math.round(allRanked.reduce((s, v) => s + (v.viral_score || 0), 0) / allRanked.length) : 0;
+    const topFormats = allRanked.reduce((acc: Record<string, number>, v) => { acc[v.content_format || "?"] = (acc[v.content_format || "?"] || 0) + 1; return acc; }, {});
+    const topHooks = allRanked.reduce((acc: Record<string, number>, v) => { acc[v.hook_pattern || "?"] = (acc[v.hook_pattern || "?"] || 0) + 1; return acc; }, {});
+    const bestFormat = Object.entries(topFormats).sort((a, b) => b[1] - a[1])[0]?.[0] || "?";
+    const bestHook = Object.entries(topHooks).sort((a, b) => b[1] - a[1])[0]?.[0] || "?";
+    const avgDuration = allRanked.length > 0 ? Math.round(allRanked.reduce((s, v) => s + (v.duration_sec || 0), 0) / allRanked.length / 60) : 0;
+
+    const monetizationInsights = {
+      avg_viral_score: avgViralScore,
+      best_format: bestFormat,
+      best_hook_pattern: bestHook,
+      ideal_duration: `${avgDuration} minutos`,
+      top_monetization: allRanked.filter(v => v.monetization_potential?.includes("💎")).length,
+      revenue_streams: [
+        "AdSense (CPM alto: psicologia = $8-15/1000 views)",
+        "Cursos online (converter seguidores em alunos)",
+        "Afiliados Amazon (livros de psicologia/autoajuda)",
+        "Mentoria 1:1 (premium, alto ticket)",
+        "Comunidade WhatsApp (engajamento + indicações)",
+      ],
+      community_growth_tactics: [
+        `Formato mais viral: ${bestFormat}`,
+        `Hook mais eficaz: ${bestHook}`,
+        `Duração ideal: ~${avgDuration}min`,
+        "Postar às 07:00, 12:00 e 19:00 (horários de pico BR)",
+        "Responder TODOS os comentários nas primeiras 2h",
+      ],
+    };
+
     // Save results
     const viralData = {
       viral_patterns: {
@@ -709,12 +740,22 @@ serve(async (req) => {
         google_trends: googleTrends,
         best_posting_times: ["07:00-09:00", "12:00-13:00", "19:00-21:00"],
       },
+      monetization_insights: monetizationInsights,
       competitor_analysis: brRanking,
       world_ranking: worldRanking,
       reddit_trending: redditPosts.slice(0, 10),
       news_trending: news.slice(0, 10),
       data_sources: dataSources,
       apis_skipped: apisSkipped,
+      algorithm_version: "v3_max_monetization",
+      ranking_criteria: {
+        formula: "viral_score = (views/dia^1.15) × freshness × engagement × monetization × CPM",
+        min_views: MIN_VIEWS,
+        period: "14 dias",
+        freshness_bonus: "1-3d=2.5x, 4-7d=1.8x, 8-14d=1.3x, 15-30d=1.0x",
+        engagement_weight: "comments×3 + likes×1 (comments = 3x mais valiosos)",
+        monetization_factor: "8-20min=1.5x, 3-8min=1.2x, shorts=0.8x",
+      },
       rate_limits: {
         youtube: { limit: "10.000 units/dia", calls_max: `${API_LIMITS.youtube.daily_calls}/dia`, units_per_call: API_LIMITS.youtube.units_per_call },
         reddit: { limit: "60 req/min", calls_max: `${API_LIMITS.reddit.daily_calls}/dia` },
