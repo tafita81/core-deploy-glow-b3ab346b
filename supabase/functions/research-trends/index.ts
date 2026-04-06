@@ -451,9 +451,33 @@ serve(async (req) => {
 
     console.log(`Data fetched — Called: ${apisCalled.join(",")} | Skipped: ${apisSkipped.join(",") || "none"} | Google: ${googleTrends.length}, YT BR: ${ytBR.length}, YT US: ${ytUS.length}, Reddit: ${redditPosts.length}, News: ${news.length}`);
 
-    // Build rankings — sorted by VIDEO views, focused on psychology/mental health
-    // BRASIL — trending + psicologia
+    // ===== FILTRO DE PSICOLOGIA =====
+    // Só mostrar vídeos relacionados a psicologia, saúde mental, terapia, autoconhecimento
+    const psychKeywords = [
+      "psicolog", "psycholog", "mental health", "saúde mental", "terapia", "therap",
+      "ansiedade", "anxiety", "depressão", "depression", "autoconhecimento", "self improvement",
+      "self help", "autoajuda", "narcis", "trauma", "emotional", "emocional", "mindfulness",
+      "meditação", "meditation", "burnout", "stress", "estresse", "bipolar", "adhd", "tdah",
+      "autismo", "autism", "toxic", "tóxic", "relacionamento", "relationship", "attachment",
+      "apego", "neuroci", "neuroci", "brain", "cérebro", "cognitiv", "behavior", "comportament",
+      "motivat", "motivaç", "resilience", "resiliência", "self care", "autocuidado",
+      "wellbeing", "bem-estar", "psyche", "psique", "mind", "mente", "disorder", "transtorno",
+      "phobia", "fobia", "panic", "pânico", "obsessive", "obsessiv", "compulsiv",
+      "self esteem", "autoestima", "confidence", "confiança", "introvert", "extrovert",
+      "personality", "personalidade", "emotion", "emoção", "feeling", "sentimento",
+      "healing", "cura", "inner", "interior", "growth", "crescimento", "awareness", "consciência",
+      "psychotherap", "psicotera", "counsel", "aconselhamento", "mental", "wellness"
+    ];
+
+    function isPsychRelated(video: any): boolean {
+      const text = `${video.video_title || ""} ${video.channel_title || ""} ${video.description || ""}`.toLowerCase();
+      return psychKeywords.some(kw => text.includes(kw));
+    }
+
+    // Build rankings — sorted by VIDEO views, ONLY psychology/mental health
+    // BRASIL — trending + psicologia (filtrado)
     const brRanking = [...ytBR, ...ytNicheBR]
+      .filter(isPsychRelated)
       .sort((a: any, b: any) => (b.raw_views || 0) - (a.raw_views || 0))
       .slice(0, 10)
       .map((v: any, i: number) => ({
@@ -463,18 +487,19 @@ serve(async (req) => {
         why_relevant: `🇧🇷 ${v.total_views || "N/A"} views`,
       }));
 
-    // MUNDIAL (EUA + Europa) — prioridade máxima, menos riscos de conteúdo
+    // MUNDIAL (EUA + Europa) — prioridade máxima, FILTRADO psicologia
     const worldRanking = [...ytUS, ...ytNicheEN, ...ytGB, ...ytNicheDE]
-      .filter((v: any) => v.region !== "BR") // excluir Brasil
+      .filter((v: any) => v.region !== "BR")
+      .filter(isPsychRelated)
       .sort((a: any, b: any) => (b.raw_views || 0) - (a.raw_views || 0))
-      .slice(0, 15) // mais vídeos no mundial (prioridade)
+      .slice(0, 15)
       .map((v: any, i: number) => {
         const regionMap: Record<string, string> = { US: "🇺🇸 EUA", GB: "🇬🇧 Reino Unido", DE: "🇩🇪 Alemanha" };
         const country = regionMap[v.region] || "🌍 Internacional";
         return {
           ...v,
           rank: i + 1,
-          momentum_score: Math.max(50, 98 - i * 3), // scores mais altos (prioridade)
+          momentum_score: Math.max(50, 98 - i * 3),
           country,
           why_relevant: `${country} — ${v.total_views || "N/A"} views`,
           adaptation_guide: "Traduzir, adaptar culturalmente e focar no gancho emocional para público BR",
