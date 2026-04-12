@@ -513,80 +513,134 @@ function getDateDaysAgo(days: number): string {
   return d.toISOString();
 }
 
-// Psychology filter
+// Psychology filter — comprehensive keywords in English and Portuguese
 const psychExact = [
+  // Core psychology terms
   "psicolog", "psycholog", "mental health", "saúde mental", "terapia", "therap", "ansiedade", "anxiety", "depressão", "depression",
   "autoconhecimento", "self improvement", "self-improvement", "self development", "desenvolvimento pessoal", "personal development", "personal growth",
   "motivation", "motivação", "discipline", "disciplina", "mindset", "habit", "hábito", "procrastin", "productivity", "produtividade",
+  // Dark psychology & Narcissism
   "narcisis", "narcisist", "narcissist", "dark psychology", "psicologia sombria", "manipulation", "manipula", "gaslighting", "toxic people", "pessoa tóxica",
   "sociopath", "psychopath", "psicopata", "emotional abuse", "abuso emocional", "love bombing", "trauma bond", "covert narciss",
+  // Relationships & Attachment
   "toxic relationship", "relacionamento tóxic", "attachment", "apego", "red flag", "bandeira vermelha", "boundaries", "limites",
-  "people pleaser", "codependen", "breakup", "término",
+  "people pleaser", "codependen", "breakup", "término", "dependência emocional", "emotional dependency",
+  // Emotional intelligence
   "emotional intelligence", "inteligência emocional", "emotional regulation", "regulação emocional", "emotional healing", "cura emocional",
   "overthinking", "pensamento excessivo", "rumination", "ruminação",
-  "trauma", "ptsd", "inner child", "criança interior", "shadow work", "healing", "cura", "recovery", "recuperação",
+  // Trauma & Healing
+  "trauma", "ptsd", "inner child", "criança interior", "shadow work", "healing", "cura", "recovery", "recuperação", "resiliência", "resilience",
+  // Philosophy
   "stoicism", "estoicismo", "stoic", "marcus aurelius", "epictetus", "philosophy", "filosofia", "wisdom", "sabedoria",
+  // Neuroscience
   "neurociência", "neuroscience", "brain", "cérebro", "dopamine", "dopamina", "cognitive", "cognitiv", "neuroplasticity", "neuroplasticidade",
-  "mindfulness", "meditação", "meditation", "calm", "peace", "paz interior",
+  "serotonin", "serotonina", "cortisol", "neurotransmis",
+  // Mindfulness
+  "mindfulness", "meditação", "meditation", "calm", "peace", "paz interior", "atenção plena",
+  // Body language
   "body language", "linguagem corporal", "microexpress", "lie detection",
+  // Clinical / Disorders
   "burnout", "transtorno", "bipolar", "adhd", "tdah", "autismo", "autism", "ocd", "toc", "panic", "pânico", "social anxiety", "ansiedade social",
+  "fobia", "phobia", "borderline", "esquizofreni", "schizophren",
+  // Self-esteem & Confidence
   "autoestima", "self-esteem", "self esteem", "confidence", "confiança", "self worth", "autovalor", "imposter syndrome", "síndrome do impostor",
+  "autoamor", "self love", "autocuidado", "self care",
+  // Success & Entrepreneurship
   "success", "sucesso", "millionaire mindset", "wealth", "riqueza", "financial freedom", "liberdade financeira", "entrepreneur", "empreendedor",
+  // Portuguese-specific psychology terms
+  "comportamento", "behaviour", "behavior", "personalidade", "personality", "subconsciente", "subconscious", "inconsciente", "unconscious",
+  "inteligência social", "social intelligence", "assertividade", "assertiveness", "empatia", "empathy",
+  "psiquiatra", "psychiatr", "psicanálise", "psychoanaly", "gestalt", "terapia cognitiv", "cbt",
+  "luto", "grief", "solidão", "loneliness", "insônia", "insomnia", "estresse", "stress",
+  "parentalidade", "parenting", "criação de filhos", "educação emocional",
 ];
 
 // Keywords that indicate NON-psychology content (gaming, music, sports, cooking, etc.)
+// NOTE: Avoid generic words that appear in psychology contexts:
+//   "game" → appears in "mind games narcissists play"
+//   "challenge" → appears in "mental health challenge"
+//   "react" → appears in "how narcissists react"
+//   "live" / "ao vivo" → handled by isLiveStream with regex patterns
 const NON_PSYCH_KEYWORDS = [
-  "gameplay", "gaming", "game", "jogo", "jogos", "live stream", "livestream", "ao vivo",
+  // Gaming (use specific game names + compound terms, not generic "game")
+  "gameplay", "gaming", "walkthrough", "playthrough", "speedrun", "lets play", "let's play",
   "fortnite", "minecraft", "roblox", "gta", "valorant", "league of legends", "cod", "call of duty",
-  "fifa", "elden ring", "zelda", "pokemon", "pubg", "apex", "overwatch", "csgo", "cs2",
+  "fifa", "elden ring", "zelda", "pokemon", "pubg", "apex legends", "overwatch", "csgo", "cs2",
+  "xbox", "playstation", "ps5", "nintendo", "twitch", "esports",
+  // Music
   "music video", "official video", "official audio", "clipe oficial", "videoclipe", "feat.", "ft.",
   "remix", "lyric video", "letra", "karaoke", "concert", "concerto", "show ao vivo",
-  "cooking", "receita", "recipe", "culinária", "mukbang", "asmr food",
-  "futebol", "soccer", "basketball", "nba", "nfl", "cricket", "tennis", "mma", "ufc", "boxing",
-  "highlights", "melhores momentos", "gol", "goals",
-  "unboxing", "haul", "vlog diário", "daily vlog", "grwm", "get ready with me",
-  "prank", "challenge", "desafio", "react", "reacting to", "reagindo",
-  "trailer", "teaser", "movie clip", "cena do filme",
-  "stole", "steal", "i bought", "comprei", "abrindo", "opening",
+  "album", "álbum", "single oficial", "mv oficial",
+  // Cooking
+  "cooking", "receita", "recipe", "culinária", "mukbang", "asmr food", "asmr eating",
+  // Sports (specific terms)
+  "futebol", "soccer match", "basketball", "nba", "nfl", "cricket", "tennis match", "mma", "ufc", "boxing",
+  "highlights", "melhores momentos", "gol de", "goals compilation",
+  // Shopping / Unboxing
+  "unboxing", "haul", "grwm", "get ready with me",
+  // Pranks (not "challenge" which appears in psychology)
+  "prank", "pegadinha",
+  // Entertainment
+  "trailer oficial", "teaser trailer", "movie clip", "cena do filme",
+  // Theft/buying content
+  "i stole", "stole 6", "stole newest",
 ];
 
-// Indicators that a video is a live stream
-const LIVE_INDICATORS = [
-  "live", "ao vivo", "livestream", "live stream", "streaming", "em direto",
-  "🔴", "transmissão", "24/7", "24 hours", "24 horas",
+// Patterns that specifically indicate a live stream (using regex to avoid false positives)
+// "live" alone is too broad — matches "live your best life", "live without anxiety"
+const LIVE_STREAM_PATTERNS = [
+  /\blive\s*stream/i,          // "live stream", "livestream"
+  /\bao\s+vivo\b/i,            // "ao vivo"
+  /\bem\s+direto\b/i,          // "em direto"
+  /🔴/,                         // red circle emoji = live indicator
+  /\btransmiss[aã]o\b/i,       // "transmissão"
+  /\b24\/7\b/,                  // "24/7"
+  /\b24\s*hours?\s*(live|stream)/i,  // "24 hours live"
+  /\b24\s*horas?\s*(ao vivo|live)/i, // "24 horas ao vivo"
+  /\blive\s+(now|agora|hoje)\b/i,    // "live now", "live agora"
+  /\b(assistindo|watching)\s+live\b/i, // "watching live"
 ];
 
 function isLiveStream(video: any): boolean {
   const title = `${video.video_title || ""}`.toLowerCase();
-  const desc = `${video.description || ""}`.toLowerCase();
   const durationSec = video.duration_sec || 0;
   // Videos longer than 3 hours are likely live streams
   if (durationSec > 10800) return true;
-  // Check title for live indicators
-  if (LIVE_INDICATORS.some(kw => title.includes(kw))) return true;
   // Check if YouTube flagged it as live
   if (video.liveBroadcastContent && video.liveBroadcastContent !== "none") return true;
+  // Check title for specific live stream patterns (avoids matching "live your best life")
+  if (LIVE_STREAM_PATTERNS.some(p => p.test(title))) return true;
   return false;
 }
 
 function isNonPsychContent(video: any): boolean {
   const title = `${video.video_title || ""}`.toLowerCase();
-  return NON_PSYCH_KEYWORDS.some(kw => title.includes(kw));
+  const desc = `${video.description || ""}`.toLowerCase();
+  // Check title for non-psych keywords (strong signal)
+  if (NON_PSYCH_KEYWORDS.some(kw => title.includes(kw))) return true;
+  // Also check description — require 3+ non-psych keywords to reject (avoids single-word false positives)
+  const descNonPsychCount = NON_PSYCH_KEYWORDS.filter(kw => desc.includes(kw)).length;
+  if (descNonPsychCount >= 3) return true;
+  return false;
 }
 
 function isPsychRelated(video: any): boolean {
-  // First: reject live streams
+  // First: reject live streams (always block regardless of keywords)
   if (isLiveStream(video)) return false;
-  // Second: reject clearly non-psychology content
-  if (isNonPsychContent(video)) return false;
 
   const title = `${video.video_title || ""}`.toLowerCase();
   const channel = `${video.channel_title || ""}`.toLowerCase();
   const desc = `${video.description || ""}`.toLowerCase();
 
-  // Title must match at least one psychology keyword (strongest signal)
+  // Title psychology keyword match (strongest signal)
   const titleMatch = psychExact.some(kw => title.includes(kw));
+
+  // If title has a psychology keyword, it OVERRIDES non-psych detection
+  // e.g., "The Mind Games Narcissists Play" has "game" but also "narcissist" → psychology wins
   if (titleMatch) return true;
+
+  // Only reject non-psych content when there's no psychology keyword in the title
+  if (isNonPsychContent(video)) return false;
 
   // Channel name match + at least 1 description keyword
   const channelMatch = psychExact.some(kw => channel.includes(kw));
