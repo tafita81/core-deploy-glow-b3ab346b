@@ -292,7 +292,7 @@ function detectTopic(title: string, desc: string): string {
     "inteligência_emocional": ["emotional intelligence", "inteligência emocional", "empathy", "empatia"],
     "trauma": ["trauma", "ptsd", "inner child", "healing", "cura"],
     "linguagem_corporal": ["body language", "linguagem corporal", "microexpress"],
-    "neurociência": ["neuroscience", "neurociência", "brain", "cérebro", "dopamine"],
+    "neurociência": ["neuroscience", "neurociência", "cérebro", "dopamine"],
     "mindset": ["mindset", "motivation", "motivação", "discipline", "disciplina", "habits", "hábito"],
     "burnout": ["burnout", "exhaustion", "esgotamento"],
     "autoestima": ["self-esteem", "autoestima", "confidence", "confiança", "imposter"],
@@ -301,7 +301,7 @@ function detectTopic(title: string, desc: string): string {
     if (keywords.some(kw => text.includes(kw))) return topic;
   }
   // Check if at least one broad psychology keyword is present before defaulting
-  const broadPsychKeywords = ["psycholog", "psicolog", "mental", "therap", "terapia", "emotion", "emocion", "mindset", "self", "auto"];
+  const broadPsychKeywords = ["psycholog", "psicolog", "mental", "therap", "terapia", "emotion", "emocion", "mindset"];
   if (broadPsychKeywords.some(kw => text.includes(kw))) return "psicologia_geral";
   return "other";
 }
@@ -582,8 +582,12 @@ const NON_PSYCH_KEYWORDS = [
   "prank", "pegadinha",
   // Entertainment
   "trailer oficial", "teaser trailer", "movie clip", "cena do filme",
-  // Theft/buying content
+  // Theft/buying content & brainrot
   "i stole", "stole 6", "stole newest",
+  "brainrot", "brain rot", "skibidi", "sigma male edit", "sigma edit",
+  "ohio", "rizz", "gyatt",
+  // Kids/toy/meme content
+  "roblox", "adopt me", "blox", "tycoon", "obby",
 ];
 
 // Patterns that specifically indicate a live stream (using regex to avoid false positives)
@@ -613,15 +617,17 @@ function isLiveStream(video: any): boolean {
   return false;
 }
 
-function isNonPsychContent(video: any): boolean {
-  const title = `${video.video_title || ""}`.toLowerCase();
-  const desc = `${video.description || ""}`.toLowerCase();
-  // Check title for non-psych keywords (strong signal)
-  if (NON_PSYCH_KEYWORDS.some(kw => title.includes(kw))) return true;
-  // Also check description — require 3+ non-psych keywords to reject (avoids single-word false positives)
-  const descNonPsychCount = NON_PSYCH_KEYWORDS.filter(kw => desc.includes(kw)).length;
-  if (descNonPsychCount >= 3) return true;
-  return false;
+// Words that require word-boundary checks to avoid false positives inside compound words
+// e.g., "brain" should NOT match "brainrot", but SHOULD match "brain science"
+const BOUNDARY_CHECK_KEYWORDS = ["brain", "cérebro", "self", "auto", "mind", "stress"];
+
+function matchesPsychKeyword(text: string, kw: string): boolean {
+  if (BOUNDARY_CHECK_KEYWORDS.includes(kw)) {
+    // Use word boundary check: keyword must not be part of a larger word
+    const regex = new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    return regex.test(text);
+  }
+  return text.includes(kw);
 }
 
 function isPsychRelated(video: any): boolean {
@@ -632,19 +638,34 @@ function isPsychRelated(video: any): boolean {
   const channel = `${video.channel_title || ""}`.toLowerCase();
   const desc = `${video.description || ""}`.toLowerCase();
 
-  // Title psychology keyword match (strongest signal)
-  const titleMatch = psychExact.some(kw => title.includes(kw));
+  // ALWAYS reject non-psych content FIRST (strong signal)
+  // If the title has explicit gaming/entertainment keywords, reject immediately
+  const hasNonPsychTitle = NON_PSYCH_KEYWORDS.some(kw => title.includes(kw));
 
-  // If title has a psychology keyword, it OVERRIDES non-psych detection
-  // e.g., "The Mind Games Narcissists Play" has "game" but also "narcissist" → psychology wins
-  if (titleMatch) return true;
+  // Count psychology keyword matches in the title (with boundary checks)
+  const titlePsychMatches = psychExact.filter(kw => matchesPsychKeyword(title, kw));
 
-  // Only reject non-psych content when there's no psychology keyword in the title
-  if (isNonPsychContent(video)) return false;
+  // If title has non-psych keywords, require 2+ distinct psych keywords to override
+  // e.g., "STEAL A BRAINROT UPDATE" → "brain" false-matches but only 1 psych keyword → rejected
+  // e.g., "The Mind Games Narcissists Play" → "narcissist" + "mind" = 2 psych keywords → accepted
+  if (hasNonPsychTitle) {
+    if (titlePsychMatches.length >= 2) return true;
+    return false;
+  }
+
+  // Also check description for non-psych content (3+ keywords = strong non-psych signal)
+  const descNonPsychCount = NON_PSYCH_KEYWORDS.filter(kw => desc.includes(kw)).length;
+  if (descNonPsychCount >= 3) {
+    if (titlePsychMatches.length >= 2) return true;
+    return false;
+  }
+
+  // Title psychology keyword match (strongest signal for clean titles)
+  if (titlePsychMatches.length >= 1) return true;
 
   // Channel name match + at least 1 description keyword
-  const channelMatch = psychExact.some(kw => channel.includes(kw));
-  const descMatches = psychExact.filter(kw => desc.includes(kw)).length;
+  const channelMatch = psychExact.some(kw => matchesPsychKeyword(channel, kw));
+  const descMatches = psychExact.filter(kw => matchesPsychKeyword(desc, kw)).length;
   if (channelMatch && descMatches >= 1) return true;
 
   // Description alone needs 3+ keyword matches to be confident
@@ -755,7 +776,22 @@ serve(async (req) => {
 
     function deduplicateVideos(videos: any[]): any[] {
       const seen = new Set<string>();
-      return videos.filter(v => { const key = v.video_url || v.video_title; if (seen.has(key)) return false; seen.add(key); return true; });
+      return videos.filter(v => {
+        // Use video URL as primary dedup key, fallback to normalized title
+        const urlKey = v.video_url || "";
+        const titleKey = (v.video_title || "").toLowerCase().trim();
+        // Extract video ID from URL for better dedup
+        const videoIdMatch = urlKey.match(/[?&]v=([^&]+)/);
+        const key = videoIdMatch ? videoIdMatch[1] : (urlKey || titleKey);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        // Also add title to catch same video with different URL formats
+        if (titleKey) {
+          if (seen.has(titleKey)) return false;
+          seen.add(titleKey);
+        }
+        return true;
+      });
     }
 
     function buildRankingEntry(v: any, i: number, region?: string) {
@@ -776,7 +812,7 @@ serve(async (req) => {
       .sort((a: any, b: any) => (b.viral_score || 0) - (a.viral_score || 0)).slice(0, 10).map((v: any, i: number) => buildRankingEntry(v, i));
 
     const worldRanking = deduplicateVideos([...ytUS, ...ytNicheEN, ...ytGB, ...ytNicheEN2, ...ytNicheEN3, ...ytNicheEN4].filter((v: any) => v.region !== "BR").filter(isPsychRelated).filter((v: any) => (v.raw_views || 0) >= MIN_VIEWS))
-      .sort((a: any, b: any) => (b.viral_score || 0) - (a.viral_score || 0)).slice(0, 15).map((v: any, i: number) => buildRankingEntry(v, i));
+      .sort((a: any, b: any) => (b.raw_views || 0) - (a.raw_views || 0)).slice(0, 15).map((v: any, i: number) => buildRankingEntry(v, i));
 
     // ===== EXTREME ANALYTICS =====
     const allRanked = [...worldRanking, ...brRanking];

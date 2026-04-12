@@ -179,8 +179,8 @@ const Index = () => {
         {(topVideosMundial.length > 0 || topVideosBrasil.length > 0 || (monetization.revenue_streams || []).length > 0) && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <VideoRankingCard
-              title="🌍 World Top Videos — Psychology (EN)"
-              subtitle="English-language psychology videos ranked by viral score"
+              title="🌍 Top Vídeos Mundial — Psicologia (EN)"
+              subtitle="Vídeos mundiais de psicologia com mais visualizações — ranqueados por views"
               priorityBadge="⭐ Priority"
               videos={topVideosMundial}
               maxVideos={15}
