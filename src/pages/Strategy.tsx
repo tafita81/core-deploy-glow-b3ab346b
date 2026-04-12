@@ -80,6 +80,33 @@ const Strategy = () => {
     },
   });
 
+  // Performance history for real insights
+  const { data: perfHistory } = useQuery({
+    queryKey: ["perf-history-strategy"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("performance_history")
+        .select("views_7d, comments_count, likes_count, engagement_rate, content_format, hook_pattern, topic, revenue_estimated, duration_sec, language")
+        .order("views_7d", { ascending: false })
+        .limit(50);
+      return data || [];
+    },
+    refetchInterval: 120000,
+  });
+
+  // Learning weights — algorithm evolution
+  const { data: learningWeights } = useQuery({
+    queryKey: ["learning-weights-strategy"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("settings")
+        .select("value")
+        .eq("key", "learning_weights")
+        .single();
+      return data?.value as any;
+    },
+  });
+
   const momentum = viralIntel?.momentum_analysis || {};
   const patterns = viralIntel?.viral_patterns || {};
   const monetization = viralIntel?.monetization_insights || {};
@@ -611,6 +638,68 @@ const Strategy = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* REAL DATA: Performance History Insights */}
+            {perfHistory && perfHistory.length > 0 && (
+              <div className="rounded-lg border border-green-500/30 p-3 space-y-3">
+                <p className="text-[10px] font-medium text-green-400 flex items-center gap-1.5">
+                  <TrendingUp className="h-3 w-3" />
+                  Dados REAIS do Historico de Performance ({perfHistory.length} videos rastreados)
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="bg-muted/30 rounded-md p-2 text-center">
+                    <p className="text-xs font-bold text-primary">
+                      {perfHistory.reduce((s: number, p: any) => s + (p.views_7d || 0), 0) >= 1000000
+                        ? `${(perfHistory.reduce((s: number, p: any) => s + (p.views_7d || 0), 0) / 1000000).toFixed(1)}M`
+                        : `${Math.round(perfHistory.reduce((s: number, p: any) => s + (p.views_7d || 0), 0) / 1000)}K`}
+                    </p>
+                    <p className="text-[9px] text-muted-foreground">Views 7d Total</p>
+                  </div>
+                  <div className="bg-muted/30 rounded-md p-2 text-center">
+                    <p className="text-xs font-bold text-green-400">
+                      {(perfHistory.reduce((s: number, p: any) => s + (p.engagement_rate || 0), 0) / perfHistory.length).toFixed(2)}%
+                    </p>
+                    <p className="text-[9px] text-muted-foreground">Engajamento Medio</p>
+                  </div>
+                  <div className="bg-muted/30 rounded-md p-2 text-center">
+                    <p className="text-xs font-bold text-green-400">
+                      ${Math.round(perfHistory.reduce((s: number, p: any) => s + (p.revenue_estimated || 0), 0)).toLocaleString()}
+                    </p>
+                    <p className="text-[9px] text-muted-foreground">Revenue Total</p>
+                  </div>
+                  <div className="bg-muted/30 rounded-md p-2 text-center">
+                    <p className="text-xs font-bold text-purple-400">
+                      {(() => {
+                        const durs = perfHistory.filter((p: any) => p.duration_sec > 0).map((p: any) => p.duration_sec);
+                        if (durs.length === 0) return "N/A";
+                        const avg = Math.round(durs.reduce((a: number, b: number) => a + b, 0) / durs.length / 60);
+                        return `${avg}min`;
+                      })()}
+                    </p>
+                    <p className="text-[9px] text-muted-foreground">Duracao Media</p>
+                  </div>
+                </div>
+
+                {learningWeights && (
+                  <div className="rounded-md bg-purple-500/5 border border-purple-500/20 p-2.5 space-y-1.5">
+                    <p className="text-[10px] font-medium text-purple-400">
+                      Algoritmo Auto-Evolutivo — Geracao {learningWeights.evolution_generation || 0}
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      <Badge variant="secondary" className="text-[8px]">Comentarios: {learningWeights.comment_weight || 3}x</Badge>
+                      <Badge variant="secondary" className="text-[8px]">Engajamento: {learningWeights.engagement_power || 1.0}x</Badge>
+                      <Badge variant="secondary" className="text-[8px]">Duracao: {learningWeights.optimal_duration_min || 8}-{learningWeights.optimal_duration_max || 20}min</Badge>
+                      {(learningWeights.top_hooks || []).slice(0, 2).map((h: string, i: number) => (
+                        <Badge key={i} variant="secondary" className="text-[8px] bg-purple-500/10 text-purple-400">Hook: {h}</Badge>
+                      ))}
+                      {(learningWeights.top_topics || []).slice(0, 3).map((t: string, i: number) => (
+                        <Badge key={i} variant="secondary" className="text-[8px] bg-green-500/10 text-green-400">{t}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* INNOVATIONS the brain is adding */}
             <Card className="border-purple-500/30">

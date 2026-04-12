@@ -32,6 +32,16 @@ const Index = () => {
     refetchInterval: 60000, // Real-time: refresh every 60s
   });
 
+  // Learning weights for dashboard summary
+  const { data: learningWeights } = useQuery({
+    queryKey: ["learning-weights-dashboard"],
+    queryFn: async () => {
+      const { data } = await supabase.from("settings").select("value").eq("key", "learning_weights").single();
+      return data?.value as any;
+    },
+    refetchInterval: 120000,
+  });
+
   const published = contents?.filter((c) => c.status === "publicado").length ?? 0;
   const pending = contents?.filter((c) => c.status !== "publicado" && c.status !== "rejeitado").length ?? 0;
   const avgScore = contents?.length ? Math.round(contents.reduce((a, b) => a + (b.score ?? 0), 0) / contents.length) : 0;
@@ -90,49 +100,80 @@ const Index = () => {
         </div>
 
         {/* ALGORITHM EVOLUTION CARD */}
-        {evolution.generation > 0 && (
-          <Card className="border-purple-500/30 bg-gradient-to-r from-purple-500/5 to-primary/5">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Brain className="h-4 w-4 text-purple-400" />
-                🧬 Motor de Evolução Autônoma — Geração {evolution.generation}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="bg-muted/30 rounded-md p-2">
-                  <p className="text-muted-foreground">Peso dos Comentários</p>
-                  <p className="font-bold text-primary">{evolution.comment_weight}x</p>
-                </div>
-                <div className="bg-muted/30 rounded-md p-2">
-                  <p className="text-muted-foreground">Poder do Engajamento</p>
-                  <p className="font-bold text-primary">{evolution.engagement_power}x</p>
-                </div>
-              </div>
-              {(evolution.learned_hooks || []).length > 0 && (
-                <div className="text-xs">
-                  <p className="text-muted-foreground mb-1">🎯 Hooks aprendidos (mais eficazes):</p>
-                  <div className="flex flex-wrap gap-1">
-                    {(evolution.learned_hooks || []).map((h: string, i: number) => (
-                      <Badge key={i} variant="secondary" className="text-[9px] bg-purple-500/10 text-purple-400">{h}</Badge>
-                    ))}
+        {(evolution.generation > 0 || learningWeights?.evolution_generation > 0) && (() => {
+          const gen = evolution.generation || learningWeights?.evolution_generation || 0;
+          const cw = evolution.comment_weight || learningWeights?.comment_weight || 3;
+          const ep = evolution.engagement_power || learningWeights?.engagement_power || 1.0;
+          const hooks = evolution.learned_hooks || learningWeights?.top_hooks || [];
+          const topics = evolution.learned_topics || learningWeights?.top_topics || [];
+          const formats = learningWeights?.top_formats || [];
+          const lastEvolved = evolution.last_evolved || learningWeights?.last_evolved;
+          const durMin = learningWeights?.optimal_duration_min || 8;
+          const durMax = learningWeights?.optimal_duration_max || 20;
+          const viewsTarget = learningWeights?.avg_views_per_day_target || 0;
+
+          return (
+            <Card className="border-purple-500/30 bg-gradient-to-r from-purple-500/5 to-primary/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Brain className="h-4 w-4 text-purple-400" />
+                  Motor de Evolucao Autonoma — Geracao {gen}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  <div className="bg-muted/30 rounded-md p-2">
+                    <p className="text-muted-foreground">Peso Comentarios</p>
+                    <p className="font-bold text-primary">{cw}x</p>
+                  </div>
+                  <div className="bg-muted/30 rounded-md p-2">
+                    <p className="text-muted-foreground">Poder Engajamento</p>
+                    <p className="font-bold text-primary">{ep}x</p>
+                  </div>
+                  <div className="bg-muted/30 rounded-md p-2">
+                    <p className="text-muted-foreground">Duracao Ideal</p>
+                    <p className="font-bold text-blue-400">{durMin}-{durMax}min</p>
+                  </div>
+                  <div className="bg-muted/30 rounded-md p-2">
+                    <p className="text-muted-foreground">Meta Views/Dia</p>
+                    <p className="font-bold text-green-400">{viewsTarget >= 1000000 ? `${(viewsTarget / 1000000).toFixed(1)}M` : viewsTarget >= 1000 ? `${(viewsTarget / 1000).toFixed(0)}K` : viewsTarget}</p>
                   </div>
                 </div>
-              )}
-              {(evolution.learned_topics || []).length > 0 && (
-                <div className="text-xs">
-                  <p className="text-muted-foreground mb-1">🏆 Tópicos que mais performam:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {(evolution.learned_topics || []).map((t: string, i: number) => (
-                      <Badge key={i} variant="secondary" className="text-[9px] bg-green-500/10 text-green-400">{t}</Badge>
-                    ))}
+                {hooks.length > 0 && (
+                  <div className="text-xs">
+                    <p className="text-muted-foreground mb-1">Hooks aprendidos (mais eficazes):</p>
+                    <div className="flex flex-wrap gap-1">
+                      {hooks.map((h: string, i: number) => (
+                        <Badge key={i} variant="secondary" className="text-[9px] bg-purple-500/10 text-purple-400">{h}</Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-              <p className="text-[9px] text-muted-foreground">Última evolução: {evolution.last_evolved ? new Date(evolution.last_evolved).toLocaleString("pt-BR") : "—"}</p>
-            </CardContent>
-          </Card>
-        )}
+                )}
+                {topics.length > 0 && (
+                  <div className="text-xs">
+                    <p className="text-muted-foreground mb-1">Topicos que mais performam:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {topics.map((t: string, i: number) => (
+                        <Badge key={i} variant="secondary" className="text-[9px] bg-green-500/10 text-green-400">{t}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {formats.length > 0 && (
+                  <div className="text-xs">
+                    <p className="text-muted-foreground mb-1">Formatos mais eficazes:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {formats.map((f: string, i: number) => (
+                        <Badge key={i} variant="secondary" className="text-[9px] bg-blue-500/10 text-blue-400">{f}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <p className="text-[9px] text-muted-foreground">Ultima evolucao: {lastEvolved ? new Date(lastEvolved).toLocaleString("pt-BR") : "—"}</p>
+              </CardContent>
+            </Card>
+          );
+        })()}
 
         {/* VIRAL RANKINGS */}
         {(topVideosMundial.length > 0 || topVideosBrasil.length > 0 || (monetization.revenue_streams || []).length > 0) && (
