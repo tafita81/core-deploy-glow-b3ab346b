@@ -300,7 +300,10 @@ function detectTopic(title: string, desc: string): string {
   for (const [topic, keywords] of Object.entries(topicMap)) {
     if (keywords.some(kw => text.includes(kw))) return topic;
   }
-  return "psicologia_geral";
+  // Check if at least one broad psychology keyword is present before defaulting
+  const broadPsychKeywords = ["psycholog", "psicolog", "mental", "therap", "terapia", "emotion", "emocion", "mindset", "self", "auto"];
+  if (broadPsychKeywords.some(kw => text.includes(kw))) return "psicologia_geral";
+  return "other";
 }
 
 function enrichVideoData(item: any, regionCode?: string): any {
@@ -430,6 +433,7 @@ function enrichVideoData(item: any, regionCode?: string): any {
     video_url: `https://www.youtube.com/watch?v=${item.id?.videoId || item.id}`,
     creator: item.snippet?.channelTitle || "",
     creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
+    liveBroadcastContent: item.snippet?.liveBroadcastContent || "none",
     total_views: formatViews(item.statistics?.viewCount),
     raw_views: rawViews,
     likes,
@@ -530,13 +534,69 @@ const psychExact = [
   "success", "sucesso", "millionaire mindset", "wealth", "riqueza", "financial freedom", "liberdade financeira", "entrepreneur", "empreendedor",
 ];
 
+// Keywords that indicate NON-psychology content (gaming, music, sports, cooking, etc.)
+const NON_PSYCH_KEYWORDS = [
+  "gameplay", "gaming", "game", "jogo", "jogos", "live stream", "livestream", "ao vivo",
+  "fortnite", "minecraft", "roblox", "gta", "valorant", "league of legends", "cod", "call of duty",
+  "fifa", "elden ring", "zelda", "pokemon", "pubg", "apex", "overwatch", "csgo", "cs2",
+  "music video", "official video", "official audio", "clipe oficial", "videoclipe", "feat.", "ft.",
+  "remix", "lyric video", "letra", "karaoke", "concert", "concerto", "show ao vivo",
+  "cooking", "receita", "recipe", "culinária", "mukbang", "asmr food",
+  "futebol", "soccer", "basketball", "nba", "nfl", "cricket", "tennis", "mma", "ufc", "boxing",
+  "highlights", "melhores momentos", "gol", "goals",
+  "unboxing", "haul", "vlog diário", "daily vlog", "grwm", "get ready with me",
+  "prank", "challenge", "desafio", "react", "reacting to", "reagindo",
+  "trailer", "teaser", "movie clip", "cena do filme",
+  "stole", "steal", "i bought", "comprei", "abrindo", "opening",
+];
+
+// Indicators that a video is a live stream
+const LIVE_INDICATORS = [
+  "live", "ao vivo", "livestream", "live stream", "streaming", "em direto",
+  "🔴", "transmissão", "24/7", "24 hours", "24 horas",
+];
+
+function isLiveStream(video: any): boolean {
+  const title = `${video.video_title || ""}`.toLowerCase();
+  const desc = `${video.description || ""}`.toLowerCase();
+  const durationSec = video.duration_sec || 0;
+  // Videos longer than 3 hours are likely live streams
+  if (durationSec > 10800) return true;
+  // Check title for live indicators
+  if (LIVE_INDICATORS.some(kw => title.includes(kw))) return true;
+  // Check if YouTube flagged it as live
+  if (video.liveBroadcastContent && video.liveBroadcastContent !== "none") return true;
+  return false;
+}
+
+function isNonPsychContent(video: any): boolean {
+  const title = `${video.video_title || ""}`.toLowerCase();
+  return NON_PSYCH_KEYWORDS.some(kw => title.includes(kw));
+}
+
 function isPsychRelated(video: any): boolean {
+  // First: reject live streams
+  if (isLiveStream(video)) return false;
+  // Second: reject clearly non-psychology content
+  if (isNonPsychContent(video)) return false;
+
   const title = `${video.video_title || ""}`.toLowerCase();
   const channel = `${video.channel_title || ""}`.toLowerCase();
   const desc = `${video.description || ""}`.toLowerCase();
-  const titleMatch = psychExact.some(kw => title.includes(kw) || channel.includes(kw));
+
+  // Title must match at least one psychology keyword (strongest signal)
+  const titleMatch = psychExact.some(kw => title.includes(kw));
   if (titleMatch) return true;
-  return psychExact.filter(kw => desc.includes(kw)).length >= 2;
+
+  // Channel name match + at least 1 description keyword
+  const channelMatch = psychExact.some(kw => channel.includes(kw));
+  const descMatches = psychExact.filter(kw => desc.includes(kw)).length;
+  if (channelMatch && descMatches >= 1) return true;
+
+  // Description alone needs 3+ keyword matches to be confident
+  if (descMatches >= 3) return true;
+
+  return false;
 }
 
 serve(async (req) => {

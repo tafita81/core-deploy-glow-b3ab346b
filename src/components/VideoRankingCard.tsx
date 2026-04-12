@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExternalLink } from "lucide-react";
 
 interface VideoRankingCardProps {
   title: string;
@@ -61,10 +62,22 @@ export function VideoRankingCard({ title, subtitle, priorityBadge, videos, maxVi
                   )}
                 </div>
 
-                {/* Creator */}
-                <p className="text-[10px] text-muted-foreground truncate">
-                  {v.creator} {v.country ? `• ${v.country}` : ""} • <span className="text-primary underline font-medium">ver vídeo ↗</span>
-                </p>
+                {/* Creator + Link */}
+                <div className="flex items-center gap-1.5">
+                  <p className="text-[10px] text-muted-foreground truncate flex-1">
+                    {v.creator} {v.country ? `• ${v.country}` : ""}
+                  </p>
+                  <a
+                    href={videoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-0.5 text-[10px] text-primary hover:text-primary/80 font-medium shrink-0 underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    ver vídeo
+                  </a>
+                </div>
 
                 {/* Key Metrics */}
                 <div className="flex items-center gap-2 flex-wrap mt-0.5">
