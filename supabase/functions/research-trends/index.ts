@@ -689,12 +689,18 @@ serve(async (req) => {
     if (youtubeApiKey) {
       const check = await canCallApi(supabase, "youtube", currentHour, forceAll);
       if (check.allowed) {
+        // Brazil - Portuguese psychology terms
         promises.push(fetchYouTubeTrending(youtubeApiKey, "BR"));
         promises.push(searchYouTubeNiche(youtubeApiKey, "psicologia narcisismo ansiedade depressão autoconhecimento trauma inteligência emocional", 14));
+        // USA - English psychology & self-improvement (primary world source)
         promises.push(fetchYouTubeTrending(youtubeApiKey, "US"));
         promises.push(searchYouTubeNiche(youtubeApiKey, "psychology narcissist anxiety depression therapy dark psychology manipulation emotional intelligence", 14));
+        // UK + additional English niche searches for broader world coverage
         promises.push(fetchYouTubeTrending(youtubeApiKey, "GB"));
-        promises.push(searchYouTubeNiche(youtubeApiKey, "mental health motivation stoicism toxic people overthinking self improvement habits procrastination", 14));
+        promises.push(searchYouTubeNiche(youtubeApiKey, "mental health self improvement stoicism toxic relationships attachment style trauma healing neuroscience habits", 14));
+        // Extra English niche searches for trending world content
+        promises.push(searchYouTubeNiche(youtubeApiKey, "overthinking burnout emotional intelligence body language dopamine procrastination confidence mindset discipline", 14));
+        promises.push(searchYouTubeNiche(youtubeApiKey, "narcissistic abuse gaslighting inner child shadow work self esteem imposter syndrome social anxiety boundaries", 14));
         apisCalled.push("youtube");
       } else { apisSkipped.push(`youtube (${check.reason})`); }
     }
@@ -715,7 +721,8 @@ serve(async (req) => {
     const googleTrends = (results[0] as any)?.value || [];
 
     let ytBR: any[] = [], ytNicheBR: any[] = [];
-    let ytUS: any[] = [], ytNicheEN: any[] = [], ytGB: any[] = [], ytNicheDE: any[] = [];
+    let ytUS: any[] = [], ytNicheEN: any[] = [], ytGB: any[] = [], ytNicheEN2: any[] = [];
+    let ytNicheEN3: any[] = [], ytNicheEN4: any[] = [];
     let redditPosts: any[] = [], news: any[] = [];
     let idx = 1;
 
@@ -725,7 +732,9 @@ serve(async (req) => {
       ytUS = (results[idx++] as any)?.value || [];
       ytNicheEN = (results[idx++] as any)?.value || [];
       ytGB = (results[idx++] as any)?.value || [];
-      ytNicheDE = (results[idx++] as any)?.value || [];
+      ytNicheEN2 = (results[idx++] as any)?.value || [];
+      ytNicheEN3 = (results[idx++] as any)?.value || [];
+      ytNicheEN4 = (results[idx++] as any)?.value || [];
       await logApiCall(supabase, "youtube", 305);
     }
     if (apisCalled.includes("reddit")) { redditPosts = (results[idx++] as any)?.value || []; await logApiCall(supabase, "reddit", 5); }
@@ -750,21 +759,23 @@ serve(async (req) => {
     }
 
     function buildRankingEntry(v: any, i: number, region?: string) {
-      const country = region || (v.region ? ({ US: "🇺🇸 EUA", GB: "🇬🇧 Reino Unido" } as any)[v.region] || "🌍 Internacional" : "🇧🇷 Brasil");
+      const country = region || (v.region ? ({ US: "🇺🇸 USA", GB: "🇬🇧 UK", CA: "🇨🇦 Canada", AU: "🇦🇺 Australia" } as any)[v.region] || "🌍 International" : "🇧🇷 Brasil");
+      const isInternational = country !== "🇧🇷 Brasil";
       return {
         ...v,
         rank: i + 1,
         momentum_score: v.viral_score ? Math.min(99, Math.round(50 + Math.log10(Math.max(1, v.viral_score)) * 8)) : 50,
         country,
-        why_relevant: [country, v.total_views, `${formatViews(String(v.views_per_day || 0))}/dia`, `${v.age_days}d`, `💬${v.comment_rate || 0}%`, `❤️${v.like_rate || 0}%`, v.duration_label || "", `$${v.estimated_revenue || 0}`].filter(Boolean).join(" • "),
-        adaptation_guide: region ? "Traduzir, adaptar gancho emocional e formato para público BR" : undefined,
+        original_language: isInternational ? "EN" : "PT-BR",
+        why_relevant: [country, v.total_views, `${formatViews(String(v.views_per_day || 0))}/day`, `${v.age_days}d`, `💬${v.comment_rate || 0}%`, `❤️${v.like_rate || 0}%`, v.duration_label || "", `$${v.estimated_revenue || 0}`].filter(Boolean).join(" • "),
+        adaptation_guide: isInternational ? "Traduzir título e roteiro para PT-BR, adaptar gancho emocional e formato para público brasileiro" : undefined,
       };
     }
 
     const brRanking = deduplicateVideos([...ytBR, ...ytNicheBR].filter(isPsychRelated).filter((v: any) => (v.raw_views || 0) >= MIN_VIEWS))
       .sort((a: any, b: any) => (b.viral_score || 0) - (a.viral_score || 0)).slice(0, 10).map((v: any, i: number) => buildRankingEntry(v, i));
 
-    const worldRanking = deduplicateVideos([...ytUS, ...ytNicheEN, ...ytGB, ...ytNicheDE].filter((v: any) => v.region !== "BR").filter(isPsychRelated).filter((v: any) => (v.raw_views || 0) >= MIN_VIEWS))
+    const worldRanking = deduplicateVideos([...ytUS, ...ytNicheEN, ...ytGB, ...ytNicheEN2, ...ytNicheEN3, ...ytNicheEN4].filter((v: any) => v.region !== "BR").filter(isPsychRelated).filter((v: any) => (v.raw_views || 0) >= MIN_VIEWS))
       .sort((a: any, b: any) => (b.viral_score || 0) - (a.viral_score || 0)).slice(0, 15).map((v: any, i: number) => buildRankingEntry(v, i));
 
     // ===== EXTREME ANALYTICS =====

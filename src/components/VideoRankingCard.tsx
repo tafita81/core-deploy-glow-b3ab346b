@@ -114,6 +114,11 @@ export function VideoRankingCard({ title, subtitle, priorityBadge, videos, maxVi
 
                 {/* Follower Conversion + Topic */}
                 <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                  {v.original_language && v.original_language !== "PT-BR" && (
+                    <Badge variant="outline" className="text-[8px] border-indigo-500/50 text-indigo-400">
+                      🌐 {v.original_language}
+                    </Badge>
+                  )}
                   {v.follower_conversion_score > 0 && (
                     <Badge variant={v.follower_conversion_score >= 60 ? "default" : "outline"} className="text-[8px]">
                       👥 Conv: {v.follower_conversion_score}%
@@ -130,6 +135,13 @@ export function VideoRankingCard({ title, subtitle, priorityBadge, videos, maxVi
                     </Badge>
                   )}
                 </div>
+
+                {/* Adaptation Guide for international videos */}
+                {v.adaptation_guide && (
+                  <p className="text-[9px] text-indigo-400 mt-0.5 italic">
+                    📝 {v.adaptation_guide}
+                  </p>
+                )}
 
                 {/* Revenue per day */}
                 {v.revenue_per_day > 0 && (
