@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Brain, Sparkles, FlaskConical, Shield, Loader2, Image, Volume2, Trash2 } from "lucide-react";
+import { Brain, Sparkles, FlaskConical, Shield, Loader2, Image, Volume2, Trash2, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -210,6 +210,7 @@ export default function ContentPage() {
               const status = statusMap[item.status] || statusMap.rascunho;
               const thumbUrl = (item as any).thumbnail_url;
               const audioUrl = (item as any).audio_url;
+              const mediaUrl = (item as any).media_url;
               return (
                 <Card key={item.id} className="hover:glow-primary transition-shadow">
                   <CardContent className="p-5 space-y-4">
@@ -235,7 +236,20 @@ export default function ContentPage() {
                       </div>
                     </div>
 
-                    <h3 className="font-medium text-sm">{item.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium text-sm flex-1">{item.title}</h3>
+                      {(mediaUrl || thumbUrl) && (
+                        <a
+                          href={mediaUrl || thumbUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-medium shrink-0 underline"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          Ver conteúdo
+                        </a>
+                      )}
+                    </div>
 
                     {thumbUrl && (
                       <div className="rounded-lg overflow-hidden border">

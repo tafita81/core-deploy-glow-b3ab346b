@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import {
   TrendingUp, TrendingDown, Eye, Users, Heart, MessageCircle,
   RefreshCw, Clock, Instagram, Youtube, Twitter, Facebook, Linkedin,
-  BarChart3, ArrowUpRight, ArrowDownRight, Minus,
+  BarChart3, ArrowUpRight, ArrowDownRight, Minus, Brain,
 } from "lucide-react";
 
 type Period = "1h" | "6h" | "24h" | "7d" | "30d";
@@ -157,6 +157,50 @@ const Monitoring = () => {
         .gte("created_at", cutoff)
         .order("momentum_score", { ascending: false })
         .limit(20);
+      return data || [];
+    },
+  });
+
+  // Performance history — algorithm learning data
+  const { data: perfHistory } = useQuery({
+    queryKey: ["perf-history-monitoring", period],
+    queryFn: async () => {
+      const cutoff = getDateFromPeriod(period);
+      const { data } = await supabase
+        .from("performance_history")
+        .select("*")
+        .gte("created_at", cutoff)
+        .order("views_7d", { ascending: false })
+        .limit(50);
+      return data || [];
+    },
+    refetchInterval: 120000,
+  });
+
+  // Learning weights — algorithm evolution state
+  const { data: learningWeights } = useQuery({
+    queryKey: ["learning-weights-monitoring"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("settings")
+        .select("value")
+        .eq("key", "learning_weights")
+        .single();
+      return data?.value as any;
+    },
+    refetchInterval: 120000,
+  });
+
+  // Algorithm evolution logs
+  const { data: evolutionLogs } = useQuery({
+    queryKey: ["evolution-logs-monitoring"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("system_logs")
+        .select("*")
+        .eq("event_type", "algorithm_evolution")
+        .order("created_at", { ascending: false })
+        .limit(5);
       return data || [];
     },
   });
@@ -478,6 +522,237 @@ const Monitoring = () => {
                       {v.region === "BR" ? "🇧🇷" : "🌍"} {v.platform}
                     </Badge>
                   </a>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Algorithm Evolution Engine */}
+        {learningWeights && (
+          <Card className="border-purple-500/30 bg-gradient-to-r from-purple-500/5 to-primary/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Brain className="h-4 w-4 text-purple-400" />
+                Motor de Evolucao Autonoma — Geracao {learningWeights.evolution_generation || 0}
+              </CardTitle>
+              <p className="text-[10px] text-muted-foreground">
+                O algoritmo aprende com os dados reais de performance e evolui automaticamente
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <div className="bg-muted/30 rounded-md p-2 text-center">
+                  <p className="text-[10px] text-muted-foreground">Peso Comentarios</p>
+                  <p className="text-sm font-bold text-purple-400">{learningWeights.comment_weight || 3}x</p>
+                </div>
+                <div className="bg-muted/30 rounded-md p-2 text-center">
+                  <p className="text-[10px] text-muted-foreground">Poder Engajamento</p>
+                  <p className="text-sm font-bold text-purple-400">{learningWeights.engagement_power || 1.0}x</p>
+                </div>
+                <div className="bg-muted/30 rounded-md p-2 text-center">
+                  <p className="text-[10px] text-muted-foreground">Duracao Ideal</p>
+                  <p className="text-sm font-bold text-blue-400">{learningWeights.optimal_duration_min || 8}-{learningWeights.optimal_duration_max || 20}min</p>
+                </div>
+                <div className="bg-muted/30 rounded-md p-2 text-center">
+                  <p className="text-[10px] text-muted-foreground">Meta Views/Dia</p>
+                  <p className="text-sm font-bold text-green-400">{formatNumber(learningWeights.avg_views_per_day_target || 0)}</p>
+                </div>
+              </div>
+
+              {(learningWeights.top_hooks || []).length > 0 && (
+                <div className="text-xs">
+                  <p className="text-[10px] text-muted-foreground mb-1">Hooks mais eficazes aprendidos:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {(learningWeights.top_hooks || []).map((h: string, i: number) => (
+                      <Badge key={i} variant="secondary" className="text-[9px] bg-purple-500/10 text-purple-400">{h}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(learningWeights.top_topics || []).length > 0 && (
+                <div className="text-xs">
+                  <p className="text-[10px] text-muted-foreground mb-1">Topicos que mais performam:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {(learningWeights.top_topics || []).map((t: string, i: number) => (
+                      <Badge key={i} variant="secondary" className="text-[9px] bg-green-500/10 text-green-400">{t}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(learningWeights.top_formats || []).length > 0 && (
+                <div className="text-xs">
+                  <p className="text-[10px] text-muted-foreground mb-1">Formatos mais eficazes:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {(learningWeights.top_formats || []).map((f: string, i: number) => (
+                      <Badge key={i} variant="secondary" className="text-[9px] bg-blue-500/10 text-blue-400">{f}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <p className="text-[9px] text-muted-foreground">
+                Ultima evolucao: {learningWeights.last_evolved ? new Date(learningWeights.last_evolved).toLocaleString("pt-BR") : "Aguardando dados..."}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Performance History Insights */}
+        {perfHistory && perfHistory.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-green-400" />
+                Performance dos Videos Rastreados ({PERIOD_LABELS[period]})
+                <Badge variant="outline" className="text-[9px]">{perfHistory.length} videos</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Summary metrics */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                <div className="bg-muted/30 rounded-md p-2 text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <Eye className="h-3 w-3 text-primary" />
+                    <p className="text-xs font-bold text-primary">
+                      {formatNumber(perfHistory.reduce((s: number, p: any) => s + (p.views_7d || 0), 0))}
+                    </p>
+                  </div>
+                  <p className="text-[9px] text-muted-foreground">Views 7d Total</p>
+                </div>
+                <div className="bg-muted/30 rounded-md p-2 text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <Heart className="h-3 w-3 text-pink-400" />
+                    <p className="text-xs font-bold text-pink-400">
+                      {formatNumber(Math.round(perfHistory.reduce((s: number, p: any) => s + (p.likes_count || 0), 0) / perfHistory.length))}
+                    </p>
+                  </div>
+                  <p className="text-[9px] text-muted-foreground">Avg Likes</p>
+                </div>
+                <div className="bg-muted/30 rounded-md p-2 text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <MessageCircle className="h-3 w-3 text-orange-400" />
+                    <p className="text-xs font-bold text-orange-400">
+                      {formatNumber(Math.round(perfHistory.reduce((s: number, p: any) => s + (p.comments_count || 0), 0) / perfHistory.length))}
+                    </p>
+                  </div>
+                  <p className="text-[9px] text-muted-foreground">Avg Comments</p>
+                </div>
+                <div className="bg-muted/30 rounded-md p-2 text-center">
+                  <p className="text-xs font-bold text-green-400">
+                    {(perfHistory.reduce((s: number, p: any) => s + (p.engagement_rate || 0), 0) / perfHistory.length).toFixed(2)}%
+                  </p>
+                  <p className="text-[9px] text-muted-foreground">Avg Engagement</p>
+                </div>
+                <div className="bg-muted/30 rounded-md p-2 text-center">
+                  <p className="text-xs font-bold text-green-400">
+                    ${formatNumber(Math.round(perfHistory.reduce((s: number, p: any) => s + (p.revenue_estimated || 0), 0)))}
+                  </p>
+                  <p className="text-[9px] text-muted-foreground">Revenue Total</p>
+                </div>
+              </div>
+
+              {/* Top performing videos from performance_history */}
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-medium text-muted-foreground">Top videos por views (dados do algoritmo):</p>
+                {perfHistory.slice(0, 10).map((v: any, i: number) => (
+                  <div
+                    key={v.id || i}
+                    onClick={() => v.video_url && window.open(v.video_url, "_blank")}
+                    className="flex items-start gap-2 text-xs hover:bg-muted/50 rounded-md p-1.5 -mx-1.5 cursor-pointer"
+                  >
+                    <span className="font-bold text-primary min-w-[20px]">#{i + 1}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">{v.title}</p>
+                      <div className="flex items-center gap-2 flex-wrap text-[10px] text-muted-foreground">
+                        <span className="text-green-400 font-semibold">{formatNumber(v.views_7d || 0)} views</span>
+                        {v.likes_count > 0 && <span>❤️ {formatNumber(v.likes_count)}</span>}
+                        {v.comments_count > 0 && <span>💬 {formatNumber(v.comments_count)}</span>}
+                        {v.engagement_rate > 0 && <span>📊 {v.engagement_rate}%</span>}
+                        {v.revenue_estimated > 0 && <span className="text-green-400">💵 ${formatNumber(v.revenue_estimated)}</span>}
+                        {v.topic && <Badge variant="outline" className="text-[8px]">{v.topic}</Badge>}
+                        {v.content_format && <Badge variant="outline" className="text-[8px]">{v.content_format}</Badge>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Topic performance breakdown */}
+              {(() => {
+                const topicStats: Record<string, { count: number; views: number; engagement: number }> = {};
+                perfHistory.forEach((p: any) => {
+                  const t = p.topic || "geral";
+                  if (!topicStats[t]) topicStats[t] = { count: 0, views: 0, engagement: 0 };
+                  topicStats[t].count++;
+                  topicStats[t].views += p.views_7d || 0;
+                  topicStats[t].engagement += p.engagement_rate || 0;
+                });
+                const sortedTopics = Object.entries(topicStats)
+                  .map(([topic, stats]) => ({ topic, ...stats, avgEngagement: stats.engagement / stats.count }))
+                  .sort((a, b) => b.views - a.views)
+                  .slice(0, 6);
+
+                if (sortedTopics.length === 0) return null;
+                const maxViews = sortedTopics[0]?.views || 1;
+
+                return (
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground mb-2">Performance por topico:</p>
+                    <div className="space-y-1.5">
+                      {sortedTopics.map((t, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <span className="text-[10px] min-w-[100px] truncate">{t.topic.replace(/_/g, " ")}</span>
+                          <div className="flex-1 h-4 bg-muted/30 rounded overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-primary/60 to-primary rounded transition-all"
+                              style={{ width: `${(t.views / maxViews) * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-[9px] text-muted-foreground min-w-[50px] text-right">{formatNumber(t.views)}</span>
+                          <span className="text-[9px] text-green-400 min-w-[40px] text-right">{t.avgEngagement.toFixed(1)}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Algorithm Evolution History */}
+        {evolutionLogs && evolutionLogs.length > 0 && (
+          <Card className="border-purple-500/20">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Brain className="h-4 w-4 text-purple-400" />
+                Historico de Evolucao do Algoritmo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {evolutionLogs.map((log: any, i: number) => (
+                  <div key={log.id || i} className="rounded-md bg-muted/30 p-2.5 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-medium">{log.message}</p>
+                      <Badge variant="outline" className="text-[8px] shrink-0">
+                        {new Date(log.created_at).toLocaleString("pt-BR")}
+                      </Badge>
+                    </div>
+                    {log.metadata && (
+                      <div className="flex flex-wrap gap-1">
+                        {log.metadata.top_hooks?.map((h: string, j: number) => (
+                          <Badge key={`h-${j}`} variant="secondary" className="text-[8px] bg-purple-500/10 text-purple-400">Hook: {h}</Badge>
+                        ))}
+                        {log.metadata.top_topics?.slice(0, 3).map((t: string, j: number) => (
+                          <Badge key={`t-${j}`} variant="secondary" className="text-[8px] bg-green-500/10 text-green-400">{t}</Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </CardContent>

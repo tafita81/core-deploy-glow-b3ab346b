@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExternalLink } from "lucide-react";
 
 interface VideoRankingCardProps {
   title: string;
@@ -61,10 +62,22 @@ export function VideoRankingCard({ title, subtitle, priorityBadge, videos, maxVi
                   )}
                 </div>
 
-                {/* Creator */}
-                <p className="text-[10px] text-muted-foreground truncate">
-                  {v.creator} {v.country ? `• ${v.country}` : ""} • <span className="text-primary underline font-medium">ver vídeo ↗</span>
-                </p>
+                {/* Creator + Link */}
+                <div className="flex items-center gap-1.5">
+                  <p className="text-[10px] text-muted-foreground truncate flex-1">
+                    {v.creator} {v.country ? `• ${v.country}` : ""}
+                  </p>
+                  <a
+                    href={videoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-0.5 text-[10px] text-primary hover:text-primary/80 font-medium shrink-0 underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    ver vídeo
+                  </a>
+                </div>
 
                 {/* Key Metrics */}
                 <div className="flex items-center gap-2 flex-wrap mt-0.5">
@@ -101,6 +114,11 @@ export function VideoRankingCard({ title, subtitle, priorityBadge, videos, maxVi
 
                 {/* Follower Conversion + Topic */}
                 <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                  {v.original_language && v.original_language !== "PT-BR" && (
+                    <Badge variant="outline" className="text-[8px] border-indigo-500/50 text-indigo-400">
+                      🌐 {v.original_language}
+                    </Badge>
+                  )}
                   {v.follower_conversion_score > 0 && (
                     <Badge variant={v.follower_conversion_score >= 60 ? "default" : "outline"} className="text-[8px]">
                       👥 Conv: {v.follower_conversion_score}%
@@ -117,6 +135,13 @@ export function VideoRankingCard({ title, subtitle, priorityBadge, videos, maxVi
                     </Badge>
                   )}
                 </div>
+
+                {/* Adaptation Guide for international videos */}
+                {v.adaptation_guide && (
+                  <p className="text-[9px] text-indigo-400 mt-0.5 italic">
+                    📝 {v.adaptation_guide}
+                  </p>
+                )}
 
                 {/* Revenue per day */}
                 {v.revenue_per_day > 0 && (

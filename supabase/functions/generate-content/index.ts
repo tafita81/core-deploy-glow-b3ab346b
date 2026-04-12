@@ -97,6 +97,12 @@ PROTEÇÃO ANTI-PLÁGIO E SEGURANÇA DO CANAL (REGRAS ABSOLUTAS):
   4. VOZ ÚNICA: tom, vocabulário e estilo de comunicação distintos
   5. DADOS DIFERENTES: use outras pesquisas, estatísticas e referências científicas
 - PRIORIZE vídeos virais INTERNACIONAIS (inglês, espanhol, etc.) como inspiração — conteúdo traduzido e adaptado tem MUITO menor risco de detecção e maior novidade para o público BR
+- Ao se inspirar em vídeos em INGLÊS do ranking mundial, SEMPRE traduza e adapte completamente para PORTUGUÊS BRASILEIRO:
+  1. Traduza o título para PT-BR com gancho emocional adaptado à cultura brasileira
+  2. Reescreva todo o roteiro em português natural e coloquial do Brasil
+  3. Adapte exemplos, referências culturais e expressões para o contexto brasileiro
+  4. Mantenha a estrutura viral do original mas com voz e estilo próprios
+- NUNCA publique conteúdo em inglês — TODO conteúdo final deve estar em PORTUGUÊS BRASILEIRO
 - NUNCA replique títulos — crie títulos 100% originais inspirados no PADRÃO (não no texto)
 - Inclua SEMPRE referências científicas reais (estudos, universidades, pesquisadores) para dar autoridade e originalidade
 - O conteúdo deve passar por QUALQUER detector de plágio (Copyscape, Turnitin, Content at Scale)
@@ -157,15 +163,20 @@ HOOK: [gancho dos primeiros 3 segundos]
 CTA: [chamada para ação principal]
 THUMBNAIL_DESC: [descrição da thumbnail ideal em inglês para geração de imagem]`;
 
+    const worldRanking = viralIntel.world_ranking || [];
+    const topWorldTitles = worldRanking.slice(0, 5).map((v: any) => v.video_title).filter(Boolean);
+
     const userPrompt = `Crie conteúdo VIRAL do tipo "${tipo}" para ${channel === "instagram" ? "Instagram" : channel === "tiktok" ? "TikTok" : channel === "youtube" ? "YouTube" : channel} sobre: ${topic}
 
 ${viral_title ? `Título sugerido pela pesquisa viral: "${viral_title}"` : ""}
 ${hook ? `Gancho sugerido: "${hook}"` : ""}
+${topWorldTitles.length > 0 ? `\nVídeos virais INTERNACIONAIS para inspiração (TRADUZA e ADAPTE para PT-BR):\n${topWorldTitles.map((t: string, i: number) => `${i + 1}. "${t}"`).join("\n")}` : ""}
 
 ${formatInstructions[tipo] || formatInstructions.reel}
 
 ${instructions ? `Instruções adicionais: ${instructions}` : ""}
 
+IMPORTANTE: Todo o conteúdo DEVE ser em PORTUGUÊS BRASILEIRO. Se inspirar nos vídeos internacionais mas TRADUZIR e ADAPTAR completamente.
 LEMBRE: Este conteúdo precisa ser O MAIS CLICADO e O MAIS COMPARTILHADO do dia.`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

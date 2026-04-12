@@ -292,7 +292,7 @@ function detectTopic(title: string, desc: string): string {
     "inteligência_emocional": ["emotional intelligence", "inteligência emocional", "empathy", "empatia"],
     "trauma": ["trauma", "ptsd", "inner child", "healing", "cura"],
     "linguagem_corporal": ["body language", "linguagem corporal", "microexpress"],
-    "neurociência": ["neuroscience", "neurociência", "brain", "cérebro", "dopamine"],
+    "neurociência": ["neuroscience", "neurociência", "cérebro", "dopamine"],
     "mindset": ["mindset", "motivation", "motivação", "discipline", "disciplina", "habits", "hábito"],
     "burnout": ["burnout", "exhaustion", "esgotamento"],
     "autoestima": ["self-esteem", "autoestima", "confidence", "confiança", "imposter"],
@@ -300,7 +300,10 @@ function detectTopic(title: string, desc: string): string {
   for (const [topic, keywords] of Object.entries(topicMap)) {
     if (keywords.some(kw => text.includes(kw))) return topic;
   }
-  return "psicologia_geral";
+  // Check if at least one broad psychology keyword is present before defaulting
+  const broadPsychKeywords = ["psycholog", "psicolog", "mental", "therap", "terapia", "emotion", "emocion", "mindset"];
+  if (broadPsychKeywords.some(kw => text.includes(kw))) return "psicologia_geral";
+  return "other";
 }
 
 function enrichVideoData(item: any, regionCode?: string): any {
@@ -430,6 +433,7 @@ function enrichVideoData(item: any, regionCode?: string): any {
     video_url: `https://www.youtube.com/watch?v=${item.id?.videoId || item.id}`,
     creator: item.snippet?.channelTitle || "",
     creator_url: `https://www.youtube.com/channel/${item.snippet?.channelId}`,
+    liveBroadcastContent: item.snippet?.liveBroadcastContent || "none",
     total_views: formatViews(item.statistics?.viewCount),
     raw_views: rawViews,
     likes,
@@ -509,34 +513,165 @@ function getDateDaysAgo(days: number): string {
   return d.toISOString();
 }
 
-// Psychology filter
+// Psychology filter — comprehensive keywords in English and Portuguese
 const psychExact = [
+  // Core psychology terms
   "psicolog", "psycholog", "mental health", "saúde mental", "terapia", "therap", "ansiedade", "anxiety", "depressão", "depression",
   "autoconhecimento", "self improvement", "self-improvement", "self development", "desenvolvimento pessoal", "personal development", "personal growth",
   "motivation", "motivação", "discipline", "disciplina", "mindset", "habit", "hábito", "procrastin", "productivity", "produtividade",
+  // Dark psychology & Narcissism
   "narcisis", "narcisist", "narcissist", "dark psychology", "psicologia sombria", "manipulation", "manipula", "gaslighting", "toxic people", "pessoa tóxica",
   "sociopath", "psychopath", "psicopata", "emotional abuse", "abuso emocional", "love bombing", "trauma bond", "covert narciss",
+  // Relationships & Attachment
   "toxic relationship", "relacionamento tóxic", "attachment", "apego", "red flag", "bandeira vermelha", "boundaries", "limites",
-  "people pleaser", "codependen", "breakup", "término",
+  "people pleaser", "codependen", "breakup", "término", "dependência emocional", "emotional dependency",
+  // Emotional intelligence
   "emotional intelligence", "inteligência emocional", "emotional regulation", "regulação emocional", "emotional healing", "cura emocional",
   "overthinking", "pensamento excessivo", "rumination", "ruminação",
-  "trauma", "ptsd", "inner child", "criança interior", "shadow work", "healing", "cura", "recovery", "recuperação",
+  // Trauma & Healing
+  "trauma", "ptsd", "inner child", "criança interior", "shadow work", "healing", "cura", "recovery", "recuperação", "resiliência", "resilience",
+  // Philosophy
   "stoicism", "estoicismo", "stoic", "marcus aurelius", "epictetus", "philosophy", "filosofia", "wisdom", "sabedoria",
+  // Neuroscience
   "neurociência", "neuroscience", "brain", "cérebro", "dopamine", "dopamina", "cognitive", "cognitiv", "neuroplasticity", "neuroplasticidade",
-  "mindfulness", "meditação", "meditation", "calm", "peace", "paz interior",
+  "serotonin", "serotonina", "cortisol", "neurotransmis",
+  // Mindfulness
+  "mindfulness", "meditação", "meditation", "calm", "peace", "paz interior", "atenção plena",
+  // Body language
   "body language", "linguagem corporal", "microexpress", "lie detection",
+  // Clinical / Disorders
   "burnout", "transtorno", "bipolar", "adhd", "tdah", "autismo", "autism", "ocd", "toc", "panic", "pânico", "social anxiety", "ansiedade social",
+  "fobia", "phobia", "borderline", "esquizofreni", "schizophren",
+  // Self-esteem & Confidence
   "autoestima", "self-esteem", "self esteem", "confidence", "confiança", "self worth", "autovalor", "imposter syndrome", "síndrome do impostor",
+  "autoamor", "self love", "autocuidado", "self care",
+  // Success & Entrepreneurship
   "success", "sucesso", "millionaire mindset", "wealth", "riqueza", "financial freedom", "liberdade financeira", "entrepreneur", "empreendedor",
+  // Portuguese-specific psychology terms
+  "comportamento", "behaviour", "behavior", "personalidade", "personality", "subconsciente", "subconscious", "inconsciente", "unconscious",
+  "inteligência social", "social intelligence", "assertividade", "assertiveness", "empatia", "empathy",
+  "psiquiatra", "psychiatr", "psicanálise", "psychoanaly", "gestalt", "terapia cognitiv", "cbt",
+  "luto", "grief", "solidão", "loneliness", "insônia", "insomnia", "estresse", "stress",
+  "parentalidade", "parenting", "criação de filhos", "educação emocional",
 ];
 
+// Keywords that indicate NON-psychology content (gaming, music, sports, cooking, etc.)
+// NOTE: Avoid generic words that appear in psychology contexts:
+//   "game" → appears in "mind games narcissists play"
+//   "challenge" → appears in "mental health challenge"
+//   "react" → appears in "how narcissists react"
+//   "live" / "ao vivo" → handled by isLiveStream with regex patterns
+const NON_PSYCH_KEYWORDS = [
+  // Gaming (use specific game names + compound terms, not generic "game")
+  "gameplay", "gaming", "walkthrough", "playthrough", "speedrun", "lets play", "let's play",
+  "fortnite", "minecraft", "roblox", "gta", "valorant", "league of legends", "cod", "call of duty",
+  "fifa", "elden ring", "zelda", "pokemon", "pubg", "apex legends", "overwatch", "csgo", "cs2",
+  "xbox", "playstation", "ps5", "nintendo", "twitch", "esports",
+  // Music
+  "music video", "official video", "official audio", "clipe oficial", "videoclipe", "feat.", "ft.",
+  "remix", "lyric video", "letra", "karaoke", "concert", "concerto", "show ao vivo",
+  "album", "álbum", "single oficial", "mv oficial",
+  // Cooking
+  "cooking", "receita", "recipe", "culinária", "mukbang", "asmr food", "asmr eating",
+  // Sports (specific terms)
+  "futebol", "soccer match", "basketball", "nba", "nfl", "cricket", "tennis match", "mma", "ufc", "boxing",
+  "highlights", "melhores momentos", "gol de", "goals compilation",
+  // Shopping / Unboxing
+  "unboxing", "haul", "grwm", "get ready with me",
+  // Pranks (not "challenge" which appears in psychology)
+  "prank", "pegadinha",
+  // Entertainment
+  "trailer oficial", "teaser trailer", "movie clip", "cena do filme",
+  // Theft/buying content & brainrot
+  "i stole", "stole 6", "stole newest",
+  "brainrot", "brain rot", "skibidi", "sigma male edit", "sigma edit",
+  "ohio", "rizz", "gyatt",
+  // Kids/toy/meme content
+  "roblox", "adopt me", "blox", "tycoon", "obby",
+];
+
+// Patterns that specifically indicate a live stream (using regex to avoid false positives)
+// "live" alone is too broad — matches "live your best life", "live without anxiety"
+const LIVE_STREAM_PATTERNS = [
+  /\blive\s*stream/i,          // "live stream", "livestream"
+  /\bao\s+vivo\b/i,            // "ao vivo"
+  /\bem\s+direto\b/i,          // "em direto"
+  /🔴/,                         // red circle emoji = live indicator
+  /\btransmiss[aã]o\b/i,       // "transmissão"
+  /\b24\/7\b/,                  // "24/7"
+  /\b24\s*hours?\s*(live|stream)/i,  // "24 hours live"
+  /\b24\s*horas?\s*(ao vivo|live)/i, // "24 horas ao vivo"
+  /\blive\s+(now|agora|hoje)\b/i,    // "live now", "live agora"
+  /\b(assistindo|watching)\s+live\b/i, // "watching live"
+];
+
+function isLiveStream(video: any): boolean {
+  const title = `${video.video_title || ""}`.toLowerCase();
+  const durationSec = video.duration_sec || 0;
+  // Videos longer than 3 hours are likely live streams
+  if (durationSec > 10800) return true;
+  // Check if YouTube flagged it as live
+  if (video.liveBroadcastContent && video.liveBroadcastContent !== "none") return true;
+  // Check title for specific live stream patterns (avoids matching "live your best life")
+  if (LIVE_STREAM_PATTERNS.some(p => p.test(title))) return true;
+  return false;
+}
+
+// Words that require word-boundary checks to avoid false positives inside compound words
+// e.g., "brain" should NOT match "brainrot", but SHOULD match "brain science"
+const BOUNDARY_CHECK_KEYWORDS = ["brain", "cérebro", "self", "auto", "mind", "stress"];
+
+function matchesPsychKeyword(text: string, kw: string): boolean {
+  if (BOUNDARY_CHECK_KEYWORDS.includes(kw)) {
+    // Use word boundary check: keyword must not be part of a larger word
+    const regex = new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    return regex.test(text);
+  }
+  return text.includes(kw);
+}
+
 function isPsychRelated(video: any): boolean {
+  // First: reject live streams (always block regardless of keywords)
+  if (isLiveStream(video)) return false;
+
   const title = `${video.video_title || ""}`.toLowerCase();
   const channel = `${video.channel_title || ""}`.toLowerCase();
   const desc = `${video.description || ""}`.toLowerCase();
-  const titleMatch = psychExact.some(kw => title.includes(kw) || channel.includes(kw));
-  if (titleMatch) return true;
-  return psychExact.filter(kw => desc.includes(kw)).length >= 2;
+
+  // ALWAYS reject non-psych content FIRST (strong signal)
+  // If the title has explicit gaming/entertainment keywords, reject immediately
+  const hasNonPsychTitle = NON_PSYCH_KEYWORDS.some(kw => title.includes(kw));
+
+  // Count psychology keyword matches in the title (with boundary checks)
+  const titlePsychMatches = psychExact.filter(kw => matchesPsychKeyword(title, kw));
+
+  // If title has non-psych keywords, require 2+ distinct psych keywords to override
+  // e.g., "STEAL A BRAINROT UPDATE" → "brain" false-matches but only 1 psych keyword → rejected
+  // e.g., "The Mind Games Narcissists Play" → "narcissist" + "mind" = 2 psych keywords → accepted
+  if (hasNonPsychTitle) {
+    if (titlePsychMatches.length >= 2) return true;
+    return false;
+  }
+
+  // Also check description for non-psych content (3+ keywords = strong non-psych signal)
+  const descNonPsychCount = NON_PSYCH_KEYWORDS.filter(kw => desc.includes(kw)).length;
+  if (descNonPsychCount >= 3) {
+    if (titlePsychMatches.length >= 2) return true;
+    return false;
+  }
+
+  // Title psychology keyword match (strongest signal for clean titles)
+  if (titlePsychMatches.length >= 1) return true;
+
+  // Channel name match + at least 1 description keyword
+  const channelMatch = psychExact.some(kw => matchesPsychKeyword(channel, kw));
+  const descMatches = psychExact.filter(kw => matchesPsychKeyword(desc, kw)).length;
+  if (channelMatch && descMatches >= 1) return true;
+
+  // Description alone needs 3+ keyword matches to be confident
+  if (descMatches >= 3) return true;
+
+  return false;
 }
 
 serve(async (req) => {
@@ -575,12 +710,18 @@ serve(async (req) => {
     if (youtubeApiKey) {
       const check = await canCallApi(supabase, "youtube", currentHour, forceAll);
       if (check.allowed) {
+        // Brazil - Portuguese psychology terms
         promises.push(fetchYouTubeTrending(youtubeApiKey, "BR"));
         promises.push(searchYouTubeNiche(youtubeApiKey, "psicologia narcisismo ansiedade depressão autoconhecimento trauma inteligência emocional", 14));
+        // USA - English psychology & self-improvement (primary world source)
         promises.push(fetchYouTubeTrending(youtubeApiKey, "US"));
         promises.push(searchYouTubeNiche(youtubeApiKey, "psychology narcissist anxiety depression therapy dark psychology manipulation emotional intelligence", 14));
+        // UK + additional English niche searches for broader world coverage
         promises.push(fetchYouTubeTrending(youtubeApiKey, "GB"));
-        promises.push(searchYouTubeNiche(youtubeApiKey, "mental health motivation stoicism toxic people overthinking self improvement habits procrastination", 14));
+        promises.push(searchYouTubeNiche(youtubeApiKey, "mental health self improvement stoicism toxic relationships attachment style trauma healing neuroscience habits", 14));
+        // Extra English niche searches for trending world content
+        promises.push(searchYouTubeNiche(youtubeApiKey, "overthinking burnout emotional intelligence body language dopamine procrastination confidence mindset discipline", 14));
+        promises.push(searchYouTubeNiche(youtubeApiKey, "narcissistic abuse gaslighting inner child shadow work self esteem imposter syndrome social anxiety boundaries", 14));
         apisCalled.push("youtube");
       } else { apisSkipped.push(`youtube (${check.reason})`); }
     }
@@ -601,7 +742,8 @@ serve(async (req) => {
     const googleTrends = (results[0] as any)?.value || [];
 
     let ytBR: any[] = [], ytNicheBR: any[] = [];
-    let ytUS: any[] = [], ytNicheEN: any[] = [], ytGB: any[] = [], ytNicheDE: any[] = [];
+    let ytUS: any[] = [], ytNicheEN: any[] = [], ytGB: any[] = [], ytNicheEN2: any[] = [];
+    let ytNicheEN3: any[] = [], ytNicheEN4: any[] = [];
     let redditPosts: any[] = [], news: any[] = [];
     let idx = 1;
 
@@ -611,7 +753,9 @@ serve(async (req) => {
       ytUS = (results[idx++] as any)?.value || [];
       ytNicheEN = (results[idx++] as any)?.value || [];
       ytGB = (results[idx++] as any)?.value || [];
-      ytNicheDE = (results[idx++] as any)?.value || [];
+      ytNicheEN2 = (results[idx++] as any)?.value || [];
+      ytNicheEN3 = (results[idx++] as any)?.value || [];
+      ytNicheEN4 = (results[idx++] as any)?.value || [];
       await logApiCall(supabase, "youtube", 305);
     }
     if (apisCalled.includes("reddit")) { redditPosts = (results[idx++] as any)?.value || []; await logApiCall(supabase, "reddit", 5); }
@@ -632,26 +776,43 @@ serve(async (req) => {
 
     function deduplicateVideos(videos: any[]): any[] {
       const seen = new Set<string>();
-      return videos.filter(v => { const key = v.video_url || v.video_title; if (seen.has(key)) return false; seen.add(key); return true; });
+      return videos.filter(v => {
+        // Use video URL as primary dedup key, fallback to normalized title
+        const urlKey = v.video_url || "";
+        const titleKey = (v.video_title || "").toLowerCase().trim();
+        // Extract video ID from URL for better dedup
+        const videoIdMatch = urlKey.match(/[?&]v=([^&]+)/);
+        const key = videoIdMatch ? videoIdMatch[1] : (urlKey || titleKey);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        // Also add title to catch same video with different URL formats
+        if (titleKey) {
+          if (seen.has(titleKey)) return false;
+          seen.add(titleKey);
+        }
+        return true;
+      });
     }
 
     function buildRankingEntry(v: any, i: number, region?: string) {
-      const country = region || (v.region ? ({ US: "🇺🇸 EUA", GB: "🇬🇧 Reino Unido" } as any)[v.region] || "🌍 Internacional" : "🇧🇷 Brasil");
+      const country = region || (v.region ? ({ US: "🇺🇸 USA", GB: "🇬🇧 UK", CA: "🇨🇦 Canada", AU: "🇦🇺 Australia" } as any)[v.region] || "🌍 International" : "🇧🇷 Brasil");
+      const isInternational = country !== "🇧🇷 Brasil";
       return {
         ...v,
         rank: i + 1,
         momentum_score: v.viral_score ? Math.min(99, Math.round(50 + Math.log10(Math.max(1, v.viral_score)) * 8)) : 50,
         country,
-        why_relevant: [country, v.total_views, `${formatViews(String(v.views_per_day || 0))}/dia`, `${v.age_days}d`, `💬${v.comment_rate || 0}%`, `❤️${v.like_rate || 0}%`, v.duration_label || "", `$${v.estimated_revenue || 0}`].filter(Boolean).join(" • "),
-        adaptation_guide: region ? "Traduzir, adaptar gancho emocional e formato para público BR" : undefined,
+        original_language: isInternational ? "EN" : "PT-BR",
+        why_relevant: [country, v.total_views, `${formatViews(String(v.views_per_day || 0))}/day`, `${v.age_days}d`, `💬${v.comment_rate || 0}%`, `❤️${v.like_rate || 0}%`, v.duration_label || "", `$${v.estimated_revenue || 0}`].filter(Boolean).join(" • "),
+        adaptation_guide: isInternational ? "Traduzir título e roteiro para PT-BR, adaptar gancho emocional e formato para público brasileiro" : undefined,
       };
     }
 
     const brRanking = deduplicateVideos([...ytBR, ...ytNicheBR].filter(isPsychRelated).filter((v: any) => (v.raw_views || 0) >= MIN_VIEWS))
       .sort((a: any, b: any) => (b.viral_score || 0) - (a.viral_score || 0)).slice(0, 10).map((v: any, i: number) => buildRankingEntry(v, i));
 
-    const worldRanking = deduplicateVideos([...ytUS, ...ytNicheEN, ...ytGB, ...ytNicheDE].filter((v: any) => v.region !== "BR").filter(isPsychRelated).filter((v: any) => (v.raw_views || 0) >= MIN_VIEWS))
-      .sort((a: any, b: any) => (b.viral_score || 0) - (a.viral_score || 0)).slice(0, 15).map((v: any, i: number) => buildRankingEntry(v, i));
+    const worldRanking = deduplicateVideos([...ytUS, ...ytNicheEN, ...ytGB, ...ytNicheEN2, ...ytNicheEN3, ...ytNicheEN4].filter((v: any) => v.region !== "BR").filter(isPsychRelated).filter((v: any) => (v.raw_views || 0) >= MIN_VIEWS))
+      .sort((a: any, b: any) => (b.raw_views || 0) - (a.raw_views || 0)).slice(0, 15).map((v: any, i: number) => buildRankingEntry(v, i));
 
     // ===== EXTREME ANALYTICS =====
     const allRanked = [...worldRanking, ...brRanking];
@@ -749,6 +910,75 @@ serve(async (req) => {
     };
 
     await supabase.from("settings").upsert({ key: "viral_intelligence", value: viralData }, { onConflict: "key" });
+
+    // Save to performance_history for self-evolving algorithm learning
+    if (apisCalled.includes("youtube")) {
+      const allRankedForHistory = [...worldRanking, ...brRanking];
+      const historyRows = allRankedForHistory.slice(0, 25).filter((v: any) => v.video_url).map((v: any) => ({
+        platform: "youtube",
+        video_url: v.video_url,
+        title: v.video_title || v.title || "Untitled",
+        views_24h: Math.round((v.raw_views || 0) / Math.max(1, v.age_days || 1)),
+        views_48h: v.age_days <= 2 ? (v.raw_views || 0) : Math.round((v.raw_views || 0) / Math.max(1, v.age_days || 1) * 2),
+        views_7d: v.age_days <= 7 ? (v.raw_views || 0) : Math.round((v.raw_views || 0) / Math.max(1, v.age_days || 1) * 7),
+        comments_count: v.comments || 0,
+        likes_count: v.likes || 0,
+        shares_count: v.shares_estimate || 0,
+        followers_gained: 0,
+        revenue_estimated: v.estimated_revenue || 0,
+        engagement_rate: v.engagement_rate || 0,
+        content_format: v.content_format || null,
+        hook_pattern: v.hook_pattern || null,
+        duration_sec: v.duration_sec || 0,
+        posted_at: v.published_at || null,
+        topic: v.topic || null,
+        language: v.region === "BR" ? "pt" : "en",
+        learned_insights: {
+          viral_score: v.viral_score,
+          freshness_bonus: v.freshness_bonus,
+          monetization_potential: v.monetization_potential,
+          follower_conversion_score: v.follower_conversion_score,
+          comment_rate: v.comment_rate,
+          like_rate: v.like_rate,
+          country: v.country,
+        },
+        metadata: {
+          channel: v.channel_title || v.creator || "",
+          region: v.region || "",
+          age_days: v.age_days,
+          views_per_day: v.views_per_day,
+        },
+      }));
+
+      if (historyRows.length > 0) {
+        // Upsert by video_url to avoid duplicates — update stats on re-crawl
+        for (const row of historyRows) {
+          const { data: existing } = await supabase
+            .from("performance_history")
+            .select("id")
+            .eq("video_url", row.video_url)
+            .limit(1)
+            .single();
+
+          if (existing) {
+            await supabase.from("performance_history").update({
+              views_24h: row.views_24h,
+              views_48h: row.views_48h,
+              views_7d: row.views_7d,
+              comments_count: row.comments_count,
+              likes_count: row.likes_count,
+              shares_count: row.shares_count,
+              revenue_estimated: row.revenue_estimated,
+              engagement_rate: row.engagement_rate,
+              learned_insights: row.learned_insights,
+              metadata: row.metadata,
+            }).eq("id", existing.id);
+          } else {
+            await supabase.from("performance_history").insert(row);
+          }
+        }
+      }
+    }
 
     // Save video snapshots with extreme tracking
     if (apisCalled.includes("youtube")) {
