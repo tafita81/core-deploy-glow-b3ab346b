@@ -750,6 +750,75 @@ serve(async (req) => {
 
     await supabase.from("settings").upsert({ key: "viral_intelligence", value: viralData }, { onConflict: "key" });
 
+    // Save to performance_history for self-evolving algorithm learning
+    if (apisCalled.includes("youtube")) {
+      const allRankedForHistory = [...worldRanking, ...brRanking];
+      const historyRows = allRankedForHistory.slice(0, 25).filter((v: any) => v.video_url).map((v: any) => ({
+        platform: "youtube",
+        video_url: v.video_url,
+        title: v.video_title || v.title || "Untitled",
+        views_24h: Math.round((v.raw_views || 0) / Math.max(1, v.age_days || 1)),
+        views_48h: v.age_days <= 2 ? (v.raw_views || 0) : Math.round((v.raw_views || 0) / Math.max(1, v.age_days || 1) * 2),
+        views_7d: v.age_days <= 7 ? (v.raw_views || 0) : Math.round((v.raw_views || 0) / Math.max(1, v.age_days || 1) * 7),
+        comments_count: v.comments || 0,
+        likes_count: v.likes || 0,
+        shares_count: v.shares_estimate || 0,
+        followers_gained: 0,
+        revenue_estimated: v.estimated_revenue || 0,
+        engagement_rate: v.engagement_rate || 0,
+        content_format: v.content_format || null,
+        hook_pattern: v.hook_pattern || null,
+        duration_sec: v.duration_sec || 0,
+        posted_at: v.published_at || null,
+        topic: v.topic || null,
+        language: v.region === "BR" ? "pt" : "en",
+        learned_insights: {
+          viral_score: v.viral_score,
+          freshness_bonus: v.freshness_bonus,
+          monetization_potential: v.monetization_potential,
+          follower_conversion_score: v.follower_conversion_score,
+          comment_rate: v.comment_rate,
+          like_rate: v.like_rate,
+          country: v.country,
+        },
+        metadata: {
+          channel: v.channel_title || v.creator || "",
+          region: v.region || "",
+          age_days: v.age_days,
+          views_per_day: v.views_per_day,
+        },
+      }));
+
+      if (historyRows.length > 0) {
+        // Upsert by video_url to avoid duplicates — update stats on re-crawl
+        for (const row of historyRows) {
+          const { data: existing } = await supabase
+            .from("performance_history")
+            .select("id")
+            .eq("video_url", row.video_url)
+            .limit(1)
+            .single();
+
+          if (existing) {
+            await supabase.from("performance_history").update({
+              views_24h: row.views_24h,
+              views_48h: row.views_48h,
+              views_7d: row.views_7d,
+              comments_count: row.comments_count,
+              likes_count: row.likes_count,
+              shares_count: row.shares_count,
+              revenue_estimated: row.revenue_estimated,
+              engagement_rate: row.engagement_rate,
+              learned_insights: row.learned_insights,
+              metadata: row.metadata,
+            }).eq("id", existing.id);
+          } else {
+            await supabase.from("performance_history").insert(row);
+          }
+        }
+      }
+    }
+
     // Save video snapshots with extreme tracking
     if (apisCalled.includes("youtube")) {
       const allVideos = [...worldRanking, ...brRanking];
