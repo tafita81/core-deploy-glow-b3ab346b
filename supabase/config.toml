@@ -1,1 +1,57 @@
 project_id = "qfbjogofvrxdxobmecbk"
+
+# Modo totalmente público: nenhuma Edge Function exige JWT.
+# Isso permite chamadas sem credenciais de entrada.
+[functions.analyze-viral-visuals]
+verify_jwt = false
+
+[functions.auto-publish]
+verify_jwt = false
+
+[functions.brain-pipeline]
+verify_jwt = false
+
+[functions.cross-platform-intelligence]
+verify_jwt = false
+
+[functions.curate-amazon-books]
+verify_jwt = false
+
+[functions.generate-content]
+verify_jwt = false
+
+[functions.generate-media]
+verify_jwt = false
+
+[functions.generate-video-heygen]
+verify_jwt = false
+
+[functions.generate-whatsapp-content]
+verify_jwt = false
+
+[functions.github-repo-proxy]
+verify_jwt = false
+
+[functions.monitor-channels]
+verify_jwt = false
+
+[functions.optimize-profiles]
+verify_jwt = false
+
+[functions.publish-social]
+verify_jwt = false
+
+[functions.research-trends]
+verify_jwt = false
+
+[functions.validate-ethics]
+verify_jwt = false
+
+[functions.validate-science]
+verify_jwt = false
+
+[functions.whatsapp-auto-reply]
+verify_jwt = false
+
+[functions.whatsapp-webhook]
+verify_jwt = false

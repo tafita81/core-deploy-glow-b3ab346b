@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   TrendingUp, TrendingDown, Eye, Users, Heart, MessageCircle,
   RefreshCw, Clock, Instagram, Youtube, Twitter, Facebook, Linkedin,
@@ -161,6 +161,16 @@ const Monitoring = () => {
     },
   });
 
+  const { data: githubRepo } = useQuery({
+    queryKey: ["github-repo-monitoring"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("github-repo-proxy");
+      if (error) throw error;
+      return data as any;
+    },
+    refetchInterval: 120000,
+  });
+
   // Group latest snapshots by platform (take most recent per platform)
   const latestByPlatform = (latestSnapshots || []).reduce((acc: Record<string, any>, s: any) => {
     if (!acc[s.platform] || new Date(s.created_at) > new Date(acc[s.platform].created_at)) {
@@ -234,6 +244,28 @@ const Monitoring = () => {
             </Button>
           ))}
         </div>
+
+        {githubRepo?.repository && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Backend GitHub (Edge Function)</p>
+                  <p className="font-medium">{githubRepo.repository.full_name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Último push: {githubRepo.repository.pushed_at ? new Date(githubRepo.repository.pushed_at).toLocaleString("pt-BR") : "—"}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <Badge variant="outline">⭐ {githubRepo.repository.stargazers_count ?? 0}</Badge>
+                  <Badge variant="outline">🍴 {githubRepo.repository.forks_count ?? 0}</Badge>
+                  <Badge variant="outline">🐞 {githubRepo.repository.open_issues_count ?? 0}</Badge>
+                  <Badge variant="outline">Commits: {githubRepo.recent_commits?.length ?? 0}</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Total Overview Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

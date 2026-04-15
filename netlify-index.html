@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CérebroDani — Dashboard Viral Extremo</title>
+  <style>
+    :root{--bg:#090f1f;--panel:#121a33;--card:#151f3d;--txt:#eef3ff;--muted:#9eabd0;--pri:#7c6bff;--ok:#18d4a1;--warn:#ffba57;--danger:#ff6f8b;--bd:rgba(255,255,255,.12)}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(1200px 500px at 10% -10%,rgba(124,107,255,.3),transparent 45%),var(--bg);font-family:Inter,system-ui,Arial,sans-serif;color:var(--txt)}
+    .layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+    .sidebar{border-right:1px solid var(--bd);padding:16px;background:#0a1124}
+    .brand{font-weight:800}.sub{font-size:.82rem;color:var(--muted);margin:.3rem 0 1rem}
+    .nav button{display:block;width:100%;text-align:left;padding:11px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--txt);margin:7px 0;cursor:pointer}
+    .nav button.active,.nav button:hover{background:var(--panel);border-color:var(--bd)}
+    .main{padding:18px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    .badge{font-size:.72rem;border:1px solid var(--bd);color:var(--muted);padding:6px 10px;border-radius:999px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;margin-top:14px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));border:1px solid var(--bd);border-radius:14px;padding:13px;grid-column:span 12}
+    .kpi{grid-column:span 2}.kpi .t{color:var(--muted);font-size:.77rem}.kpi .v{font-weight:800;font-size:1.35rem;margin-top:6px}
+    .small{color:var(--muted);font-size:.82rem}.pill{font-size:.72rem;padding:4px 8px;border:1px solid var(--bd);border-radius:999px}
+    .ok{color:var(--ok)}.warn{color:var(--warn)}.danger{color:var(--danger)}
+    .btn{border:0;background:var(--pri);color:#fff;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:600}.btn.sec{background:transparent;border:1px solid var(--bd)}
+    .hidden{display:none} input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--bd);background:#1a2448;color:var(--txt)} textarea{min-height:84px}
+    .row{display:grid;grid-template-columns:repeat(12,1fr);gap:10px}.c3{grid-column:span 3}.c4{grid-column:span 4}.c6{grid-column:span 6}.c12{grid-column:span 12}
+    table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px solid var(--bd);text-align:left;font-size:.88rem}
+    @media (max-width:980px){.layout{grid-template-columns:1fr}.kpi{grid-column:span 6}.c3,.c4,.c6{grid-column:span 12}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">🧠 CérebroDani</div>
+    <div class="sub">Sistema Autônomo de Conteúdo 24/7</div>
+    <div class="nav" id="nav"></div>
+    <hr style="border-color:var(--bd)">
+    <button class="btn" id="runPipeline" style="width:100%">⚡ Rodar Pipeline</button>
+    <p class="small">Salve como <b>index.html</b> e publique no Netlify.</p>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <h1 id="title" style="margin:0">Dashboard Viral Extremo</h1>
+      <span class="badge">Arquivo único • HTML + CSS + JS</span>
+    </div>
+
+    <section id="p-dashboard"></section>
+    <section id="p-content" class="hidden"></section>
+    <section id="p-channels" class="hidden"></section>
+    <section id="p-community" class="hidden"></section>
+    <section id="p-monitoring" class="hidden"></section>
+    <section id="p-logs" class="hidden"></section>
+    <section id="p-settings" class="hidden"></section>
+  </main>
+</div>
+
+<script>
+const KEY='cerebrodani_identico_mock_v2';
+const DB=JSON.parse(localStorage.getItem(KEY)||'null')||{
+  settings:{auto_publish:true,science:true,ethics:true,threshold:75},
+  channels:[
+    {id:1,name:'Instagram Dani',platform:'instagram',connected:true,followers:24500,posts:320,engagement:4.2},
+    {id:2,name:'YouTube Dani',platform:'youtube',connected:true,followers:8200,posts:118,engagement:6.8},
+    {id:3,name:'TikTok Dani',platform:'tiktok',connected:true,followers:15900,posts:210,engagement:9.4},
+    {id:4,name:'WhatsApp Comunidade',platform:'whatsapp',connected:true,followers:1024,posts:240,engagement:17.5}
+  ],
+  contents:[
+    {id:1,title:'5 sinais de ansiedade silenciosa',topic:'ansiedade',channel:'instagram',type:'reel',status:'publicado',score:88},
+    {id:2,title:'Como regular emoções em 2 minutos',topic:'inteligência emocional',channel:'youtube',type:'artigo',status:'aprovado',score:81},
+    {id:3,title:'Apego ansioso: o que fazer hoje',topic:'apego',channel:'tiktok',type:'reel',status:'revisao',score:72}
+  ],
+  groups:[{id:1,name:'🧠 Autoconhecimento',members:982,active:true},{id:2,name:'🧘 Ansiedade',members:744,active:true}],
+  logs:[{time:new Date().toLocaleString('pt-BR'),type:'sistema',level:'info',msg:'Plataforma carregada com layout estilo Lovable.'}]
+};
+let page='dashboard';
+const pages=[['dashboard','Dashboard Viral Extremo'],['content','Conteúdo'],['channels','Canais'],['community','Comunidade'],['monitoring','Monitoramento'],['logs','Logs'],['settings','Configurações']];
+const save=()=>localStorage.setItem(KEY,JSON.stringify(DB));
+const fmt=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(n);
+const log=(msg,type='sistema',level='info')=>{DB.logs.unshift({time:new Date().toLocaleString('pt-BR'),type,level,msg});DB.logs=DB.logs.slice(0,300);save();render();};
+
+function nav(){const n=document.getElementById('nav');n.innerHTML=pages.map(([id,name])=>`<button class="${id===page?'active':''}" data-p="${id}">${name}</button>`).join('');n.querySelectorAll('button').forEach(b=>b.onclick=()=>openPage(b.dataset.p));}
+function openPage(p){page=p;document.getElementById('title').textContent=pages.find(x=>x[0]===p)[1];nav();document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));document.getElementById('p-'+p).classList.remove('hidden');}
+
+function dashboard(){
+  const total=DB.contents.length,pub=DB.contents.filter(c=>c.status==='publicado').length,pend=DB.contents.filter(c=>!['publicado','rejeitado'].includes(c.status)).length;
+  const avg=total?Math.round(DB.contents.reduce((a,b)=>a+b.score,0)/total):0;
+  const monet=145000;
+  document.getElementById('p-dashboard').innerHTML=`<div class="grid">
+    <div class="card kpi"><div class="t">Gerados</div><div class="v">${total}</div></div>
+    <div class="card kpi"><div class="t">Publicados</div><div class="v">${pub}</div></div>
+    <div class="card kpi"><div class="t">Pendentes</div><div class="v">${pend}</div></div>
+    <div class="card kpi"><div class="t">Score Médio</div><div class="v">${avg}</div></div>
+    <div class="card kpi"><div class="t">Comment Rate</div><div class="v">6.4%</div></div>
+    <div class="card kpi"><div class="t">Revenue Mkt</div><div class="v">$${fmt(monet)}</div></div>
+
+    <div class="card" style="grid-column:span 8">
+      <h3 style="margin:.1rem 0 .6rem">📊 Fila de Conteúdo</h3>
+      <table><thead><tr><th>Título</th><th>Canal</th><th>Tipo</th><th>Status</th><th>Score</th></tr></thead><tbody>
+        ${DB.contents.map(c=>`<tr><td>${c.title}</td><td>${c.channel}</td><td>${c.type}</td><td><span class="pill">${c.status}</span></td><td>${c.score}</td></tr>`).join('')}
+      </tbody></table>
+    </div>
+
+    <div class="card" style="grid-column:span 4">
+      <h3 style="margin:.1rem 0 .6rem">🧬 Auto-Evolving</h3>
+      <p class="small">Geração: <b>4</b></p>
+      <p class="small">Hook vencedor: <span class="ok">"Você sabia que..."</span></p>
+      <p class="small">Tópico quente: <span class="warn">Ansiedade</span></p>
+      <p class="small">Status Pipeline: <span class="ok">ativo</span></p>
+    </div>
+  </div>`;
+}
+
+function content(){
+  document.getElementById('p-content').innerHTML=`<div class="grid">
+    <div class="card"><h3>✨ Gerar Novo Conteúdo</h3>
+      <div class="row">
+        <div class="c4"><label>Tema</label><select id="topic"><option>ansiedade</option><option>apego</option><option>autoestima</option><option>burnout</option></select></div>
+        <div class="c4"><label>Canal</label><select id="channel"><option>instagram</option><option>youtube</option><option>tiktok</option><option>whatsapp</option></select></div>
+        <div class="c4"><label>Tipo</label><select id="type"><option>reel</option><option>carrossel</option><option>story</option><option>artigo</option></select></div>
+        <div class="c12"><label>Instruções</label><textarea id="instr" placeholder="Instruções extras..."></textarea></div>
+      </div>
+      <button class="btn" id="createContent">Gerar Viral com IA</button>
+    </div>
+    <div class="card"><h3>Conteúdos</h3><table><thead><tr><th>Título</th><th>Tema</th><th>Status</th><th>Score</th><th></th></tr></thead><tbody>
+      ${DB.contents.map(c=>`<tr><td>${c.title}</td><td>${c.topic}</td><td>${c.status}</td><td>${c.score}</td><td><button class="btn sec" onclick="delContent(${c.id})">Excluir</button></td></tr>`).join('')}
+    </tbody></table></div></div>`;
+  document.getElementById('createContent').onclick=()=>{
+    const topic=topicEl.value,channel=channelEl.value,type=typeEl.value;
+    const score=Math.floor(70+Math.random()*28);let status=score>=DB.settings.threshold?'aprovado':'revisao';
+    if(DB.settings.auto_publish&&status==='aprovado')status='publicado';
+    const title=`${Math.floor(Math.random()*5)+3} gatilhos sobre ${topic}`;
+    DB.contents.unshift({id:Date.now(),title,topic,channel,type,status,score});
+    log(`Conteúdo gerado: ${title}`,'geracao','info');
+  };
+}
+window.delContent=(id)=>{DB.contents=DB.contents.filter(c=>c.id!==id);log('Conteúdo excluído '+id,'sistema','warning');}
+
+function channels(){
+  document.getElementById('p-channels').innerHTML=`<div class="grid">${DB.channels.map(c=>`<div class="card" style="grid-column:span 6"><h3>${c.name}</h3><p class="small">${c.platform} • ${fmt(c.followers)} seguidores • ${c.engagement}% engajamento</p><label><input type="checkbox" ${c.connected?'checked':''} onchange="toggleCh(${c.id},this.checked)"> Conectado</label></div>`).join('')}</div>`;
+}
+window.toggleCh=(id,v)=>{const c=DB.channels.find(x=>x.id===id);c.connected=v;log(`${c.name} ${v?'conectado':'desconectado'}`,'sistema',v?'info':'warning');}
+
+function community(){
+  const total=DB.groups.reduce((a,b)=>a+b.members,0);
+  document.getElementById('p-community').innerHTML=`<div class="grid">
+    <div class="card" style="grid-column:span 4"><h3>👥 Grupos Ativos</h3><p class="small">${DB.groups.length} grupos</p><p><b>${fmt(total)}</b> membros totais</p></div>
+    <div class="card" style="grid-column:span 8"><h3>Grupos WhatsApp</h3><table><thead><tr><th>Nome</th><th>Membros</th><th>Status</th></tr></thead><tbody>${DB.groups.map(g=>`<tr><td>${g.name}</td><td>${g.members}</td><td class="${g.active?'ok':'warn'}">${g.active?'ativo':'inativo'}</td></tr>`).join('')}</tbody></table></div>
+  </div>`;
+}
+
+function monitoring(){
+  document.getElementById('p-monitoring').innerHTML=`<div class="grid"><div class="card"><h3>📈 Monitoramento em Tempo Real</h3><table><thead><tr><th>Plataforma</th><th>Seguidores</th><th>Posts</th><th>Engajamento</th><th>Status</th></tr></thead><tbody>${DB.channels.map(c=>`<tr><td>${c.platform}</td><td>${fmt(c.followers)}</td><td>${c.posts}</td><td>${c.engagement}%</td><td class="${c.connected?'ok':'warn'}">${c.connected?'online':'offline'}</td></tr>`).join('')}</tbody></table></div></div>`;
+}
+
+function logs(){
+  document.getElementById('p-logs').innerHTML=`<div class="grid"><div class="card"><h3>📜 Logs do Sistema</h3><table><thead><tr><th>Data</th><th>Tipo</th><th>Nível</th><th>Mensagem</th></tr></thead><tbody>${DB.logs.map(l=>`<tr><td>${l.time}</td><td>${l.type}</td><td>${l.level}</td><td>${l.msg}</td></tr>`).join('')}</tbody></table></div></div>`;
+}
+
+function settings(){
+  document.getElementById('p-settings').innerHTML=`<div class="grid">
+    <div class="card" style="grid-column:span 8"><h3>⚙️ Configurações</h3>
+      <p><label><input id="s1" type="checkbox" ${DB.settings.auto_publish?'checked':''}> Auto Publish</label></p>
+      <p><label><input id="s2" type="checkbox" ${DB.settings.science?'checked':''}> Validação Científica</label></p>
+      <p><label><input id="s3" type="checkbox" ${DB.settings.ethics?'checked':''}> Filtro Ético</label></p>
+      <p>Threshold score <input id="s4" type="number" min="0" max="100" value="${DB.settings.threshold}"></p>
+      <button class="btn" id="saveSettings">Salvar</button>
+    </div>
+    <div class="card" style="grid-column:span 4"><h3>Backup</h3><button class="btn sec" id="exportData">Exportar JSON</button><button class="btn sec" id="resetData" style="margin-top:8px">Resetar</button></div>
+  </div>`;
+  document.getElementById('saveSettings').onclick=()=>{DB.settings.auto_publish=s1.checked;DB.settings.science=s2.checked;DB.settings.ethics=s3.checked;DB.settings.threshold=Math.max(0,Math.min(100,Number(s4.value)||75));log('Configurações atualizadas');};
+  document.getElementById('exportData').onclick=()=>{const b=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='cerebrodani-backup.json';a.click();};
+  document.getElementById('resetData').onclick=()=>{if(confirm('Apagar dados locais?')){localStorage.removeItem(KEY);location.reload();}};
+}
+
+function runPipeline(){
+  const topic=['ansiedade','burnout','apego','luto'][Math.floor(Math.random()*4)];
+  const score=Math.floor(72+Math.random()*25);let status=score>=DB.settings.threshold?'aprovado':'revisao';if(DB.settings.auto_publish&&status==='aprovado')status='publicado';
+  DB.contents.unshift({id:Date.now(),title:`Pipeline: ${topic} em alta`,topic,channel:'instagram',type:'reel',status,score});
+  log(`Pipeline concluído • tópico ${topic}`,'pipeline','info');
+}
+
+function render(){save();nav();dashboard();content();channels();community();monitoring();logs();settings();}
+document.getElementById('runPipeline').onclick=()=>{runPipeline();render();openPage('dashboard');};
+render();openPage('dashboard');
+
+const topicEl={get value(){return document.getElementById('topic')?.value||'ansiedade'}};
+const channelEl={get value(){return document.getElementById('channel')?.value||'instagram'}};
+const typeEl={get value(){return document.getElementById('type')?.value||'reel'}};
+</script>
+</body>
+</html>
