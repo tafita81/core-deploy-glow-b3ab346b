@@ -333,6 +333,26 @@ O app estará disponível em `http://localhost:5173`.
 
 ---
 
+
+## 🚀 Deploy idêntico (sem Lovable)
+
+Para ter uma versão **idêntica** da plataforma `https://core-deploy-glow.lovable.app/` sem depender do Lovable, use este repositório como fonte oficial:
+
+1. Faça deploy do frontend React/Vite deste repositório (Vercel/Netlify/Cloudflare).
+2. Configure o projeto Supabase com as migrations e Edge Functions em `supabase/functions`.
+3. Publique as variáveis `.env` do frontend (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`).
+4. (Opcional) Configure `GITHUB_TOKEN` para aumentar limite de chamadas da integração com GitHub.
+
+### Backend GitHub incluído
+
+Foi adicionada a função `github-repo-proxy` para o backend consultar dados do repositório no GitHub (metadados + commits recentes):
+
+`GET /functions/v1/github-repo-proxy?owner=tafita81&repo=core-deploy-glow-b3ab346b`
+
+> Atenção: manter funções públicas facilita acesso, mas reduz segurança operacional.
+
+---
+
 ## 🌐 Deploy
 
 - **URL Publicada**: [https://core-deploy-glow.lovable.app](https://core-deploy-glow.lovable.app)
